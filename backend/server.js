@@ -17,17 +17,20 @@ import adminAddTenantRoutes from "./routes/admin/adminAddTenantRoutes.js";
 import adminMaintenanceRoutes from "./routes/admin/adminMaintenanceRoutes.js";
 import adminContractRoutes from "./routes/admin/adminContractRoutes.js";
 import adminPaymentRoutes from "./routes/admin/adminPaymentRoutes.js";
+import adminAnnouncementRoutes from "./routes/admin/adminAnnouncementRoutes.js";
 
 // Caretaker routes
 import caretakerRoutes from "./routes/caretaker/caretakerRoute.js";
 import caretakerMaintenanceRoutes from "./routes/caretaker/caretakerMaintenanceRoutes.js";
 import caretakerPaymentRoutes from "./routes/caretaker/caretakerPaymentRoutes.js";
+import caretakerAnnouncementRoutes from "./routes/caretaker/caretakerAnnouncementRoutes.js";
 
 // User routes
 import userRoutes from "./routes/userRoutes.js";
 import userMaintenanceRoutes from "./routes/userMaintenanceRoutes.js";
 import userContractRoutes from "./routes/userContractRoutes.js";
 import userPaymentRoutes from "./routes/userPaymentRoutes.js";
+import userAnnouncementRoutes from "./routes/userAnnouncementRoutes.js";
 
 // utils
 import runSeeders from "./utils/runSeeders.js";
@@ -79,17 +82,20 @@ app.use("/api/admin/maintenance", adminMaintenanceRoutes);
 app.use("/api/admin/tenants", adminAddTenantRoutes);
 app.use("/api/admin/contracts", adminContractRoutes);
 app.use("/api/admin/payments", adminPaymentRoutes);
+app.use("/api/admin/announcements", adminAnnouncementRoutes);
 
 // ===================== Caretaker ROUTES =====================
 app.use("/api/caretaker", caretakerRoutes);
 app.use("/api/caretaker/maintenance", caretakerMaintenanceRoutes);
 app.use("/api/caretaker/payments", caretakerPaymentRoutes);
+app.use("/api/caretaker/announcements", caretakerAnnouncementRoutes);
 
 // ===================== User ROUTES =====================
 app.use("/api/users", userRoutes);
 app.use("/api/users/maintenance", userMaintenanceRoutes);
 app.use("/api/users/contracts", userContractRoutes);
 app.use("/api/users/payments", userPaymentRoutes);
+app.use("/api/users/announcements", userAnnouncementRoutes);
 
 // Root check
 app.get("/", (req, res) => {
