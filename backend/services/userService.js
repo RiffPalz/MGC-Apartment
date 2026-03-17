@@ -4,6 +4,7 @@ import ContractTenant from "../models/contractTenant.js";
 import Unit from "../models/unit.js";
 import { generateAccessToken, generateLoginToken } from "../utils/token.js";
 import { Op } from "sequelize";
+import { createActivityLog } from "../services/activityLogService.js";
 
 // Creates a unique ID like TENANT-001, TENANT-002, etc.
 const generatePublicUserID = async () => {
@@ -26,22 +27,12 @@ const generatePublicUserID = async () => {
 
 // Handle new tenant registration
 export const registerUser = async (userData) => {
-  const {
-    fullName,
-    email,
-    contactNumber,
-    unitNumber,
-    numberOfTenants,
-    userName,
-    password,
-  } = userData;
+  const { fullName, email, contactNumber, unitNumber, numberOfTenants, userName, password } = userData;
 
-  // 1. Validation: Ensure all fields are filled
   if (!fullName || !email || !userName || !password || !unitNumber) {
     throw new Error("All required fields must be provided");
   }
 
-  // 2. Uniqueness: Check if email or username already exists
   if (await User.findOne({ where: { emailAddress: email } })) {
     throw new Error("Email already in use");
   }
@@ -49,13 +40,9 @@ export const registerUser = async (userData) => {
     throw new Error("Username already in use");
   }
 
-  // 3. Unit Check: Ensure the unit exists
   const unit = await Unit.findOne({ where: { unit_number: unitNumber } });
-  if (!unit) {
-    throw new Error("Invalid unit number");
-  }
+  if (!unit) throw new Error("Invalid unit number");
 
-  // 4. Occupancy Check: Ensure the unit isn't full (max 2 tenants)
   const activeContract = await Contract.findOne({
     where: { unit_id: unit.ID, status: "Active" },
   });
@@ -64,12 +51,9 @@ export const registerUser = async (userData) => {
     const tenantCount = await ContractTenant.count({
       where: { contract_id: activeContract.ID },
     });
-    if (tenantCount >= 2) {
-      throw new Error("This unit number is already fully occupied");
-    }
+    if (tenantCount >= 2) throw new Error("This unit number is already fully occupied");
   }
 
-  // 5. Creation: Generate ID and save the user
   const publicUserID = await generatePublicUserID();
   const user = await User.create({
     publicUserID,
@@ -90,21 +74,12 @@ export const registerUser = async (userData) => {
 export const loginUser = async ({ userName, password }) => {
   const user = await User.findOne({ where: { userName } });
 
-  // 1. Verification: Check user existence and role
-  if (!user || user.role !== "tenant") {
-    throw new Error("Invalid username or password");
-  }
+  if (!user || user.role !== "tenant") throw new Error("Invalid username or password");
+  if (user.status !== "Approved") throw new Error("Your account is still pending admin approval");
 
-  // 2. Approval: Ensure admin has approved the account
-  if (user.status !== "Approved") {
-    throw new Error("Your account is still pending admin approval");
-  }
-
-  // 3. Password: Compare provided password with hash
   const isMatch = await user.comparePassword(password);
   if (!isMatch) throw new Error("Invalid username or password");
 
-  // 4. Tokens: Generate access and session tokens
   const accessToken = generateAccessToken({ id: user.ID, role: user.role });
   const loginToken = generateLoginToken();
 
@@ -126,4 +101,43 @@ export const loginUser = async ({ userName, password }) => {
       role: user.role,
     },
   };
+};
+
+// Handle fetching user profile
+export const getUserProfileService = async (userId) => {
+  const user = await User.findByPk(userId);
+  if (!user) throw new Error("User not found");
+  return user;
+};
+
+// Handle updating user profile and logging activity
+export const updateUserProfileService = async (userId, updateData) => {
+  const user = await User.findByPk(userId);
+  if (!user) throw new Error("User not found");
+
+  // Secure extraction: only pull editable fields
+  const { fullName, emailAddress, contactNumber } = updateData;
+
+  if (fullName) user.fullName = fullName;
+  if (contactNumber) user.contactNumber = contactNumber;
+
+  if (emailAddress && emailAddress !== user.emailAddress) {
+    const emailExists = await User.findOne({ where: { emailAddress } });
+    if (emailExists) throw new Error("Email already in use");
+    user.emailAddress = emailAddress;
+  }
+
+  await user.save();
+
+  // Log Activity
+  await createActivityLog({
+    userId: user.ID,
+    role: user.role, // "tenant"
+    action: "UPDATE_PROFILE",
+    description: "Tenant updated their personal account information.",
+    referenceId: user.ID,
+    referenceType: "user"
+  });
+
+  return user;
 };

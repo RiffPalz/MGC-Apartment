@@ -3,6 +3,7 @@ import Contract from "../../models/contract.js";
 import Unit from "../../models/unit.js";
 import User from "../../models/user.js";
 import { createNotification } from "../../services/notificationService.js";
+import { createActivityLog } from "../../services/activityLogService.js";
 
 
 /* GET ALL PAYMENTS  */
@@ -123,6 +124,15 @@ export const verifyPayment = async (paymentId) => {
         type: "payment_verified",
         title: "Payment Verified",
         message: `Payment ${payment.ID} has been verified by caretaker.`,
+        referenceId: payment.ID,
+        referenceType: "payment"
+    });
+
+    /* LOG ACTIVITY */
+    await createActivityLog({
+        role: "caretaker",
+        action: "VERIFY_PAYMENT",
+        description: `Caretaker verified payment ID ${payment.ID}`,
         referenceId: payment.ID,
         referenceType: "payment"
     });

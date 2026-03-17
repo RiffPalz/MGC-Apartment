@@ -1,5 +1,7 @@
 import { Maintenance, User } from "../../models/index.js";
 import { createNotification } from "../../services/notificationService.js";
+import { createActivityLog } from "../../services/activityLogService.js";
+
 /**
  * CREATE MAINTENANCE 
  */
@@ -58,6 +60,15 @@ export const createMaintenance = async (data) => {
         type: "maintenance_created",
         title: "Maintenance Scheduled",
         message: `Caretaker scheduled maintenance: ${title}`,
+        referenceId: request.ID,
+        referenceType: "maintenance"
+    });
+
+    /* NOTIFY CARETAKER */
+    await createActivityLog({
+        role: "caretaker",
+        action: "CREATE_MAINTENANCE",
+        description: `Caretaker created maintenance request: ${title}`,
         referenceId: request.ID,
         referenceType: "maintenance"
     });
@@ -126,6 +137,14 @@ export const updateMaintenance = async (maintenanceId, data) => {
         type: "maintenance_update",
         title: "Maintenance Status Updated",
         message: `Maintenance request ${request.ID} updated to ${request.status}.`,
+        referenceId: request.ID,
+        referenceType: "maintenance"
+    });
+
+    await createActivityLog({
+        role: "caretaker",
+        action: "CREATE_MAINTENANCE",
+        description: `Caretaker created maintenance request: ${title}`,
         referenceId: request.ID,
         referenceType: "maintenance"
     });

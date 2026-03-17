@@ -4,6 +4,7 @@ import Contract from "../../models/contract.js";
 import Unit from "../../models/unit.js";
 import User from "../../models/user.js";
 import { createNotification } from "../../services/notificationService.js";
+import { createActivityLog } from "../../services/activityLogService.js";
 
 // Create a new payment record
 export const createPayment = async ({
@@ -80,6 +81,17 @@ export const createPayment = async ({
         referenceId: payment.ID,
         referenceType: "payment"
     });
+
+    /* LOG ACTIVITY */
+    await createActivityLog({
+        userId: null, // optional if you don't track admin ID yet
+        role: "admin",
+        action: "CREATE_PAYMENT",
+        description: `Created ${category} bill for contract ${contract_id}`,
+        referenceId: payment.ID,
+        referenceType: "payment"
+    });
+
 
     return payment;
 };
@@ -175,6 +187,16 @@ export const verifyPayment = async (paymentId) => {
         type: "payment_verified",
         title: "Payment Verified",
         message: `Payment ${payment.ID} has been verified by admin.`,
+        referenceId: payment.ID,
+        referenceType: "payment"
+    });
+
+    /* LOG ACTIVITY */
+    await createActivityLog({
+        userId: null, // optional if you don't track admin ID yet
+        role: "admin",
+        action: "VERIFY_PAYMENT",
+        description: `Verified payment ${payment.ID} for contract ${payment.contract_id}`,
         referenceId: payment.ID,
         referenceType: "payment"
     });

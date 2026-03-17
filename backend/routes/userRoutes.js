@@ -6,16 +6,16 @@ import { userLoginValidator } from "../validator/userLoginValidator.js";
 
 const router = express.Router();
 
-// REGISTER
+// Register a new account with data validation
 router.post("/register", userRegisterValidator, register);
 
-// LOGIN
+// Login with data validation
 router.post("/login", userLoginValidator, login);
 
-// FETCH PROFILE (protected)
-router.get("/profile", authenticate, authorize("user"), getUserProfile);
+// Get the logged-in tenant's profile info
+router.get("/profile", authenticate, authorize("tenant"), getUserProfile);
 
-// UPDATE PROFILE (protected)
-router.patch("/profile/update", authenticate, authorize("user"), updateUserProfile);
+// Update specific fields of the tenant's profile
+router.patch("/profile/update", authenticate, authorize("tenant"), updateUserProfile);
 
 export default router;

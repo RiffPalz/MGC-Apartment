@@ -1,5 +1,7 @@
 import { Maintenance, User } from "../../models/index.js";
 import { createNotification } from "../../services/notificationService.js";
+import { createActivityLog } from "../../services/activityLogService.js";
+
 
 /**
  * CREATE MAINTENANCE 
@@ -52,6 +54,14 @@ export const createMaintenance = async (data) => {
     referenceType: "maintenance"
   });
 
+  await createActivityLog({
+    role: "admin",
+    action: "CREATE_MAINTENANCE",
+    description: `Admin created maintenance request: ${title}`,
+    referenceId: request.ID,
+    referenceType: "maintenance"
+  });
+
   return {
     message: "Maintenance request created by admin",
     id: request.ID,
@@ -95,6 +105,14 @@ export const approveMaintenance = async (maintenanceId) => {
     type: "maintenance_approved",
     title: "Maintenance Request Approved",
     message: `Maintenance request ${request.ID} is approved.`,
+    referenceId: request.ID,
+    referenceType: "maintenance"
+  });
+
+  await createActivityLog({
+    role: "admin",
+    action: "APPROVE_MAINTENANCE",
+    description: `Approved maintenance request ID ${request.ID}`,
     referenceId: request.ID,
     referenceType: "maintenance"
   });
@@ -157,6 +175,14 @@ export const updateMaintenance = async (maintenanceId, data) => {
     type: "maintenance_update",
     title: "Maintenance Status Updated",
     message: `Maintenance request ${request.ID} is now ${request.status}.`,
+    referenceId: request.ID,
+    referenceType: "maintenance"
+  });
+
+  await createActivityLog({
+    role: "admin",
+    action: "APPROVE_MAINTENANCE",
+    description: `Approved maintenance request ID ${request.ID}`,
     referenceId: request.ID,
     referenceType: "maintenance"
   });

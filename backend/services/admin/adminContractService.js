@@ -5,6 +5,7 @@ import Contract from "../../models/contract.js";
 import ContractTenant from "../../models/contractTenant.js";
 import User from "../../models/user.js";
 import { createNotification } from "../../services/notificationService.js";
+import { createActivityLog } from "../../services/activityLogService.js";
 
 export const createContractByAdmin = async ({
     unit_id,
@@ -111,6 +112,7 @@ export const createContractByAdmin = async ({
         }
 
         await transaction.commit();
+
         /* NOTIFY TENANTS */
         for (const userId of tenantIds) {
             await createNotification({
@@ -123,6 +125,14 @@ export const createContractByAdmin = async ({
                 referenceType: "contract"
             });
         }
+
+        await createActivityLog({
+            role: "admin",
+            action: "CREATE_CONTRACT",
+            description: `Created contract for unit ${unit.unit_number}`,
+            referenceId: contract.ID,
+            referenceType: "contract"
+        });
 
 
         return contract;
@@ -164,6 +174,7 @@ export const terminateContract = async (contractId) => {
         }
 
         await transaction.commit();
+
         /* NOTIFY TENANTS */
         for (const tenant of contract.tenants) {
             await createNotification({
@@ -176,6 +187,14 @@ export const terminateContract = async (contractId) => {
                 referenceType: "contract"
             });
         }
+
+        await createActivityLog({
+            role: "admin",
+            action: "TERMINATE_CONTRACT",
+            description: `Terminated contract ID ${contract.ID}`,
+            referenceId: contract.ID,
+            referenceType: "contract"
+        });
 
 
         return contract;
@@ -192,24 +211,32 @@ export const renewContract = async ({
     newEndDate,
     contract_file,
 }) => {
+
     const transaction = await sequelize.transaction();
 
     try {
 
         const oldContract = await Contract.findByPk(oldContractId, {
-            include: {
-                model: User,
-                as: "tenants",
-            },
+            include: [
+                {
+                    model: User,
+                    as: "tenants",
+                },
+                {
+                    model: Unit,
+                    as: "unit"
+                }
+            ],
             transaction,
         });
 
         if (!oldContract) throw new Error("Old contract not found.");
 
-        if (oldContract.status === "Active")
+        if (oldContract.status === "Active") {
             throw new Error("Terminate current contract before renewal.");
+        }
 
-        /* Create new contract */
+        /* CREATE NEW CONTRACT */
         const newContract = await Contract.create(
             {
                 unit_id: oldContract.unit_id,
@@ -224,7 +251,7 @@ export const renewContract = async ({
             { transaction }
         );
 
-        /* Attach old tenants */
+        /* ATTACH TENANTS */
         for (const tenant of oldContract.tenants) {
 
             await ContractTenant.create(
@@ -235,6 +262,7 @@ export const renewContract = async ({
                 { transaction }
             );
 
+            // Update tenant unit assignment
             await tenant.update(
                 { unitNumber: oldContract.unit.unit_number },
                 { transaction }
@@ -255,9 +283,20 @@ export const renewContract = async ({
                 referenceType: "contract"
             });
         }
+
+        /* ACTIVITY LOG */
+        await createActivityLog({
+            role: "admin",
+            action: "RENEW_CONTRACT",
+            description: `Renewed contract. New contract ID ${newContract.ID}`,
+            referenceId: newContract.ID,
+            referenceType: "contract"
+        });
+
         return newContract;
 
     } catch (error) {
+
         await transaction.rollback();
         throw error;
     }
@@ -418,6 +457,7 @@ export const completeContract = async (contractId) => {
         }
 
         await transaction.commit();
+
         /* NOTIFY TENANTS */
         for (const tenant of contract.tenants) {
             await createNotification({
@@ -430,6 +470,16 @@ export const completeContract = async (contractId) => {
                 referenceType: "contract"
             });
         }
+
+        await createActivityLog({
+            role: "admin",
+            action: "COMPLETE_CONTRACT",
+            description: `Completed contract ID ${contract.ID}`,
+            referenceId: contract.ID,
+            referenceType: "contract"
+        });
+
+
         return contract;
 
     } catch (error) {

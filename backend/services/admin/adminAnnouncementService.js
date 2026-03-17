@@ -1,5 +1,6 @@
 import Announcement from "../../models/announcement.js";
 import { createNotification } from "../../services/notificationService.js";
+import { createActivityLog } from "../../services/activityLogService.js";
 
 /* CREATE ANNOUNCEMENT */
 export const createAnnouncement = async ({
@@ -40,6 +41,16 @@ export const createAnnouncement = async ({
         referenceType: "announcement"
     });
 
+    /* ACTIVITY LOG */
+    await createActivityLog({
+        userId: adminId || null,
+        role: "admin",
+        action: "CREATE_ANNOUNCEMENT",
+        description: `Created announcement: ${announcementTitle}`,
+        referenceId: announcement.ID,
+        referenceType: "announcement"
+    });
+
     return announcement;
 };
 
@@ -63,7 +74,17 @@ export const updateAnnouncement = async (announcementId, updates) => {
         throw new Error("Announcement not found");
     }
     await announcement.update(updates);
+
+    await createActivityLog({
+        role: "admin",
+        action: "UPDATE_ANNOUNCEMENT",
+        description: `Updated announcement ID ${announcement.ID}`,
+        referenceId: announcement.ID,
+        referenceType: "announcement"
+    });
     return announcement;
+
+
 };
 
 
@@ -77,6 +98,14 @@ export const deleteAnnouncement = async (announcementId) => {
     }
 
     await announcement.destroy();
+
+    await createActivityLog({
+        role: "admin",
+        action: "DELETE_ANNOUNCEMENT",
+        description: `Deleted announcement ID ${announcement.ID}`,
+        referenceId: announcement.ID,
+        referenceType: "announcement"
+    });
 
     return {
         message: "Announcement deleted successfully"

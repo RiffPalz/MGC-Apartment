@@ -1,6 +1,7 @@
 import Maintenance from "../models/maintenance.js";
 import User from "../models/user.js";
 import { createNotification } from "../services/notificationService.js";
+import { createActivityLog } from "../services/activityLogService.js";
 
 /**
  * CREATE MAINTENANCE REQUEST (Tenant)
@@ -41,6 +42,15 @@ export const createMaintenance = async (userId, data) => {
     type: "maintenance_request",
     title: "New Maintenance Request",
     message: `${title} reported by a tenant`,
+    referenceId: request.ID,
+    referenceType: "maintenance"
+  });
+
+  await createActivityLog({
+    userId,
+    role: "tenant",
+    action: "CREATE_MAINTENANCE",
+    description: `Tenant created maintenance request: ${title}`,
     referenceId: request.ID,
     referenceType: "maintenance"
   });

@@ -3,6 +3,7 @@ import Contract from "../models/contract.js";
 import User from "../models/user.js";
 import Unit from "../models/unit.js";
 import { createNotification } from "../services/notificationService.js";
+import { createActivityLog } from "../services/activityLogService.js";
 
 
 /* GET TENANT PAYMENTS */
@@ -165,6 +166,16 @@ export const uploadPaymentReceipt = async (
         type: "payment_receipt_uploaded",
         title: "Payment Receipt Uploaded",
         message: "A tenant uploaded a payment receipt for verification.",
+        referenceId: payment.ID,
+        referenceType: "payment"
+    });
+
+    /* LOG ACTIVITY */
+    await createActivityLog({
+        userId,
+        role: "tenant",
+        action: "UPLOAD_PAYMENT_RECEIPT",
+        description: `Tenant uploaded receipt for payment ID ${payment.ID}`,
         referenceId: payment.ID,
         referenceType: "payment"
     });

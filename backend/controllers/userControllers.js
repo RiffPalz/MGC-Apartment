@@ -1,5 +1,9 @@
-import { registerUser, loginUser } from "../services/userAuthService.js";
-import User from "../models/user.js";
+import {
+  registerUser,
+  loginUser,
+  getUserProfileService,
+  updateUserProfileService
+} from "../services/userService.js"; // Make sure the import points to your new file name!
 import { emitEvent } from "../utils/emitEvent.js";
 
 /**
@@ -9,7 +13,6 @@ export const register = async (req, res) => {
   try {
     const user = await registerUser(req.body);
 
-    // Emit ONLY after successful creation
     emitEvent(req, "dataUpdated", {
       type: "USER",
       action: "CREATED",
@@ -30,10 +33,7 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
@@ -43,7 +43,6 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const result = await loginUser(req.body);
-
     return res.status(200).json({
       success: true,
       message: result.message,
@@ -52,10 +51,7 @@ export const login = async (req, res) => {
       user: result.user,
     });
   } catch (error) {
-    return res.status(401).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(401).json({ success: false, message: error.message });
   }
 };
 
@@ -64,14 +60,7 @@ export const login = async (req, res) => {
  */
 export const getUserProfile = async (req, res) => {
   try {
-    const user = await User.findByPk(req.auth.id);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+    const user = await getUserProfileService(req.auth.id);
 
     return res.status(200).json({
       success: true,
@@ -87,10 +76,7 @@ export const getUserProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch profile",
-    });
+    return res.status(404).json({ success: false, message: error.message });
   }
 };
 
@@ -99,44 +85,8 @@ export const getUserProfile = async (req, res) => {
  */
 export const updateUserProfile = async (req, res) => {
   try {
-    const user = await User.findByPk(req.auth.id);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    const { fullName, emailAddress, userName, contactNumber, unitNumber } = req.body;
-
-    if (fullName) user.fullName = fullName;
-    if (contactNumber) user.contactNumber = contactNumber;
-    if (unitNumber) user.unitNumber = unitNumber;
-
-    if (emailAddress && emailAddress !== user.emailAddress) {
-      const emailExists = await User.findOne({ where: { emailAddress } });
-      if (emailExists) {
-        return res.status(400).json({
-          success: false,
-          message: "Email already in use",
-        });
-      }
-      user.emailAddress = emailAddress;
-    }
-
-    if (userName && userName !== user.userName) {
-      const usernameExists = await User.findOne({ where: { userName } });
-      if (usernameExists) {
-        return res.status(400).json({
-          success: false,
-          message: "Username already in use",
-        });
-      }
-      user.userName = userName;
-    }
-
-    await user.save();
+    // Pass the request body securely to the service
+    const user = await updateUserProfileService(req.auth.id, req.body);
 
     // 🔔 Emit update event
     emitEvent(req, "dataUpdated", {
@@ -161,9 +111,6 @@ export const updateUserProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("Update user error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update profile",
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
