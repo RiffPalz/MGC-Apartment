@@ -1,9 +1,8 @@
 import { getAnnouncements } from "../../services/caretaker/caretakerAnnouncementService.js";
 
-/* GET ANNOUNCEMENTS */
+// Get announcements (optionally filter by category)
 export const getAnnouncementsController = async (req, res) => {
   try {
-
     const { category } = req.query;
 
     const announcements = await getAnnouncements(category);
@@ -15,11 +14,11 @@ export const getAnnouncementsController = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("Fetch announcements error:", error);
 
     return res.status(500).json({
       success: false,
       message: "Failed to fetch announcements"
     });
-
   }
 };

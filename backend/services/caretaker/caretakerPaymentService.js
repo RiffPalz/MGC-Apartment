@@ -6,7 +6,7 @@ import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
 
 
-/* GET ALL PAYMENTS  */
+/* GET ALL PAYMENTS */
 export const getAllPayments = async () => {
 
     const payments = await Payment.findAll({
@@ -37,14 +37,11 @@ export const getAllPayments = async () => {
 };
 
 
-
-/* GET PAYMENTS PENDING VERIFICATION */
+/* GET PENDING PAYMENTS */
 export const getPendingPayments = async () => {
 
     const payments = await Payment.findAll({
-        where: {
-            status: "Pending Verification"
-        },
+        where: { status: "Pending Verification" },
         include: [
             {
                 model: Contract,
@@ -71,9 +68,8 @@ export const getPendingPayments = async () => {
 };
 
 
-
-/*  VERIFY PAYMENT  */
-export const verifyPayment = async (paymentId) => {
+/* VERIFY PAYMENT */
+export const verifyPayment = async (paymentId, caretakerId) => {
 
     const payment = await Payment.findOne({
         where: { ID: paymentId },
@@ -101,13 +97,11 @@ export const verifyPayment = async (paymentId) => {
         throw new Error("Payment is not awaiting verification");
     }
 
-    const tenantId = payment.contract.tenants[0].ID;
+    const tenantId = payment.contract.tenants?.[0]?.ID;
 
     payment.status = "Paid";
-
     await payment.save();
 
-    /* NOTIFY TENANT */
     await createNotification({
         role: "tenant",
         userId: tenantId,
@@ -118,21 +112,20 @@ export const verifyPayment = async (paymentId) => {
         referenceType: "payment"
     });
 
-    /* NOTIFY ADMIN */
     await createNotification({
         role: "admin",
         type: "payment_verified",
         title: "Payment Verified",
-        message: `Payment ${payment.ID} has been verified by caretaker.`,
+        message: `Payment ${payment.ID} verified by caretaker.`,
         referenceId: payment.ID,
         referenceType: "payment"
     });
 
-    /* LOG ACTIVITY */
     await createActivityLog({
+        userId: caretakerId,
         role: "caretaker",
         action: "VERIFY_PAYMENT",
-        description: `Caretaker verified payment ID ${payment.ID}`,
+        description: `Verified payment ${payment.ID}`,
         referenceId: payment.ID,
         referenceType: "payment"
     });

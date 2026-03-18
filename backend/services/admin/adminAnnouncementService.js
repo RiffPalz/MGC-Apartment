@@ -2,14 +2,13 @@ import Announcement from "../../models/announcement.js";
 import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
 
-/* CREATE ANNOUNCEMENT */
+// Create an announcement, notify everyone, and log the action
 export const createAnnouncement = async ({
     announcementTitle,
     announcementMessage,
     category,
-    adminId
+    adminId 
 }) => {
-
     if (!announcementTitle || !announcementMessage) {
         throw new Error("Title and message are required");
     }
@@ -21,7 +20,7 @@ export const createAnnouncement = async ({
         createdBy: adminId
     });
 
-    /* NOTIFY TENANTS */
+    // Send notifications to both Tenants and Caretakers
     await createNotification({
         role: "tenant",
         type: "announcement_created",
@@ -31,7 +30,6 @@ export const createAnnouncement = async ({
         referenceType: "announcement"
     });
 
-    /* NOTIFY CARETAKERS */
     await createNotification({
         role: "caretaker",
         type: "announcement_created",
@@ -41,9 +39,9 @@ export const createAnnouncement = async ({
         referenceType: "announcement"
     });
 
-    /* ACTIVITY LOG */
+    // Record this action in the Admin activity log
     await createActivityLog({
-        userId: adminId || null,
+        userId: adminId,
         role: "admin",
         action: "CREATE_ANNOUNCEMENT",
         description: `Created announcement: ${announcementTitle}`,
@@ -54,52 +52,42 @@ export const createAnnouncement = async ({
     return announcement;
 };
 
-
-/* GET ALL ANNOUNCEMENTS */
+// Fetch all announcements, newest first
 export const getAllAnnouncements = async () => {
-
-    const announcements = await Announcement.findAll({
+    return await Announcement.findAll({
         order: [["created_at", "DESC"]]
     });
-
-    return announcements;
 };
 
-
-
-/* UPDATE ANNOUNCEMENT */
-export const updateAnnouncement = async (announcementId, updates) => {
+// Update an existing announcement and log the change
+export const updateAnnouncement = async (announcementId, updates, adminId) => {
     const announcement = await Announcement.findByPk(announcementId);
-    if (!announcement) {
-        throw new Error("Announcement not found");
-    }
+    
+    if (!announcement) throw new Error("Announcement not found");
+    
     await announcement.update(updates);
 
     await createActivityLog({
+        userId: adminId,
         role: "admin",
         action: "UPDATE_ANNOUNCEMENT",
         description: `Updated announcement ID ${announcement.ID}`,
         referenceId: announcement.ID,
         referenceType: "announcement"
     });
+    
     return announcement;
-
-
 };
 
-
-/* DELETE ANNOUNCEMENT */
-export const deleteAnnouncement = async (announcementId) => {
-
+// Log the deletion and then remove the announcement from the database
+export const deleteAnnouncement = async (announcementId, adminId) => {
     const announcement = await Announcement.findByPk(announcementId);
 
-    if (!announcement) {
-        throw new Error("Announcement not found");
-    }
+    if (!announcement) throw new Error("Announcement not found");
 
-    await announcement.destroy();
-
+    // Log the action before destroying the data
     await createActivityLog({
+        userId: adminId,
         role: "admin",
         action: "DELETE_ANNOUNCEMENT",
         description: `Deleted announcement ID ${announcement.ID}`,
@@ -107,7 +95,7 @@ export const deleteAnnouncement = async (announcementId) => {
         referenceType: "announcement"
     });
 
-    return {
-        message: "Announcement deleted successfully"
-    };
+    await announcement.destroy();
+
+    return { message: "Announcement deleted successfully" };
 };

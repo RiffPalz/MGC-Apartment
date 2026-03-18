@@ -2,23 +2,12 @@ import { Maintenance, User } from "../../models/index.js";
 import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
 
+// Admin creates a maintenance request on behalf of a tenant
+export const createMaintenance = async (data, adminId) => {
+  const { userId, category, title, description, status, startDate, endDate } = data;
 
-/**
- * CREATE MAINTENANCE 
- */
-export const createMaintenance = async (data) => {
-  const {
-    userId,
-    category,
-    title,
-    description,
-    status,
-    startDate,
-    endDate,
-  } = data;
-
+  // Validate tenant existence
   const user = await User.findByPk(userId);
-
   if (!user || user.role !== "tenant") {
     throw new Error("Tenant not found");
   }
@@ -33,7 +22,7 @@ export const createMaintenance = async (data) => {
     endDate: endDate || null,
   });
 
-  /* NOTIFY TENANT */
+  // Notify tenant and caretaker about the new task
   await createNotification({
     userId,
     role: "tenant",
@@ -44,7 +33,6 @@ export const createMaintenance = async (data) => {
     referenceType: "maintenance"
   });
 
-  /* NOTIFY CARETAKER */
   await createNotification({
     role: "caretaker",
     type: "maintenance_created",
@@ -54,7 +42,9 @@ export const createMaintenance = async (data) => {
     referenceType: "maintenance"
   });
 
+  // Log the admin action
   await createActivityLog({
+    userId: adminId,
     role: "admin",
     action: "CREATE_MAINTENANCE",
     description: `Admin created maintenance request: ${title}`,
@@ -62,33 +52,21 @@ export const createMaintenance = async (data) => {
     referenceType: "maintenance"
   });
 
-  return {
-    message: "Maintenance request created by admin",
-    id: request.ID,
-  };
+  return { message: "Maintenance request created by admin", id: request.ID };
 };
 
-/**
- * APPROVE MAINTENANCE REQUEST
- */
-export const approveMaintenance = async (maintenanceId) => {
-
+// Mark a pending request as Approved and set today as the start date
+export const approveMaintenance = async (maintenanceId, adminId) => {
   const request = await Maintenance.findByPk(maintenanceId);
 
-  if (!request) {
-    throw new Error("Maintenance request not found");
-  }
-
-  if (request.status !== "Pending") {
-    throw new Error("Only pending requests can be approved");
-  }
+  if (!request) throw new Error("Maintenance request not found");
+  if (request.status !== "Pending") throw new Error("Only pending requests can be approved");
 
   request.status = "Approved";
   request.startDate = new Date();
-
   await request.save();
 
-  /* NOTIFY TENANT */
+  // Notify parties and log the approval
   await createNotification({
     userId: request.userId,
     role: "tenant",
@@ -99,7 +77,6 @@ export const approveMaintenance = async (maintenanceId) => {
     referenceType: "maintenance"
   });
 
-  /* NOTIFY CARETAKER */
   await createNotification({
     role: "caretaker",
     type: "maintenance_approved",
@@ -110,6 +87,7 @@ export const approveMaintenance = async (maintenanceId) => {
   });
 
   await createActivityLog({
+    userId: adminId,
     role: "admin",
     action: "APPROVE_MAINTENANCE",
     description: `Approved maintenance request ID ${request.ID}`,
@@ -117,48 +95,30 @@ export const approveMaintenance = async (maintenanceId) => {
     referenceType: "maintenance"
   });
 
-  return {
-    message: "Maintenance request approved",
-  };
+  return { message: "Maintenance request approved" };
 };
 
-/**
- * UPDATE MAINTENANCE STATUS
- */
-export const updateMaintenance = async (maintenanceId, data) => {
-
+// Update status or timeline for an existing request
+export const updateMaintenance = async (maintenanceId, data, adminId) => {
   const { status, startDate, endDate } = data;
-
   const request = await Maintenance.findByPk(maintenanceId);
 
-  if (!request) {
-    throw new Error("Maintenance request not found");
-  }
+  if (!request) throw new Error("Maintenance request not found");
 
-  const allowedStatuses = [
-    "Pending",
-    "Approved",
-    "In Progress",
-    "Done",
-  ];
-
-  if (status && !allowedStatuses.includes(status)) {
-    throw new Error("Invalid status value");
+  // Status and date validation
+  const allowedStatuses = ["Pending", "Approved", "In Progress", "Done"];
+  if (status && !allowedStatuses.includes(status)) throw new Error("Invalid status value");
+  if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+    throw new Error("End date must be later than start date");
   }
 
   if (status) request.status = status;
   if (startDate) request.startDate = startDate;
   if (endDate) request.endDate = endDate;
 
-  if (startDate && endDate) {
-    if (new Date(endDate) < new Date(startDate)) {
-      throw new Error("End date must be later than start date");
-    }
-  }
-
   await request.save();
 
-  /* NOTIFY TENANT */
+  // Notify parties of the progress update
   await createNotification({
     userId: request.userId,
     role: "tenant",
@@ -169,7 +129,6 @@ export const updateMaintenance = async (maintenanceId, data) => {
     referenceType: "maintenance"
   });
 
-  /* NOTIFY CARETAKER */
   await createNotification({
     role: "caretaker",
     type: "maintenance_update",
@@ -180,30 +139,25 @@ export const updateMaintenance = async (maintenanceId, data) => {
   });
 
   await createActivityLog({
+    userId: adminId,
     role: "admin",
-    action: "APPROVE_MAINTENANCE",
-    description: `Approved maintenance request ID ${request.ID}`,
+    action: "UPDATE_MAINTENANCE",
+    description: `Updated maintenance request ID ${request.ID} to ${request.status}`,
     referenceId: request.ID,
     referenceType: "maintenance"
   });
 
-  return {
-    message: "Maintenance updated successfully",
-  };
+  return { message: "Maintenance updated successfully" };
 };
 
-/**
- * GET ALL MAINTENANCE REQUESTS (ADMIN)
- */
+// Fetch all maintenance records with tenant and unit details
 export const getAllMaintenance = async () => {
     const requests = await Maintenance.findAll({
-        include: [
-            {
-                model: User,
-                as: "user",
-                attributes: ["publicUserID", "fullName", "unitNumber"],
-            },
-        ],
+        include: [{
+            model: User,
+            as: "user",
+            attributes: ["publicUserID", "fullName", "unitNumber"],
+        }],
         order: [["created_at", "DESC"]],
     });
 
@@ -224,19 +178,22 @@ export const getAllMaintenance = async () => {
     }));
 };
 
-/**
- * DELETE MAINTENANCE (ADMIN)
- */
-export const deleteMaintenance = async (maintenanceId) => {
+// Delete a maintenance record and log the action before it's gone
+export const deleteMaintenance = async (maintenanceId, adminId) => {
   const request = await Maintenance.findByPk(maintenanceId);
 
-  if (!request) {
-    throw new Error("Maintenance request not found");
-  }
+  if (!request) throw new Error("Maintenance request not found");
+
+  await createActivityLog({
+      userId: adminId,
+      role: "admin",
+      action: "DELETE_MAINTENANCE",
+      description: `Admin deleted maintenance request ID ${request.ID}`,
+      referenceId: request.ID,
+      referenceType: "maintenance"
+  });
 
   await request.destroy();
 
-  return {
-    message: "Maintenance deleted successfully",
-  };
+  return { message: "Maintenance deleted successfully" };
 };

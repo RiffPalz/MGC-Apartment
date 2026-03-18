@@ -6,25 +6,16 @@ import {
   deleteMaintenance
 } from "../../services/admin/adminMaintenanceService.js";
 
-
 export const createMaintenanceController = async (req, res) => {
   try {
-    const result = await createMaintenanceService(req.body);
+    const adminId = req.admin?.id || req.auth?.id;
+    const result = await createMaintenanceService(req.body, adminId); // Pass Admin ID
 
-    return res.status(201).json({
-      success: true,
-      message: result.message,
-      id: result.id,
-    });
+    return res.status(201).json({ success: true, message: result.message, id: result.id });
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
-
-
 
 /**
  * APPROVE MAINTENANCE REQUEST
@@ -32,18 +23,13 @@ export const createMaintenanceController = async (req, res) => {
 export const approveMaintenanceController = async (req, res) => {
   try {
     const { id } = req.params;
+    const adminId = req.admin?.id || req.auth?.id;
 
-    const result = await approveMaintenance(id);
+    const result = await approveMaintenance(id, adminId); // Pass Admin ID
 
-    return res.status(200).json({
-      success: true,
-      message: result.message,
-    });
+    return res.status(200).json({ success: true, message: result.message });
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
@@ -53,21 +39,15 @@ export const approveMaintenanceController = async (req, res) => {
 export const updateMaintenanceController = async (req, res) => {
   try {
     const { id } = req.params;
+    const adminId = req.admin?.id || req.auth?.id;
 
-    const result = await updateMaintenance(id, req.body);
+    const result = await updateMaintenance(id, req.body, adminId); // Pass Admin ID
 
-    return res.status(200).json({
-      success: true,
-      message: result.message,
-    });
+    return res.status(200).json({ success: true, message: result.message });
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
-
 
 /**
  * DELETE MAINTENANCE 
@@ -75,20 +55,15 @@ export const updateMaintenanceController = async (req, res) => {
 export const deleteMaintenanceController = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await deleteMaintenance(id);
+    const adminId = req.admin?.id || req.auth?.id;
 
-    return res.status(200).json({
-      success: true,
-      message: result.message,
-    });
+    const result = await deleteMaintenance(id, adminId); // Pass Admin ID
+
+    return res.status(200).json({ success: true, message: result.message });
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
-
 
 /**
  * GET ALL MAINTENANCE REQUESTS
@@ -96,17 +71,9 @@ export const deleteMaintenanceController = async (req, res) => {
 export const fetchAllMaintenance = async (req, res) => {
   try {
     const result = await getAllMaintenance();
-
-    return res.status(200).json({
-      success: true,
-      count: result.length,
-      requests: result,
-    });
+    return res.status(200).json({ success: true, count: result.length, requests: result });
   } catch (error) {
     console.error("Fetch maintenance error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch maintenance requests",
-    });
+    return res.status(500).json({ success: false, message: "Failed to fetch maintenance requests" });
   }
 };

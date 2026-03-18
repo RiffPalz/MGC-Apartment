@@ -1,9 +1,12 @@
-import { User } from "../../models/index.js";
+import User from "../../models/user.js";
 import { Op } from "sequelize";
+import { createActivityLog } from "../../services/activityLogService.js";
+import { createNotification } from "../../services/notificationService.js";
 
+/* Generate Tenant Public ID */
 const generatePublicUserID = async () => {
   const lastUser = await User.findOne({
-    where: { publicUserID: { [Op.like]: "TENANT- %" } },
+    where: { publicUserID: { [Op.like]: "TENANT-%" } },
     order: [["created_at", "DESC"]],
   });
 
@@ -11,18 +14,17 @@ const generatePublicUserID = async () => {
 
   if (lastUser && lastUser.publicUserID) {
     const match = lastUser.publicUserID.match(/TENANT-(\d+)/);
-    if (match) {
-      nextNumber = parseInt(match[1], 10) + 1;
-    }
+    if (match) nextNumber = parseInt(match[1], 10) + 1;
   }
 
   return `TENANT-${String(nextNumber).padStart(3, "0")}`;
 };
 
-export const createTenant = async (data) => {
+/* Create Tenant */
+export const createTenant = async (data, adminId) => {
   const {
     fullName,
-    email,
+    emailAddress,
     contactNumber,
     unitNumber,
     numberOfTenants,
@@ -30,16 +32,16 @@ export const createTenant = async (data) => {
     password,
   } = data;
 
-  // Email uniqueness
-  const existingEmail = await User.findOne({
-    where: { emailAddress: email },
-  });
+  if (!fullName || !emailAddress || !userName || !password) {
+    throw new Error("Missing required fields");
+  }
+
+  // Check email
+  const existingEmail = await User.findOne({ where: { emailAddress } });
   if (existingEmail) throw new Error("Email already in use");
 
-  // Username uniqueness
-  const existingUsername = await User.findOne({
-    where: { userName },
-  });
+  // Check username
+  const existingUsername = await User.findOne({ where: { userName } });
   if (existingUsername) throw new Error("Username already in use");
 
   const publicUserID = await generatePublicUserID();
@@ -47,14 +49,35 @@ export const createTenant = async (data) => {
   const tenant = await User.create({
     publicUserID,
     fullName,
-    emailAddress: email,
+    emailAddress,
     contactNumber,
     unitNumber,
     numberOfTenants,
     userName,
-    password_hash: password, // hashing handled by model hook
+    password_hash: password,
     role: "tenant",
-    status: "Approved", //  AUTO APPROVED
+    status: "Approved",
+  });
+
+  // Activity Log
+  await createActivityLog({
+    userId: adminId,
+    role: "admin",
+    action: "CREATE_TENANT",
+    description: `Created tenant: ${tenant.fullName}`,
+    referenceId: tenant.ID,
+    referenceType: "user"
+  });
+
+  // Notification
+  await createNotification({
+    userId: tenant.ID,
+    role: "tenant",
+    type: "ACCOUNT",
+    title: "Account Created",
+    message: "Your tenant account has been created by admin.",
+    referenceId: tenant.ID,
+    referenceType: "user"
   });
 
   return {

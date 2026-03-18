@@ -7,11 +7,10 @@ import {
 
 const router = express.Router();
 
-/* GET ANNOUNCEMENTS */
-router.get(
-  "/",
-  caretakerAuth,
-  getAnnouncementsController
-);
+// Protect all routes
+router.use(caretakerAuth);
+
+// Get announcements
+router.get("/", getAnnouncementsController);
 
 export default router;

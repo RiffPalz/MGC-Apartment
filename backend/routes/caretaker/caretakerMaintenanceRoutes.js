@@ -1,37 +1,28 @@
-import express from 'express';
-import caretakerAuth from '../../middleware/caretakerAuth.js';
+import express from "express";
+import caretakerAuth from "../../middleware/caretakerAuth.js";
 
 import {
-    createMaintenanceController,
-    updateMaintenanceController,
-    deleteMaintenanceController,
-    fetchAllMaintenanceController,
+  createMaintenanceController,
+  updateMaintenanceController,
+  deleteMaintenanceController,
+  fetchAllMaintenanceController
 } from "../../controllers/caretaker/caretakerMaintenanceController.js";
 
 const router = express.Router();
 
-router.post(
-    "/",
-    caretakerAuth,
-    createMaintenanceController
-);
+// Protect all routes
+router.use(caretakerAuth);
 
-router.patch(
-    "/:id",
-    caretakerAuth,
-    updateMaintenanceController
-);
+// Create maintenance
+router.post("/", createMaintenanceController);
 
-router.delete(
-    "/:id",
-    caretakerAuth,
-    deleteMaintenanceController
-);
+// Get all maintenance
+router.get("/", fetchAllMaintenanceController);
 
-router.get(
-    "/",
-    caretakerAuth,
-    fetchAllMaintenanceController
-);
+// Update maintenance
+router.patch("/:id", updateMaintenanceController);
+
+// Delete maintenance
+router.delete("/:id", deleteMaintenanceController);
 
 export default router;

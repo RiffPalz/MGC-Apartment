@@ -90,7 +90,7 @@ export const uploadReceiptController = async (req, res) => {
   } catch (error) {
 
     // Delete uploaded image if validation fails
-    if (req.file) {
+    if (req.file?.filename) {
       await cloudinary.uploader.destroy(req.file.filename);
     }
 

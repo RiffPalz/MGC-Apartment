@@ -1,6 +1,7 @@
 import { caretakerLogin } from "../../services/caretaker/caretakerAuthService.js";
 import User from "../../models/user.js";
 import { emitEvent } from "../../utils/emitEvent.js";
+import { updateCaretakerProfile } from "../../services/caretaker/caretakerService.js";
 
 /**
  * ==============================
@@ -71,62 +72,33 @@ export const fetchCaretakerProfile = async (req, res) => {
  */
 export const saveCaretakerProfile = async (req, res) => {
   try {
-    const { instance: user } = req.caretaker;
-    const { fullName, contactNumber, emailAddress, username } = req.body;
+    const updatedUser = await updateCaretakerProfile(req.caretaker, req.body);
 
-    // Update user fields
-    if (fullName) user.fullName = fullName.trim();
-    if (contactNumber) user.contactNumber = contactNumber.trim();
-
-    if (emailAddress && emailAddress !== user.emailAddress) {
-      const emailExists = await User.findOne({ where: { emailAddress } });
-      if (emailExists) {
-        return res.status(400).json({
-          success: false,
-          message: "Email already in use",
-        });
-      }
-      user.emailAddress = emailAddress.trim();
-    }
-
-    if (username && username !== user.userName) {
-      const usernameExists = await User.findOne({ where: { userName } });
-      if (usernameExists) {
-        return res.status(400).json({
-          success: false,
-          message: "Username already in use",
-        });
-      }
-      user.userName = username.trim();
-    }
-
-    await user.save();
-
-    // 🔔 Real-time update event
+    // 🔔 Real-time update
     emitEvent(req, "dataUpdated", {
       type: "CARETAKER",
       action: "UPDATED",
-      caretaker_id: user.publicUserID,
+      caretaker_id: updatedUser.publicUserID,
     });
 
     return res.status(200).json({
       success: true,
       message: "Caretaker profile updated successfully",
       caretaker: {
-        id: user.ID,
-        caretaker_id: user.publicUserID,
-        fullName: user.fullName,
-        contactNumber: user.contactNumber,
-        username: user.userName,
-        emailAddress: user.emailAddress,
-        role: user.role,
+        id: updatedUser.ID,
+        caretaker_id: updatedUser.publicUserID,
+        fullName: updatedUser.fullName,
+        contactNumber: updatedUser.contactNumber,
+        username: updatedUser.userName,
+        emailAddress: updatedUser.emailAddress,
+        role: updatedUser.role,
       },
     });
+
   } catch (error) {
-    console.error("Caretaker update error:", error);
-    return res.status(500).json({
+    return res.status(400).json({
       success: false,
-      message: "Failed to update caretaker profile",
+      message: error.message
     });
   }
 };

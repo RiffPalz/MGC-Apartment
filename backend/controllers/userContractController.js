@@ -12,6 +12,8 @@ export const getUserContractsController = async (req, res) => {
       contracts,
     });
   } catch (error) {
+    console.error(error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch contracts",

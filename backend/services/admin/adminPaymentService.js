@@ -6,16 +6,16 @@ import User from "../../models/user.js";
 import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
 
-// Create a new payment record
+// Create a new bill, notify the tenant, and log the admin action
 export const createPayment = async ({
     contract_id,
     category,
     billing_month,
     amount,
     due_date
-}) => {
+}, adminId) => {
 
-    // Check contract + get tenant
+    // Verify contract exists and identify the primary tenant
     const contract = await Contract.findOne({
         where: { ID: contract_id },
         include: [
@@ -28,41 +28,22 @@ export const createPayment = async ({
         ]
     });
 
-    if (!contract) {
-        throw new Error("Contract not found");
-    }
-
-    if (!contract.tenants || contract.tenants.length === 0) {
-        throw new Error("No tenant associated with this contract");
-    }
+    if (!contract) throw new Error("Contract not found");
+    if (!contract.tenants?.length) throw new Error("No tenant associated with this contract");
 
     const tenantId = contract.tenants[0].ID;
 
-    // Check due date
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Validate that the due date is not in the past
+    const today = new Date().setHours(0, 0, 0, 0);
+    const dueDate = new Date(due_date).setHours(0, 0, 0, 0);
+    if (dueDate < today) throw new Error("That date is already past.");
 
-    const dueDate = new Date(due_date);
-    dueDate.setHours(0, 0, 0, 0);
-
-    if (dueDate < today) {
-        throw new Error("That date is already past.");
-    }
-
-    // Prevent duplicate bill
+    // Prevent duplicate billing for the same category and month
     const existing = await Payment.findOne({
-        where: {
-            contract_id,
-            category,
-            billing_month
-        }
+        where: { contract_id, category, billing_month }
     });
+    if (existing) throw new Error("Payment for this month already exists.");
 
-    if (existing) {
-        throw new Error("Payment for this month already exists.");
-    }
-
-    // Create payment
     const payment = await Payment.create({
         contract_id,
         category,
@@ -71,7 +52,7 @@ export const createPayment = async ({
         due_date
     });
 
-    /* NOTIFY TENANT */
+    // Notify tenant of the new bill
     await createNotification({
         userId: tenantId,
         role: "tenant",
@@ -82,9 +63,9 @@ export const createPayment = async ({
         referenceType: "payment"
     });
 
-    /* LOG ACTIVITY */
+    // Log which admin created this bill
     await createActivityLog({
-        userId: null, // optional if you don't track admin ID yet
+        userId: adminId,
         role: "admin",
         action: "CREATE_PAYMENT",
         description: `Created ${category} bill for contract ${contract_id}`,
@@ -92,85 +73,60 @@ export const createPayment = async ({
         referenceType: "payment"
     });
 
-
     return payment;
 };
 
-// Fetch all payments with related contract, unit, and tenant info
+// Fetch all payments with detailed unit and tenant information
 export const getAllPayments = async () => {
-    const payments = await Payment.findAll({
+    return await Payment.findAll({
         include: [
             {
                 model: Contract,
                 as: "contract",
                 attributes: ["ID", "start_date", "end_date"],
                 include: [
-                    {
-                        model: Unit,
-                        as: "unit",
-                        attributes: ["unit_number", "floor"],
-                    },
+                    { model: Unit, as: "unit", attributes: ["unit_number", "floor"] },
                     {
                         model: User,
                         as: "tenants",
                         attributes: ["ID", "fullName", "publicUserID"],
-                        through: { attributes: [] },
+                        through: { attributes: [] }
                     },
                 ],
             },
         ],
         order: [["created_at", "DESC"]],
     });
-
-    return payments;
 };
 
-// Fetch all payments belonging to a specific contract
+// Fetch history for a specific contract
 export const getPaymentsByContract = async (contractId) => {
-    const payments = await Payment.findAll({
+    return await Payment.findAll({
         where: { contract_id: contractId },
         order: [["billing_month", "DESC"]],
     });
-
-    return payments;
 };
 
-// Update a payment status to "Paid"
-export const verifyPayment = async (paymentId) => {
+// Confirm payment receipt, notify parties, and log the verification
+export const verifyPayment = async (paymentId, adminId) => {
 
     const payment = await Payment.findOne({
         where: { ID: paymentId },
-        include: [
-            {
-                model: Contract,
-                as: "contract",
-                include: [
-                    {
-                        model: User,
-                        as: "tenants",
-                        attributes: ["ID"],
-                        through: { attributes: [] }
-                    }
-                ]
-            }
-        ]
+        include: [{
+            model: Contract,
+            as: "contract",
+            include: [{ model: User, as: "tenants", attributes: ["ID"], through: { attributes: [] } }]
+        }]
     });
 
-    if (!payment) {
-        throw new Error("Payment not found");
-    }
-
-    if (payment.status !== "Pending Verification") {
-        throw new Error("Payment is not awaiting verification");
-    }
+    if (!payment) throw new Error("Payment not found");
+    if (payment.status !== "Pending Verification") throw new Error("Payment is not awaiting verification");
 
     const tenantId = payment.contract.tenants[0].ID;
-
     payment.status = "Paid";
-
     await payment.save();
 
-    /* NOTIFY TENANT */
+    // Notify tenant and caretaker of the verification
     await createNotification({
         userId: tenantId,
         role: "tenant",
@@ -181,7 +137,6 @@ export const verifyPayment = async (paymentId) => {
         referenceType: "payment"
     });
 
-    /* NOTIFY CARETAKER */
     await createNotification({
         role: "caretaker",
         type: "payment_verified",
@@ -191,9 +146,9 @@ export const verifyPayment = async (paymentId) => {
         referenceType: "payment"
     });
 
-    /* LOG ACTIVITY */
+    // Log which admin verified the payment
     await createActivityLog({
-        userId: null, // optional if you don't track admin ID yet
+        userId: adminId,
         role: "admin",
         action: "VERIFY_PAYMENT",
         description: `Verified payment ${payment.ID} for contract ${payment.contract_id}`,
@@ -204,72 +159,33 @@ export const verifyPayment = async (paymentId) => {
     return payment;
 };
 
-// Get a total of all costs per unit for a specific month
+// Sum up all bills per unit for a specific month
 export const getMonthlySummary = async (billingMonth) => {
-    const summary = await Payment.findAll({
+    return await Payment.findAll({
         attributes: [
             [sequelize.col("contract.unit.unit_number"), "unit_number"],
             "billing_month",
             [sequelize.fn("SUM", sequelize.col("amount")), "totalAmount"]
         ],
-        include: [
-            {
-                model: Contract,
-                as: "contract",
-                attributes: [],
-                include: [
-                    {
-                        model: Unit,
-                        as: "unit",
-                        attributes: []
-                    }
-                ]
-            }
-        ],
-        where: {
-            billing_month: billingMonth
-        },
-        group: [
-            "contract.unit.unit_number",
-            "billing_month"
-        ],
-        order: [
-            [sequelize.col("contract.unit.unit_number"), "ASC"]
-        ]
+        include: [{
+            model: Contract, as: "contract", attributes: [],
+            include: [{ model: Unit, as: "unit", attributes: [] }]
+        }],
+        where: { billing_month: billingMonth },
+        group: ["contract.unit.unit_number", "billing_month"],
+        order: [[sequelize.col("contract.unit.unit_number"), "ASC"]]
     });
-
-    return summary;
 };
 
-/* GET PAYMENT DASHBOARD */
+// Calculate totals and counts for the Admin Dashboard
 export const getPaymentDashboard = async () => {
+    const totalCollected = await Payment.sum("amount", { where: { status: "Paid" } });
+    const pendingVerification = await Payment.count({ where: { status: "Pending Verification" } });
+    const overduePayments = await Payment.count({ where: { status: "Overdue" } });
+    const unpaidBills = await Payment.count({ where: { status: "Unpaid" } });
 
-    // Total collected
-    const totalCollected = await Payment.sum("amount", {
-        where: { status: "Paid" }
-    });
-
-    // Pending verification
-    const pendingVerification = await Payment.count({
-        where: { status: "Pending Verification" }
-    });
-
-    // Overdue payments
-    const overduePayments = await Payment.count({
-        where: { status: "Overdue" }
-    });
-
-    // Unpaid bills
-    const unpaidBills = await Payment.count({
-        where: { status: "Unpaid" }
-    });
-
-    // Monthly revenue
     const monthlyRevenue = await Payment.findAll({
-        attributes: [
-            "billing_month",
-            [sequelize.fn("SUM", sequelize.col("amount")), "total"]
-        ],
+        attributes: ["billing_month", [sequelize.fn("SUM", sequelize.col("amount")), "total"]],
         where: { status: "Paid" },
         group: ["billing_month"],
         order: [["billing_month", "ASC"]]

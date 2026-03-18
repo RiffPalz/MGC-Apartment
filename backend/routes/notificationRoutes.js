@@ -14,7 +14,7 @@ const router = express.Router();
 
 /* GET USER NOTIFICATIONS (Tenant) */
 router.get(
-    "/user",
+    "/users",
     authenticate,
     getUserNotificationsController
 );

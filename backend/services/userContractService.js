@@ -8,8 +8,9 @@ export const getUserContracts = async (userId) => {
       {
         model: User,
         as: "tenants",
+        required: true,
         where: { ID: userId },
-        attributes: [],
+        attributes: []
       },
       {
         model: Unit,

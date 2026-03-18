@@ -2,19 +2,15 @@ import { Maintenance, User } from "../../models/index.js";
 import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
 
-/**
- * CREATE MAINTENANCE 
- */
-export const createMaintenance = async (data) => {
-    const {
-        userId,
-        category,
-        title,
-        description,
-        status,
-        startDate,
-        endDate,
-    } = data;
+
+/* CREATE MAINTENANCE */
+export const createMaintenance = async (data, caretakerId) => {
+
+    const { userId, category, title, description, status, startDate, endDate } = data;
+
+    if (!userId || !title || !category || !description) {
+        throw new Error("Missing required maintenance fields");
+    }
 
     const user = await User.findByPk(userId);
 
@@ -22,12 +18,7 @@ export const createMaintenance = async (data) => {
         throw new Error("Tenant not found");
     }
 
-    const allowedStatuses = [
-        "Pending",
-        "Approved",
-        "In Progress",
-        "Done",
-    ];
+    const allowedStatuses = ["Pending", "Approved", "In Progress", "Done"];
 
     if (status && !allowedStatuses.includes(status)) {
         throw new Error("Invalid status value");
@@ -38,12 +29,11 @@ export const createMaintenance = async (data) => {
         category,
         title,
         description,
-        status: status || "In Progress", // caretaker usually starts work immediately
+        status: status || "In Progress",
         startDate: startDate || new Date(),
-        endDate: endDate || null,
+        endDate: endDate || null
     });
 
-    /* NOTIFY TENANT */
     await createNotification({
         userId,
         role: "tenant",
@@ -54,7 +44,6 @@ export const createMaintenance = async (data) => {
         referenceType: "maintenance"
     });
 
-    /* NOTIFY ADMIN */
     await createNotification({
         role: "admin",
         type: "maintenance_created",
@@ -64,26 +53,26 @@ export const createMaintenance = async (data) => {
         referenceType: "maintenance"
     });
 
-    /* NOTIFY CARETAKER */
     await createActivityLog({
+        userId: caretakerId,
         role: "caretaker",
         action: "CREATE_MAINTENANCE",
-        description: `Caretaker created maintenance request: ${title}`,
+        description: `Created maintenance: ${title}`,
         referenceId: request.ID,
         referenceType: "maintenance"
     });
 
     return {
-        message: "Maintenance request created by caretaker",
-        id: request.ID,
+        message: "Maintenance request created",
+        id: request.ID
     };
 };
 
 
-/**
- * UPDATE MAINTENANCE STATUS 
- */
-export const updateMaintenance = async (maintenanceId, data) => {
+
+/* UPDATE MAINTENANCE */
+export const updateMaintenance = async (maintenanceId, data, caretakerId) => {
+
     const { status, startDate, endDate } = data;
 
     const request = await Maintenance.findByPk(maintenanceId);
@@ -92,85 +81,74 @@ export const updateMaintenance = async (maintenanceId, data) => {
         throw new Error("Maintenance request not found");
     }
 
-    const allowedStatuses = [
-        "In Progress",
-        "Done",
-    ];
+    const allowedStatuses = ["In Progress", "Done"];
 
     if (status && !allowedStatuses.includes(status)) {
         throw new Error("Invalid status update");
     }
 
-    // Update fields only if provided
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+        throw new Error("End date must be later than start date");
+    }
+
     if (status) request.status = status;
     if (startDate) request.startDate = startDate;
     if (endDate) request.endDate = endDate;
 
-    // Validate timeline
-    if (startDate && endDate) {
-        if (new Date(endDate) < new Date(startDate)) {
-            throw new Error("End date must be later than start date");
-        }
-    }
-
-    // If marking as Done and no endDate provided → auto-set
     if (status === "Done" && !endDate) {
         request.endDate = new Date();
     }
 
     await request.save();
 
-    /* NOTIFY TENANT */
     await createNotification({
         userId: request.userId,
         role: "tenant",
         type: "maintenance_update",
-        title: "Maintenance Status Updated",
-        message: `Your maintenance request is now ${request.status}.`,
+        title: "Maintenance Updated",
+        message: `Maintenance status is now ${request.status}.`,
         referenceId: request.ID,
         referenceType: "maintenance"
     });
 
-    /* NOTIFY ADMIN */
     await createNotification({
         role: "admin",
         type: "maintenance_update",
-        title: "Maintenance Status Updated",
-        message: `Maintenance request ${request.ID} updated to ${request.status}.`,
+        title: "Maintenance Updated",
+        message: `Maintenance ${request.ID} updated to ${request.status}.`,
         referenceId: request.ID,
         referenceType: "maintenance"
     });
 
     await createActivityLog({
+        userId: caretakerId,
         role: "caretaker",
-        action: "CREATE_MAINTENANCE",
-        description: `Caretaker created maintenance request: ${title}`,
+        action: "UPDATE_MAINTENANCE",
+        description: `Updated maintenance ${request.ID} to ${request.status}`,
         referenceId: request.ID,
         referenceType: "maintenance"
     });
 
-    return {
-        message: "Maintenance updated successfully",
-    };
+    return { message: "Maintenance updated successfully" };
 };
 
 
-/**
- * GET ALL MAINTENANCE REQUESTS 
- */
+
+/* GET ALL MAINTENANCE */
 export const getAllMaintenance = async () => {
+
     const requests = await Maintenance.findAll({
         include: [
             {
                 model: User,
                 as: "user",
-                attributes: ["publicUserID", "fullName", "unitNumber"],
-            },
+                attributes: ["publicUserID", "fullName", "unitNumber"]
+            }
         ],
-        order: [["created_at", "DESC"]],
+        order: [["created_at", "DESC"]]
     });
 
-    return requests.map((item) => ({
+    return requests.map(item => ({
         id: item.ID,
         title: item.title,
         category: item.category,
@@ -180,33 +158,38 @@ export const getAllMaintenance = async () => {
         startDate: item.startDate,
         endDate: item.endDate,
         tenant: {
-            publicUserID: item.user.publicUserID,
-            fullName: item.user.fullName,
-            unitNumber: item.user.unitNumber,
-        },
+            publicUserID: item.user?.publicUserID,
+            fullName: item.user?.fullName,
+            unitNumber: item.user?.unitNumber
+        }
     }));
 };
 
-/**
- * DELETE MAINTENANCE 
- */
-export const deleteMaintenance = async (maintenanceId) => {
+
+
+/* DELETE MAINTENANCE */
+export const deleteMaintenance = async (maintenanceId, caretakerId) => {
+
     const request = await Maintenance.findByPk(maintenanceId);
 
     if (!request) {
         throw new Error("Maintenance request not found");
     }
 
-    // Prevent deleting active/completed work
     if (["In Progress", "Done"].includes(request.status)) {
-        throw new Error(
-            "Cannot delete maintenance that is already in progress or completed"
-        );
+        throw new Error("Cannot delete active or completed maintenance");
     }
+
+    await createActivityLog({
+        userId: caretakerId,
+        role: "caretaker",
+        action: "DELETE_MAINTENANCE",
+        description: `Deleted maintenance ${request.ID}`,
+        referenceId: request.ID,
+        referenceType: "maintenance"
+    });
 
     await request.destroy();
 
-    return {
-        message: "Maintenance deleted successfully",
-    };
+    return { message: "Maintenance deleted successfully" };
 };

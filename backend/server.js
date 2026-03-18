@@ -14,6 +14,7 @@ import { connectDB, sequelize } from "./config/database.js";
 // Public
 import applicationRequestRoutes from "./routes/applicationRequestRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import activityLogRoutes from "./routes/activityLogRoutes.js";
 
 // Admin
 import adminRoutes from "./routes/admin/adminRoutes.js";
@@ -99,6 +100,7 @@ io.on("connection", (socket) => {
 // Public
 app.use("/api/applications", applicationRequestRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/activity-logs", activityLogRoutes);
 
 // Admin
 app.use("/api/admin", adminRoutes);

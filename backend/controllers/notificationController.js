@@ -5,14 +5,13 @@ import {
     markAllNotificationsAsRead
 } from "../services/notificationService.js";
 
-
 /**
  * GET USER NOTIFICATIONS (Tenant specific)
  */
 export const getUserNotificationsController = async (req, res) => {
     try {
-
-        const userId = req.auth?.ID || req.auth?.id;
+        // ✅ FIX: Changed req.auth to req.user
+        const userId = req.user?.ID || req.user?.id;
 
         if (!userId) {
             return res.status(401).json({
@@ -30,26 +29,21 @@ export const getUserNotificationsController = async (req, res) => {
         });
 
     } catch (error) {
-
         console.error("Notification fetch error:", error);
-
         return res.status(500).json({
             success: false,
             message: "Failed to fetch notifications"
         });
-
     }
 };
-
-
 
 /**
  * GET ROLE NOTIFICATIONS (Admin / Caretaker)
  */
 export const getRoleNotificationsController = async (req, res) => {
     try {
-
-        const role = req.auth?.role;
+        // ✅ FIX: Changed req.auth to req.user
+        const role = req.user?.role;
 
         if (!role) {
             return res.status(401).json({
@@ -67,25 +61,19 @@ export const getRoleNotificationsController = async (req, res) => {
         });
 
     } catch (error) {
-
         console.error("Role notification error:", error);
-
         return res.status(500).json({
             success: false,
             message: "Failed to fetch role notifications"
         });
-
     }
 };
-
-
 
 /**
  * MARK SINGLE NOTIFICATION AS READ
  */
 export const markNotificationAsReadController = async (req, res) => {
     try {
-
         const { id } = req.params;
 
         const notification = await markNotificationAsRead(id);
@@ -97,25 +85,21 @@ export const markNotificationAsReadController = async (req, res) => {
         });
 
     } catch (error) {
-
         return res.status(400).json({
             success: false,
             message: error.message
         });
-
     }
 };
-
-
 
 /**
  * MARK ALL USER NOTIFICATIONS AS READ
  */
 export const markAllNotificationsAsReadController = async (req, res) => {
     try {
-        // 1. Extract BOTH ID and role from the decoded token
-        const userId = req.auth?.ID || req.auth?.id;
-        const userRole = req.auth?.role; 
+        // ✅ FIX: Changed req.auth to req.user
+        const userId = req.user?.ID || req.user?.id;
+        const userRole = req.user?.role; 
 
         if (!userId || !userRole) {
             return res.status(401).json({
@@ -124,7 +108,7 @@ export const markAllNotificationsAsReadController = async (req, res) => {
             });
         }
 
-        // 2. Pass both to the service function
+        // Pass both to the service function
         const result = await markAllNotificationsAsRead(userId, userRole);
 
         return res.status(200).json({

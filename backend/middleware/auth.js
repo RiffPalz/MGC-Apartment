@@ -13,8 +13,8 @@ export const authenticate = (req, res, next) => {
     const token = authHeader.split(" ")[1];
     const decoded = verifyAccessToken(token);
 
-    // Save user info (ID, role) to the request object
-    req.auth = decoded;
+    // ✅ FIX: Attach the decoded token to req.user instead of req.auth
+    req.user = decoded; 
 
     next();
   } catch (error) {
@@ -22,17 +22,17 @@ export const authenticate = (req, res, next) => {
   }
 };
 
-// Check if the logged-in user has the right role (e.g., 'admin' or 'tenant')
+// Check if the logged-in user has the right role (e.g., 'admin', 'tenant', 'caretaker')
 export const authorize = (...roles) => {
   return (req, res, next) => {
-    // Ensure the user was authenticated first
-    if (!req.auth || !req.auth.role) {
-      return res.status(401).json({ message: "Unauthorized" });
+    // ✅ FIX: Update the checks to use req.user
+    if (!req.user || !req.user.role) {
+      return res.status(401).json({ message: "Unauthorized: Role missing from token" });
     }
 
     // Block access if the user's role isn't in the allowed list
-    if (!roles.includes(req.auth.role)) {
-      return res.status(403).json({ message: "Access denied" });
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Access denied: Invalid permissions" });
     }
 
     next();

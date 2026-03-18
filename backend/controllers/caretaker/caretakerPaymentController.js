@@ -5,7 +5,7 @@ import {
 } from "../../services/caretaker/caretakerPaymentService.js";
 
 
-/*  GET ALL PAYMENTS */
+// Get all payments
 export const getAllPaymentsController = async (req, res) => {
     try {
 
@@ -19,7 +19,7 @@ export const getAllPaymentsController = async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        console.error("Fetch payments error:", error);
 
         return res.status(500).json({
             success: false,
@@ -30,8 +30,7 @@ export const getAllPaymentsController = async (req, res) => {
 };
 
 
-
-/*   GET PAYMENTS PENDING VERIFICATION */
+// Get payments waiting for verification
 export const getPendingPaymentsController = async (req, res) => {
     try {
 
@@ -45,7 +44,7 @@ export const getPendingPaymentsController = async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        console.error("Fetch pending payments error:", error);
 
         return res.status(500).json({
             success: false,
@@ -56,14 +55,14 @@ export const getPendingPaymentsController = async (req, res) => {
 };
 
 
-
-/*   VERIFY PAYMENT */
+// Verify tenant payment
 export const verifyPaymentController = async (req, res) => {
     try {
 
         const { id } = req.params;
+        const caretakerId = req.caretaker.id;
 
-        const payment = await verifyPayment(id);
+        const payment = await verifyPayment(id, caretakerId);
 
         return res.status(200).json({
             success: true,

@@ -3,14 +3,12 @@ import Announcement from "../../models/announcement.js";
 /* GET ANNOUNCEMENTS */
 export const getAnnouncements = async (category) => {
 
-  const whereClause = {};
-
-  if (category && category !== "All") {
-    whereClause.category = category;
-  }
+  const where = category && category !== "All"
+    ? { category }
+    : {};
 
   const announcements = await Announcement.findAll({
-    where: whereClause,
+    where,
     order: [["created_at", "DESC"]]
   });
 
