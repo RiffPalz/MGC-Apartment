@@ -6,7 +6,7 @@ import { generateAccessToken, generateLoginToken } from "../utils/token.js";
 import { Op } from "sequelize";
 import { createActivityLog } from "../services/activityLogService.js";
 
-// Creates a unique ID like TENANT-001, TENANT-002, etc.
+// Generate unique tenant ID like TENANT-001, TENANT-002, etc.
 const generatePublicUserID = async () => {
   const lastUser = await User.findOne({
     where: { publicUserID: { [Op.like]: "TENANT-%" } },
@@ -14,18 +14,15 @@ const generatePublicUserID = async () => {
   });
 
   let nextNumber = 1;
-
-  if (lastUser && lastUser.publicUserID) {
+  if (lastUser?.publicUserID) {
     const match = lastUser.publicUserID.match(/TENANT-(\d+)/);
-    if (match) {
-      nextNumber = parseInt(match[1], 10) + 1;
-    }
+    if (match) nextNumber = parseInt(match[1], 10) + 1;
   }
 
   return `TENANT-${String(nextNumber).padStart(3, "0")}`;
 };
 
-// Handle new tenant registration
+// Register a new tenant
 export const registerUser = async (userData) => {
   const { fullName, email, contactNumber, unitNumber, numberOfTenants, userName, password } = userData;
 
@@ -33,24 +30,15 @@ export const registerUser = async (userData) => {
     throw new Error("All required fields must be provided");
   }
 
-  if (await User.findOne({ where: { emailAddress: email } })) {
-    throw new Error("Email already in use");
-  }
-  if (await User.findOne({ where: { userName } })) {
-    throw new Error("Username already in use");
-  }
+  if (await User.findOne({ where: { emailAddress: email } })) throw new Error("Email already in use");
+  if (await User.findOne({ where: { userName } })) throw new Error("Username already in use");
 
   const unit = await Unit.findOne({ where: { unit_number: unitNumber } });
   if (!unit) throw new Error("Invalid unit number");
 
-  const activeContract = await Contract.findOne({
-    where: { unit_id: unit.ID, status: "Active" },
-  });
-
+  const activeContract = await Contract.findOne({ where: { unit_id: unit.ID, status: "Active" } });
   if (activeContract) {
-    const tenantCount = await ContractTenant.count({
-      where: { contract_id: activeContract.ID },
-    });
+    const tenantCount = await ContractTenant.count({ where: { contract_id: activeContract.ID } });
     if (tenantCount >= 2) throw new Error("This unit number is already fully occupied");
   }
 
@@ -70,10 +58,9 @@ export const registerUser = async (userData) => {
   return user;
 };
 
-// Handle tenant login and token generation
+// Tenant login
 export const loginUser = async ({ userName, password }) => {
   const user = await User.findOne({ where: { userName } });
-
   if (!user || user.role !== "tenant") throw new Error("Invalid username or password");
   if (user.status !== "Approved") throw new Error("Your account is still pending admin approval");
 
@@ -103,24 +90,22 @@ export const loginUser = async ({ userName, password }) => {
   };
 };
 
-// Handle fetching user profile
+// Fetch tenant profile
 export const getUserProfileService = async (userId) => {
   const user = await User.findByPk(userId);
   if (!user) throw new Error("User not found");
   return user;
 };
 
-// Handle updating user profile and logging activity
+// Update tenant profile
 export const updateUserProfileService = async (userId, updateData) => {
   const user = await User.findByPk(userId);
   if (!user) throw new Error("User not found");
 
-  // Secure extraction: only pull editable fields
   const { fullName, emailAddress, contactNumber } = updateData;
 
   if (fullName) user.fullName = fullName;
   if (contactNumber) user.contactNumber = contactNumber;
-
   if (emailAddress && emailAddress !== user.emailAddress) {
     const emailExists = await User.findOne({ where: { emailAddress } });
     if (emailExists) throw new Error("Email already in use");
@@ -129,14 +114,13 @@ export const updateUserProfileService = async (userId, updateData) => {
 
   await user.save();
 
-  // Log Activity
   await createActivityLog({
     userId: user.ID,
-    role: user.role, // "tenant"
+    role: user.role,
     action: "UPDATE_PROFILE",
     description: "Tenant updated their personal account information.",
     referenceId: user.ID,
-    referenceType: "user"
+    referenceType: "user",
   });
 
   return user;

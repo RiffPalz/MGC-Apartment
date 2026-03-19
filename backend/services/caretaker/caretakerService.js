@@ -2,9 +2,6 @@ import User from "../../models/user.js";
 import { createActivityLog } from "../../services/activityLogService.js";
 import { createNotification } from "../../services/notificationService.js";
 
-/* =========================
-   UPDATE CARETAKER PROFILE
-========================= */
 export const updateCaretakerProfile = async (caretakerContext, data) => {
     const { instance: user } = caretakerContext;
     const { fullName, contactNumber, emailAddress, userName } = data;
@@ -39,7 +36,6 @@ export const updateCaretakerProfile = async (caretakerContext, data) => {
 
     await user.save();
 
-    // ✅ Activity Log
     if (changes.length > 0) {
         await createActivityLog({
             userId: user.ID,
@@ -50,7 +46,6 @@ export const updateCaretakerProfile = async (caretakerContext, data) => {
             referenceType: "user"
         });
 
-        // 🔔 Notification
         await createNotification({
             userId: user.ID,
             role: "caretaker",

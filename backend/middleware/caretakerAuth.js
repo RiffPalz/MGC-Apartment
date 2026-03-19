@@ -49,6 +49,7 @@ const caretakerAuth = async (req, res, next) => {
     next();
   } catch (error) {
     console.error("Caretaker Auth Middleware Error:", error);
+  
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token",

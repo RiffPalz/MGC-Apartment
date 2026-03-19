@@ -28,8 +28,13 @@ export const createAnnouncementController = async (req, res) => {
         message: "Announcement created successfully",
         announcement,
       });
+
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+
+    return res.status(400).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
@@ -39,11 +44,20 @@ export const getAllAnnouncementsController = async (req, res) => {
     const announcements = await getAllAnnouncements();
     return res
       .status(200)
-      .json({ success: true, count: announcements.length, announcements });
+      .json({
+        success: true,
+        count: announcements.length,
+        announcements
+      });
+
   } catch (error) {
+
     return res
       .status(500)
-      .json({ success: false, message: "Failed to fetch announcements" });
+      .json({
+        success: false,
+        message: "Failed to fetch announcements"
+      });
   }
 };
 
@@ -53,16 +67,25 @@ export const updateAnnouncementController = async (req, res) => {
     const { id } = req.params;
     const adminId = req.admin?.id || req.auth?.id;
 
-    const announcement = await updateAnnouncement(id, req.body, adminId); // Pass Admin ID
+    const announcement = await updateAnnouncement(id, req.body, adminId);
 
     const io = req.app.get("io");
     io.emit("updateAnnouncement", announcement);
 
     return res
       .status(200)
-      .json({ success: true, message: "Announcement updated", announcement });
+      .json({
+        success: true,
+        message: "Announcement updated",
+        announcement
+      });
+
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+
+    return res.status(400).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
@@ -77,8 +100,16 @@ export const deleteAnnouncementController = async (req, res) => {
     const io = req.app.get("io");
     io.emit("deleteAnnouncement", { id });
 
-    return res.status(200).json({ success: true, message: result.message });
+    return res.status(200).json({
+      success: true,
+      message: result.message
+    });
+
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+
+    return res.status(400).json({
+      success: false,
+      message: error.message
+    });
   }
 };

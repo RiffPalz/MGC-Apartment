@@ -1,6 +1,6 @@
 import { getAnnouncements } from "../../services/caretaker/caretakerAnnouncementService.js";
 
-// Get announcements (optionally filter by category)
+// Get announcements with optional category filter
 export const getAnnouncementsController = async (req, res) => {
   try {
     const { category } = req.query;

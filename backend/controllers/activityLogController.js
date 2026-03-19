@@ -1,34 +1,35 @@
 import { getActivityLogs } from "../services/activityLogService.js";
 
 export const fetchActivityLogsController = async (req, res) => {
-    try {
-        // Clone the incoming query parameters
-        const queryFilters = { ...req.query };
+  try {
 
-        // Ensure your auth middleware attaches the user to req.user
-        const loggedInUser = req.user;
+    // Copy query parameters
+    const queryFilters = { ...req.query };
 
-        // 🔒 STRICT ISOLATION FOR ALL ROLES
-        // Every single user (admin, caretaker, tenant) is forcefully 
-        // restricted to their own specific activity logs. 
-        queryFilters.userId = loggedInUser.id;
-        queryFilters.role = loggedInUser.role;
+    // Logged-in user from auth middleware
+    const loggedInUser = req.user;
 
-        const logs = await getActivityLogs(queryFilters);
+    // Restrict logs to the current user
+    queryFilters.userId = loggedInUser.id;
+    queryFilters.role = loggedInUser.role;
 
-        return res.status(200).json({
-            success: true,
-            count: logs.length,
-            filters: queryFilters, // Returns the forced filters to verify in Postman
-            logs
-        });
+    const logs = await getActivityLogs(queryFilters);
 
-    } catch (error) {
-        console.error("Fetch Activity Logs Error:", error);
+    return res.status(200).json({
+      success: true,
+      count: logs.length,
+      filters: queryFilters,
+      logs
+    });
 
-        return res.status(500).json({
-            success: false,
-            message: "Failed to fetch activity logs"
-        });
-    }
+  } catch (error) {
+
+    console.error("Fetch Activity Logs Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch activity logs"
+    });
+
+  }
 };

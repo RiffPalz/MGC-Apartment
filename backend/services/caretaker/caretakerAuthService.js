@@ -29,7 +29,7 @@ export const caretakerLogin = async ({ userName, password }) => {
     { expiresIn: process.env.JWT_EXPIRES || "7d" }
   );
 
-  // Save the token to the user record and return caretaker details
+  // Save the token to the user record
   user.loginToken = token;
   await user.save();
 

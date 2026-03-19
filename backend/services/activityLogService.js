@@ -27,7 +27,7 @@ export const createActivityLog = async ({
 /* GET ACTIVITY LOGS (ADVANCED FILTERS) */
 export const getActivityLogs = async (filters = {}) => {
     const {
-        userId, // 🔹 Added userId here
+        userId, // Filter by user ID
         role,
         action,
         search,
@@ -39,29 +39,24 @@ export const getActivityLogs = async (filters = {}) => {
 
     const whereClause = {};
 
-    // 🔹 User ID filter (Crucial for Tenant/Caretaker isolation)
     if (userId) {
         whereClause.user_id = userId;
     }
 
-    // 🔹 Role filter
     if (role && role !== "All") {
         whereClause.role = role;
     }
 
-    // 🔹 Action filter
     if (action) {
         whereClause.action = action;
     }
 
-    // 🔹 Search filter (description)
     if (search) {
         whereClause.description = {
             [Op.like]: `%${search}%`
         };
     }
 
-    // 🔹 Date range filter
     if (startDate || endDate) {
         whereClause.created_at = {};
 
