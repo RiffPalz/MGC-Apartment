@@ -2,9 +2,7 @@ import User from "../../models/user.js";
 import { createActivityLog } from "../../services/activityLogService.js";
 import { createNotification } from "../../services/notificationService.js";
 
-/* =========================
-   UPDATE ADMIN PROFILE
-========================= */
+/* UPDATE ADMIN PROFILE */
 export const updateAdminProfile = async (adminContext, data) => {
     const { instance: admin } = adminContext;
     const { fullName, contactNumber, emailAddress, userName } = data;
@@ -63,10 +61,7 @@ export const updateAdminProfile = async (adminContext, data) => {
     return admin;
 };
 
-
-/* =========================
-   APPROVE / DECLINE TENANT
-========================= */
+/* APPROVE / DECLINE TENANT */
 export const updateTenantApprovalService = async (adminUser, userId, status) => {
     const tenant = await User.findByPk(userId);
 
@@ -103,10 +98,7 @@ export const updateTenantApprovalService = async (adminUser, userId, status) => 
     return tenant;
 };
 
-
-/* =========================
-   CREATE CARETAKER
-========================= */
+/* CREATE CARETAKER */
 export const createCaretakerService = async (adminUser, data) => {
     const { fullName, emailAddress, password, contactNumber, userName } = data;
 
@@ -123,7 +115,7 @@ export const createCaretakerService = async (adminUser, data) => {
     const caretaker = await User.create({
         fullName,
         emailAddress,
-        password_hash: password, // 🔥 IMPORTANT
+        password_hash: password,
         contactNumber,
         userName,
         role: "caretaker",
@@ -152,10 +144,7 @@ export const createCaretakerService = async (adminUser, data) => {
     return caretaker;
 };
 
-
-/* =========================
-   CREATE ADMIN
-========================= */
+/* CREATE ADMIN */
 export const createAdminService = async (adminUser, data) => {
     const { fullName, emailAddress, password, contactNumber, userName } = data;
 
@@ -172,7 +161,7 @@ export const createAdminService = async (adminUser, data) => {
     const newAdmin = await User.create({
         fullName,
         emailAddress,
-        password_hash: password, // 🔥 IMPORTANT
+        password_hash: password,
         contactNumber,
         userName,
         role: "admin",
@@ -201,10 +190,7 @@ export const createAdminService = async (adminUser, data) => {
     return newAdmin;
 };
 
-
-/* =========================
-   DELETE USER
-========================= */
+/* DELETE USER */
 export const deleteUserService = async (adminUser, userId) => {
     const user = await User.findByPk(userId);
 

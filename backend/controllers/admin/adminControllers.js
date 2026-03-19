@@ -17,9 +17,7 @@ import Contract from "../../models/contract.js";
 import Unit from "../../models/unit.js";
 import { emitEvent } from "../../utils/emitEvent.js";
 
-/* =========================
-   LOGIN
-========================= */
+/* LOGIN */
 export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -30,7 +28,9 @@ export const loginAdmin = async (req, res) => {
       message: result.message,
       adminId: result.adminId,
     });
+  
   } catch (error) {
+  
     return res.status(401).json({
       success: false,
       message: error.message
@@ -38,9 +38,7 @@ export const loginAdmin = async (req, res) => {
   }
 };
 
-/* =========================
-   VERIFY OTP
-========================= */
+/* VERIFY OTP */
 export const loginCodeVerify = async (req, res) => {
   try {
     const { adminId, verificationCode } = req.body;
@@ -52,7 +50,9 @@ export const loginCodeVerify = async (req, res) => {
       accessToken: result.accessToken,
       admin: result.admin,
     });
+  
   } catch (error) {
+  
     return res.status(401).json({
       success: false,
       message: error.message
@@ -60,9 +60,7 @@ export const loginCodeVerify = async (req, res) => {
   }
 };
 
-/* =========================
-   FETCH PROFILE
-========================= */
+/* FETCH PROFILE */
 export const fetchAdminProfile = async (req, res) => {
   try {
     const { instance: admin } = req.admin;
@@ -79,7 +77,9 @@ export const fetchAdminProfile = async (req, res) => {
         role: admin.role,
       },
     });
+  
   } catch (error) {
+  
     return res.status(500).json({
       success: false,
       message: "Failed to fetch admin profile"
@@ -87,9 +87,7 @@ export const fetchAdminProfile = async (req, res) => {
   }
 };
 
-/* =========================
-   UPDATE PROFILE
-========================= */
+/* UPDATE PROFILE */
 export const saveAdminProfile = async (req, res) => {
   try {
     const updatedAdmin = await updateAdminProfile(req.admin, req.body);
@@ -115,7 +113,9 @@ export const saveAdminProfile = async (req, res) => {
       },
     });
 
+  
   } catch (error) {
+  
     return res.status(400).json({
       success: false,
       message: error.message
@@ -123,9 +123,7 @@ export const saveAdminProfile = async (req, res) => {
   }
 };
 
-/* =========================
-   RESEND OTP
-========================= */
+/* RESEND OTP */
 export const resendCodeController = async (req, res) => {
   try {
     const { adminId } = req.body;
@@ -143,7 +141,9 @@ export const resendCodeController = async (req, res) => {
       success: true,
       message: "Verification code resent successfully"
     });
+  
   } catch (error) {
+  
     return res.status(400).json({
       success: false,
       message: error.message
@@ -151,9 +151,7 @@ export const resendCodeController = async (req, res) => {
   }
 };
 
-/* =========================
-   CREATE CARETAKER
-========================= */
+/* CREATE CARETAKER */
 export const createCaretaker = async (req, res) => {
   try {
     const caretaker = await createCaretakerService(req.admin.instance, req.body);
@@ -164,7 +162,9 @@ export const createCaretaker = async (req, res) => {
       caretaker
     });
 
+  
   } catch (error) {
+  
     return res.status(400).json({
       success: false,
       message: error.message
@@ -172,9 +172,7 @@ export const createCaretaker = async (req, res) => {
   }
 };
 
-/* =========================
-   CREATE ADMIN
-========================= */
+/* CREATE ADMIN */
 export const createAdmin = async (req, res) => {
   try {
     const admin = await createAdminService(req.admin.instance, req.body);
@@ -185,7 +183,9 @@ export const createAdmin = async (req, res) => {
       admin
     });
 
+  
   } catch (error) {
+  
     return res.status(400).json({
       success: false,
       message: error.message
@@ -193,9 +193,7 @@ export const createAdmin = async (req, res) => {
   }
 };
 
-/* =========================
-   DELETE USER
-========================= */
+/* DELETE USER */
 export const deleteUser = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -207,7 +205,9 @@ export const deleteUser = async (req, res) => {
       message: "User deleted successfully"
     });
 
+  
   } catch (error) {
+  
     return res.status(400).json({
       success: false,
       message: error.message
@@ -215,9 +215,7 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-/* =========================
-   GET PENDING TENANTS
-========================= */
+/* GET PENDING TENANTS */
 export const getPendingUsers = async (req, res) => {
   try {
     const users = await User.findAll({
@@ -231,7 +229,9 @@ export const getPendingUsers = async (req, res) => {
       users
     });
 
+  
   } catch (error) {
+  
     return res.status(500).json({
       success: false,
       message: "Failed to fetch pending users"
@@ -239,9 +239,7 @@ export const getPendingUsers = async (req, res) => {
   }
 };
 
-/* =========================
-   APPROVE / DECLINE TENANT
-========================= */
+/* APPROVE / DECLINE TENANT */
 export const updateUserApproval = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -254,7 +252,9 @@ export const updateUserApproval = async (req, res) => {
       message: `Tenant ${status} successfully`
     });
 
+  
   } catch (error) {
+  
     return res.status(400).json({
       success: false,
       message: error.message
@@ -262,9 +262,7 @@ export const updateUserApproval = async (req, res) => {
   }
 };
 
-/* =========================
-   TENANTS OVERVIEW
-========================= */
+/* TENANTS OVERVIEW */
 export const getTenantsOverview = async (req, res) => {
   try {
     const tenants = await User.findAll({
@@ -287,7 +285,9 @@ export const getTenantsOverview = async (req, res) => {
       tenants
     });
 
+  
   } catch (error) {
+  
     return res.status(500).json({
       success: false,
       message: "Failed to fetch tenants overview"

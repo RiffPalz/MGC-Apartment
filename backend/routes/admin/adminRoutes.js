@@ -1,4 +1,6 @@
 import express from "express";
+import adminAuth from "../../middleware/adminAuth.js";
+
 import {
   loginAdmin,
   loginCodeVerify,
@@ -13,33 +15,23 @@ import {
   getTenantsOverview
 } from "../../controllers/admin/adminControllers.js";
 
-import adminAuth from "../../middleware/adminAuth.js";
-
 const adminRouter = express.Router();
 
-/* =========================
-   AUTH
-========================= */
+/* AUTHENTICATION */
 adminRouter.post("/login", loginAdmin);
 adminRouter.post("/login/verify", loginCodeVerify);
 adminRouter.post("/login/resend", resendCodeController);
 
-/* =========================
-   PROFILE
-========================= */
+/* PROFILE */
 adminRouter.get("/profile", adminAuth, fetchAdminProfile);
 adminRouter.patch("/profile/update", adminAuth, saveAdminProfile);
 
-/* =========================
-   USER MANAGEMENT
-========================= */
+/* USER MANAGEMENT */
 adminRouter.post("/caretaker", adminAuth, createCaretaker);
 adminRouter.post("/admin", adminAuth, createAdmin);
 adminRouter.delete("/users/:userId", adminAuth, deleteUser);
 
-/* =========================
-   TENANT MANAGEMENT
-========================= */
+/* TENANT MANAGEMENT */
 adminRouter.get("/users/pending", adminAuth, getPendingUsers);
 adminRouter.patch("/users/:userId/approval", adminAuth, updateUserApproval);
 adminRouter.get("/tenants/overview", adminAuth, getTenantsOverview);

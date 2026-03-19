@@ -12,17 +12,46 @@ import {
 
 const router = express.Router();
 
-router.post("/", adminAuth, createPaymentAdmin);
+/* CREATE PAYMENT */
+router.post(
+  "/",
+  adminAuth,
+  createPaymentAdmin
+);
 
-router.get("/", adminAuth, getAllPaymentsAdmin);
+/* GET ALL PAYMENTS */
+router.get(
+  "/",
+  adminAuth,
+  getAllPaymentsAdmin
+);
 
-router.get("/contract/:id", adminAuth, getPaymentsByContractAdmin);
+/* GET PAYMENTS BY CONTRACT */
+router.get(
+  "/contract/:id",
+  adminAuth,
+  getPaymentsByContractAdmin
+);
 
-router.patch("/:id/verify", adminAuth, verifyPaymentAdmin);
+/* VERIFY PAYMENT */
+router.patch(
+  "/:id/verify",
+  adminAuth,
+  verifyPaymentAdmin
+);
 
-router.get("/summary", adminAuth, getMonthlySummaryAdmin);
+/* GET MONTHLY SUMMARY */
+router.get(
+  "/summary",
+  adminAuth,
+  getMonthlySummaryAdmin
+);
 
-router.get("/dashboard", adminAuth, getPaymentDashboardAdmin);
-
+/* GET PAYMENT DASHBOARD */
+router.get(
+  "/dashboard",
+  adminAuth,
+  getPaymentDashboardAdmin
+);
 
 export default router;

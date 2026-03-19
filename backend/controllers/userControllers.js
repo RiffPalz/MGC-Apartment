@@ -3,12 +3,11 @@ import {
   loginUser,
   getUserProfileService,
   updateUserProfileService
-} from "../services/userService.js"; // Make sure the import points to your new file name!
+} from "../services/userService.js";
+
 import { emitEvent } from "../utils/emitEvent.js";
 
-/**
- * REGISTER USER
- */
+/* REGISTER USER */
 export const register = async (req, res) => {
   try {
     const user = await registerUser(req.body);
@@ -32,17 +31,21 @@ export const register = async (req, res) => {
         role: user.role,
       },
     });
+
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+  
+    return res.status(400).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
-/**
- * LOGIN USER
- */
+/* LOGIN USER */
 export const login = async (req, res) => {
   try {
     const result = await loginUser(req.body);
+
     return res.status(200).json({
       success: true,
       message: result.message,
@@ -50,14 +53,17 @@ export const login = async (req, res) => {
       loginToken: result.loginToken,
       user: result.user,
     });
+
   } catch (error) {
-    return res.status(401).json({ success: false, message: error.message });
+  
+    return res.status(401).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
-/**
- * FETCH USER PROFILE
- */
+/* GET USER PROFILE */
 export const getUserProfile = async (req, res) => {
   try {
     const user = await getUserProfileService(req.auth.id);
@@ -75,20 +81,21 @@ export const getUserProfile = async (req, res) => {
         role: user.role,
       },
     });
+
   } catch (error) {
-    return res.status(404).json({ success: false, message: error.message });
+  
+    return res.status(404).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
-/**
- * UPDATE USER PROFILE
- */
+/* UPDATE USER PROFILE */
 export const updateUserProfile = async (req, res) => {
   try {
-    // Pass the request body securely to the service
     const user = await updateUserProfileService(req.auth.id, req.body);
 
-    // 🔔 Emit update event
     emitEvent(req, "dataUpdated", {
       type: "USER",
       action: "UPDATED",
@@ -109,8 +116,13 @@ export const updateUserProfile = async (req, res) => {
         role: user.role,
       },
     });
+
   } catch (error) {
-    console.error("Update user error:", error);
-    return res.status(400).json({ success: false, message: error.message });
+    console.error("Update User Error:", error);
+
+    return res.status(400).json({
+      success: false,
+      message: error.message
+    });
   }
 };

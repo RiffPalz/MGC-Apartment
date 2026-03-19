@@ -3,9 +3,7 @@ import {
   getTenantMaintenance,
 } from "../services/userMaintenanceService.js";
 
-/**
- * TENANT CREATE REQUEST
- */
+// TENANT CREATE REQUEST
 export const createMaintenanceRequest = async (req, res) => {
   try {
     const result = await createMaintenance(req.auth.id, req.body);
@@ -17,6 +15,7 @@ export const createMaintenanceRequest = async (req, res) => {
     });
 
   } catch (error) {
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -24,9 +23,7 @@ export const createMaintenanceRequest = async (req, res) => {
   }
 };
 
-/**
- * TENANT VIEW OWN REQUESTS
- */
+/** TENANT VIEW OWN REQUESTS */
 export const getMyMaintenanceRequests = async (req, res) => {
   try {
     const result = await getTenantMaintenance(req.auth.id);
@@ -38,6 +35,7 @@ export const getMyMaintenanceRequests = async (req, res) => {
     });
 
   } catch (error) {
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch maintenance requests",

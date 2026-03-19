@@ -3,11 +3,7 @@ import User from "../../models/user.js";
 import { emitEvent } from "../../utils/emitEvent.js";
 import { updateCaretakerProfile } from "../../services/caretaker/caretakerService.js";
 
-/**
- * ==============================
- * CARETAKER LOGIN
- * ==============================
- */
+/** CARETAKER LOGIN */
 export const loginCaretaker = async (req, res) => {
   try {
     const { userName, password } = req.body;
@@ -35,11 +31,7 @@ export const loginCaretaker = async (req, res) => {
   }
 };
 
-/**
- * ==============================
- * FETCH CARETAKER PROFILE
- * ==============================
- */
+/** FETCH CARETAKER PROFILE */
 export const fetchCaretakerProfile = async (req, res) => {
   try {
     const { instance } = req.caretaker;
@@ -65,16 +57,12 @@ export const fetchCaretakerProfile = async (req, res) => {
   }
 };
 
-/**
- * ==============================
- * UPDATE CARETAKER PROFILE
- * ==============================
- */
+/** UPDATE CARETAKER PROFILE */
 export const saveCaretakerProfile = async (req, res) => {
   try {
     const updatedUser = await updateCaretakerProfile(req.caretaker, req.body);
 
-    // 🔔 Real-time update
+    // Real-time update
     emitEvent(req, "dataUpdated", {
       type: "CARETAKER",
       action: "UPDATED",
@@ -96,6 +84,7 @@ export const saveCaretakerProfile = async (req, res) => {
     });
 
   } catch (error) {
+   
     return res.status(400).json({
       success: false,
       message: error.message

@@ -1,11 +1,11 @@
 import { verifyAccessToken } from "../utils/token.js";
 
-// Check if the user is logged in by verifying their token
+/* AUTHENTICATE USER */
 export const authenticate = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    // Check for the Bearer token in headers
+    // Validate Bearer token
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "No token provided" });
     }
@@ -13,26 +13,34 @@ export const authenticate = (req, res, next) => {
     const token = authHeader.split(" ")[1];
     const decoded = verifyAccessToken(token);
 
-    // ✅ FIX: Attach the decoded token to req.user instead of req.auth
-    req.user = decoded; 
+    // Attach decoded token to request
+    req.user = decoded;
 
     next();
+
   } catch (error) {
-    return res.status(401).json({ message: "Invalid or expired token" });
+  
+    return res.status(401).json({
+      message: "Invalid or expired token"
+    });
   }
 };
 
-// Check if the logged-in user has the right role (e.g., 'admin', 'tenant', 'caretaker')
+/* AUTHORIZE USER ROLE */
 export const authorize = (...roles) => {
   return (req, res, next) => {
-    // ✅ FIX: Update the checks to use req.user
+
     if (!req.user || !req.user.role) {
-      return res.status(401).json({ message: "Unauthorized: Role missing from token" });
+      return res.status(401).json({
+        message: "Unauthorized: Role missing from token"
+      });
     }
 
-    // Block access if the user's role isn't in the allowed list
+    // Check if user role is allowed
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: "Access denied: Invalid permissions" });
+      return res.status(403).json({
+        message: "Access denied: Invalid permissions"
+      });
     }
 
     next();
