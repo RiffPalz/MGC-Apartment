@@ -9,14 +9,11 @@ import { EventEmitter } from "events";
 
 import { connectDB, sequelize } from "./config/database.js";
 
-// ===================== ROUTES =====================
-
-// Public
+// Routes
 import applicationRequestRoutes from "./routes/applicationRequestRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import activityLogRoutes from "./routes/activityLogRoutes.js";
 
-// Admin
 import adminRoutes from "./routes/admin/adminRoutes.js";
 import adminAddTenantRoutes from "./routes/admin/adminAddTenantRoutes.js";
 import adminMaintenanceRoutes from "./routes/admin/adminMaintenanceRoutes.js";
@@ -25,13 +22,11 @@ import adminPaymentRoutes from "./routes/admin/adminPaymentRoutes.js";
 import adminAnnouncementRoutes from "./routes/admin/adminAnnouncementRoutes.js";
 import adminApplicationRoutes from "./routes/admin/adminAppRequestRoutes.js";
 
-// Caretaker
 import caretakerRoutes from "./routes/caretaker/caretakerRoute.js";
 import caretakerMaintenanceRoutes from "./routes/caretaker/caretakerMaintenanceRoutes.js";
 import caretakerPaymentRoutes from "./routes/caretaker/caretakerPaymentRoutes.js";
 import caretakerAnnouncementRoutes from "./routes/caretaker/caretakerAnnouncementRoutes.js";
 
-// Tenant
 import userRoutes from "./routes/userRoutes.js";
 import userMaintenanceRoutes from "./routes/userMaintenanceRoutes.js";
 import userContractRoutes from "./routes/userContractRoutes.js";
@@ -42,16 +37,28 @@ import userAnnouncementRoutes from "./routes/userAnnouncementRoutes.js";
 import runSeeders from "./utils/runSeeders.js";
 import { startSystemCron } from "./utils/systemCron.js";
 
-// ===================== APP INITIALIZATION =====================
 EventEmitter.defaultMaxListeners = 20;
 
 const app = express();
 const httpServer = createServer(app);
 
-// ===================== SOCKET.IO =====================
+// Socket.IO Setup
 const io = new Server(httpServer, {
   cors: {
-    origin: ["http://localhost:5173"],
+    origin: function (origin, callback) {
+      // Allow requests with no origin (Postman, server-to-server)
+      if (!origin) return callback(null, true);
+
+      // Allow local development across multiple ports
+      if (origin.includes('localhost')) return callback(null, true);
+
+      // Allow production domain
+      if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+        return callback(null, true);
+      }
+
+      callback(new Error('Not allowed by CORS'));
+    },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true
   },
@@ -60,26 +67,42 @@ const io = new Server(httpServer, {
   pingInterval: 25000
 });
 
-// Make io accessible inside controllers/services
 app.set("io", io);
 
-// ===================== MIDDLEWARE =====================
-app.use(cors());
+// HTTP CORS & Middleware
+const allowedOrigins = [
+  'http://localhost:5173', // Tenant UI
+  'http://localhost:5174', // Admin UI
+  'http://localhost:5175', // Caretaker UI
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+}));
+
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// ===================== SOCKET CONNECTION =====================
+// Socket Events
 io.on("connection", (socket) => {
-
   console.log(`🔌 Client connected: ${socket.id}`);
 
-  /* JOIN ROLE ROOM */
   socket.on("join_role", (role) => {
     socket.join(role);
     console.log(`👤 ${socket.id} joined ${role} room`);
   });
 
-  /* JOIN USER ROOM */
   socket.on("join_user", (userId) => {
     socket.join(`user_${userId}`);
     console.log(`👤 ${socket.id} joined user_${userId}`);
@@ -92,17 +115,13 @@ io.on("connection", (socket) => {
   socket.on("connect_error", (error) => {
     console.log(`❌ Socket error: ${error.message}`);
   });
-
 });
 
-// ===================== ROUTES =====================
-
-// Public
+// Mount Routes
 app.use("/api/applications", applicationRequestRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/activity-logs", activityLogRoutes);
 
-// Admin
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin/maintenance", adminMaintenanceRoutes);
 app.use("/api/admin/tenants", adminAddTenantRoutes);
@@ -111,62 +130,47 @@ app.use("/api/admin/payments", adminPaymentRoutes);
 app.use("/api/admin/announcements", adminAnnouncementRoutes);
 app.use("/api/admin/applications", adminApplicationRoutes);
 
-// Caretaker
 app.use("/api/caretaker", caretakerRoutes);
 app.use("/api/caretaker/maintenance", caretakerMaintenanceRoutes);
 app.use("/api/caretaker/payments", caretakerPaymentRoutes);
 app.use("/api/caretaker/announcements", caretakerAnnouncementRoutes);
 
-// Tenant
 app.use("/api/users", userRoutes);
 app.use("/api/users/maintenance", userMaintenanceRoutes);
 app.use("/api/users/contracts", userContractRoutes);
 app.use("/api/users/payments", userPaymentRoutes);
 app.use("/api/users/announcements", userAnnouncementRoutes);
 
-// ===================== HEALTH CHECK =====================
+// Health Check
 app.get("/", (req, res) => {
   res.send("API is running 🚀");
 });
 
-// ===================== GLOBAL ERROR HANDLER =====================
+// Global Error Handler
 app.use((err, req, res, next) => {
-
   console.error("❌ Server Error:", err);
-
   res.status(err.status || 500).json({
     success: false,
     message: err.message || "Internal Server Error"
   });
-
 });
 
-// ===================== SERVER START =====================
+// Server Initialization
 const PORT = process.env.PORT || 5000;
 
 httpServer.listen(PORT, async () => {
-
   try {
-
     await connectDB();
-
     await sequelize.sync();
-
     await runSeeders();
-
     startSystemCron();
 
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🔌 WebSocket ready for real-time notifications`);
-
   } catch (error) {
-
     console.error("❌ Server startup failed:", error.message);
     process.exit(1);
-
   }
-
 });
 
-// Export io for services
 export { io };

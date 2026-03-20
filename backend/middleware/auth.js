@@ -1,11 +1,11 @@
 import { verifyAccessToken } from "../utils/token.js";
 
-/* AUTHENTICATE USER */
+/* Authenticate request using Bearer token */
 export const authenticate = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    // Validate Bearer token
+    // Validate Authorization header
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "No token provided" });
     }
@@ -14,33 +14,26 @@ export const authenticate = (req, res, next) => {
     const decoded = verifyAccessToken(token);
 
     // Attach decoded token to request
-    req.user = decoded;
+    req.auth = decoded;
 
     next();
-
   } catch (error) {
-  
-    return res.status(401).json({
-      message: "Invalid or expired token"
-    });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 
-/* AUTHORIZE USER ROLE */
+/* Restrict access based on user roles */
 export const authorize = (...roles) => {
   return (req, res, next) => {
 
-    if (!req.user || !req.user.role) {
-      return res.status(401).json({
-        message: "Unauthorized: Role missing from token"
-      });
+    // Ensure role exists in token
+    if (!req.auth || !req.auth.role) {
+      return res.status(401).json({ message: "Unauthorized: Role missing" });
     }
 
-    // Check if user role is allowed
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        message: "Access denied: Invalid permissions"
-      });
+    // Check if role is allowed
+    if (!roles.includes(req.auth.role)) {
+      return res.status(403).json({ message: "Access denied" });
     }
 
     next();

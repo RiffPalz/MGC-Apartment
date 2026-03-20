@@ -14,13 +14,11 @@ import PrivacyPolicy from "./PrivacyPolicy.jsx";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
-//Assets and Components
+// Assets and Components
 import ForgotPassword from "./ForgotPassword.jsx";
-
 
 // ✅ AUTH SERVICE
 import { login } from "../../api/authService";
-
 
 const Login = () => {
   const navigate = useNavigate();
@@ -44,50 +42,58 @@ const Login = () => {
 
   // 🔐 ROLE-BASED LOGIN HANDLER
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
+    e.preventDefault();
+    setError("");
 
-  if (!username.trim() || !password) {
-    setError("Please enter your credentials.");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    // 🔐 Single login entry point
-    const response = await login({
-      credentials: {
-        identifier: username, // can be email OR username
-        password,
-      },
-    });
-
-    const { role, adminId } = response;
-
-    // ================= ROLE-BASED REDIRECT =================
-    if (role === "admin") {
-      navigate("/verification", {
-        state: { adminId },
-      });
-    } else if (role === "caretaker") {
-      navigate("/caretaker/dashboard");
-    } else if (role === "tenant") {
-      navigate("/tenant/dashboard");
-    } else {
-      throw new Error("Unknown role");
+    if (!username.trim() || !password) {
+      setError("Please enter your credentials.");
+      return;
     }
-  } catch (err) {
-    setError(
-      err.response?.data?.message ||
-        "Invalid credentials. Please try again."
-    );
-  } finally {
-    setLoading(false);
-  }
-};
 
+    setLoading(true);
 
+    try {
+      // 🧠 SMART ROUTING LOGIC
+      // Determines the role based on the username prefix to hit the correct backend route
+      let assignedRole = "user"; // Defaults to tenant
+      const lowerUsername = username.toLowerCase();
+
+      if (lowerUsername.startsWith("admin")) {
+        assignedRole = "admin";
+      } else if (lowerUsername.startsWith("ct") || lowerUsername.startsWith("caretaker")) {
+        assignedRole = "caretaker";
+      }
+
+      // 🔐 Centralized login call with the exact payload the backend expects
+      const response = await login({
+        role: assignedRole,
+        credentials: {
+          userName: username, 
+          password,
+        },
+      });
+
+      // ================= ROLE-BASED REDIRECT =================
+      if (assignedRole === "admin") {
+        // Admin flow goes to verification first (no token yet)
+        navigate("/verification", {
+          state: { adminId: response.adminId },
+        });
+      } else if (assignedRole === "caretaker") {
+        navigate("/caretaker/dashboard");
+      } else {
+        navigate("/tenant/dashboard");
+      }
+      
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Invalid credentials. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row font-NunitoSans bg-white overflow-x-hidden">
@@ -179,12 +185,10 @@ const Login = () => {
             </div>
 
             <div data-aos="fade-up" data-aos-delay="300">
-              {/* Label stays at the top */}
               <label className="block text-[9px] font-bold tracking-[2px] text-gray-400 uppercase font-LemonMilkRegular mb-2">
                 Password
               </label>
 
-              {/* Input and the Underline */}
               <div className="flex items-center border-b border-gray-200 focus-within:border-[#db6747] transition-all py-2 group">
                 <RiLockPasswordFill className="text-gray-300 group-focus-within:text-[#db6747] mr-3 transition-colors" />
                 <input
@@ -207,7 +211,6 @@ const Login = () => {
                 </button>
               </div>
 
-              {/* Forgot Password Link*/}
               <div className="flex justify-end mt-3">
                 <button
                   type="button"
@@ -234,7 +237,6 @@ const Login = () => {
                 {loading ? "Authenticating..." : "Login"}
               </button>
 
-              {/* INTEGRATED LEGAL DISCLAIMER (SOFT CONSENT) */}
               <p className="mt-8 text-center text-[10px] text-gray-400 uppercase tracking-[1px] leading-relaxed">
                 By logging in, you acknowledge that you agree to our <br />
                 <button
@@ -264,7 +266,6 @@ const Login = () => {
         onClose={() => setShowForgot(false)}
       />
 
-      {/* MODAL COMPONENTS */}
       <TermsAndConditions
         isOpen={showTerms}
         onClose={() => setShowTerms(false)}

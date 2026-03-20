@@ -1,4 +1,4 @@
-const TOKEN_KEY = "token";     
+const TOKEN_KEY = "tenantToken";     
 const ROLE_KEY = "role";       
 const USER_KEY = "user";       
 

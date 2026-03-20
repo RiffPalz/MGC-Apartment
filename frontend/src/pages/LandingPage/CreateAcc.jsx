@@ -15,7 +15,7 @@ import PendingVerificationModal from "../../components/PendingVerificationModal.
 import AOS from "aos";
 import "aos/dist/aos.css";
 
-//Api
+// Api
 import { registerTenant } from "../../api/tenantAPI/tenantAuth";
 
 const CreateAcc = () => {
@@ -123,20 +123,22 @@ const CreateAcc = () => {
     setLoading(true);
 
     try {
-      // Send the data to backend
+      // 🚀 Send the exact data structure the Express backend expects
       await registerTenant({
-        userID: `USR-${Date.now()}`,
-        fullName: form.fullName.trim(), // Send the combined full name
+        // Removed the fake userID so the backend can generate its own TENANT-XXX ID
+        fullName: form.fullName.trim(),
         email: form.email,
-        contactNumber: form.phone.replace(/-/g, ""), // Remove dashes for DB
+        contactNumber: form.phone.replace(/-/g, ""), // Removes dashes, sends "09123456789"
         unitNumber: Number(form.unit),
         numberOfTenants: Number(form.tenants),
         userName: form.username,
         password: form.password,
       });
 
+      // Show the success modal upon 201 Created response
       setShowSuccessModal(true);
     } catch (err) {
+      // Safely catch backend validation errors (e.g., "Email already in use")
       setError(
         err.response?.data?.message || "Registration failed. Please try again.",
       );

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import TenantSidebar from "../components/TenantSidebar.jsx";
 import UserHeader from "../components/Header.jsx";
+import Notification from "../components/Notification.jsx";
 
 
 export default function TenantLayout() {
@@ -67,7 +68,7 @@ export default function TenantLayout() {
 <div className="flex-1 flex flex-col h-full relative overflow-hidden transition-all duration-300">
   
   {/* Role-based Header */}
-  <UserHeader />
+  <UserHeader onMenuClick={() => setIsSidebarOpen(true)} />
 
   {/* Dashboard Content */}
   <main className="flex-1 overflow-y-auto scroll-smooth bg-[#f8f9fa]">
