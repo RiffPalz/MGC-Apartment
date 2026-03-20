@@ -1,6 +1,6 @@
 import MGCRouter from "./router/MGCRouter.jsx";
 import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; // Don't forget this import!
+import "react-toastify/dist/ReactToastify.css"; 
 import "./App.css";
 
 function App() {

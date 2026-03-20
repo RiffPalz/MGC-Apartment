@@ -1,87 +1,98 @@
-import React from "react";
+import { useLocation } from "react-router-dom";
+import { FaBars } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "./Notification";
 
-const UserHeader = () => {
+const PAGE_TITLES = {
+  "/tenant/dashboard":   { title: "Dashboard",    subtitle: "Overview of your unit" },
+  "/tenant/maintenance": { title: "Maintenance",   subtitle: "Submit and track repair requests" },
+  "/tenant/contract":    { title: "My Contract",   subtitle: "View your lease agreement" },
+  "/tenant/payment":     { title: "Payments",      subtitle: "Manage your bills and receipts" },
+  "/tenant/myAccount":   { title: "Profile",       subtitle: "Manage your account settings" },
+  "/admin/dashboard":    { title: "Dashboard",     subtitle: "Admin overview" },
+  "/caretaker/dashboard":{ title: "Dashboard",     subtitle: "Caretaker overview" },
+};
+
+const UserHeader = ({ onMenuClick }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
-  // If loading, show a placeholder or nothing (prevents flicker)
-  if (loading) return <div className="p-4">Loading header...</div>;
-
-  // If no user, log it to console for debugging
-  if (!user) {
-    console.warn("UserHeader: No user found in context.");
-    return null;
+  if (loading || !user) {
+    return (
+      <div className="bg-white/90 backdrop-blur-md sticky top-0 z-30 border-b border-[#F2DED4] px-5 py-3.5">
+        <div className="flex items-center justify-between animate-pulse">
+          <div className="space-y-2">
+            <div className="h-4 bg-slate-100 rounded w-32" />
+            <div className="h-3 bg-slate-50 rounded w-24" />
+          </div>
+          <div className="h-9 w-9 bg-slate-100 rounded-xl" />
+        </div>
+      </div>
+    );
   }
 
-  const getHeaderContent = () => {
-    switch (user.role) {
-      /* =======================
-         TENANT
-      ======================= */
-      case "user":
-        return {
-          title: `Welcome, Tenant ${user.userID || ""}`,
-          subtitle: user.fullName,
-          roleDisplay: "Tenant",
-          badgeColor: "bg-blue-100 text-blue-800",
-        };
+  // Match current path — check exact then prefix
+  const matched = PAGE_TITLES[location.pathname]
+    || Object.entries(PAGE_TITLES).find(([key]) => location.pathname.startsWith(key))?.[1];
 
-      /* =======================
-         ADMIN
-      ======================= */
-      case "admin":
-        return {
-          title: "System Administrator",
-          subtitle: user.email || user.emailAddress,
-          roleDisplay: "Admin",
-          badgeColor: "bg-red-100 text-red-800",
-        };
+  const pageTitle  = matched?.title    || "Dashboard";
+  const pageSub    = matched?.subtitle || "";
 
-      /* =======================
-         CARETAKER
-      ======================= */
-      case "caretaker":
-        return {
-          title: "MGC Building Caretaker",
-          subtitle: user.userName,
-          roleDisplay: "Caretaker",
-          badgeColor: "bg-green-100 text-green-800",
-        };
-
-      /* =======================
-         FALLBACK
-      ======================= */
-      default:
-        return {
-          title: "Welcome",
-          subtitle: user.fullName || user.userName,
-          roleDisplay: "User",
-          badgeColor: "bg-gray-100 text-gray-800",
-        };
-    }
-  };
-
-  const content = getHeaderContent();
+  const initials = (user.fullName || user.userName || "U")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
-    <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
-      <div className="flex items-center justify-between">
-        {/* LEFT: TITLE + SUBTITLE */}
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 tracking-tight">
-            {content.title}
+    <div className="bg-white/90 backdrop-blur-md sticky top-0 z-30 border-b border-[#F2DED4] px-5 sm:px-6 py-3">
+      <div className="flex items-center justify-between gap-4">
+
+        {/* HAMBURGER — mobile only */}
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 rounded-xl text-[#5c1f10] hover:bg-[#FDF2ED] hover:text-[#D96648] transition-all active:scale-95 shrink-0"
+            aria-label="Open menu"
+          >
+            <FaBars size={18} />
+          </button>
+        )}
+
+        {/* LEFT: page title */}
+        <div className="min-w-0">
+          <h2 className="text-sm sm:text-base font-black text-[#330101] tracking-tight leading-tight truncate">
+            {pageTitle}
           </h2>
-          <p className="text-sm font-medium text-gray-500">
-            {content.subtitle}
-          </p>
+          {pageSub && (
+            <p className="text-[10px] font-medium text-[#330101]/40 tracking-wide hidden sm:block">
+              {pageSub}
+            </p>
+          )}
         </div>
 
-        {/* RIGHT: ROLE */}
-        <div className="text-right">
-          <div className="text-xs text-gray-400 uppercase font-semibold tracking-wider">
-            Logged in as: {content.roleDisplay}
+        {/* RIGHT: notifications + avatar */}
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+          <NotificationBell userRole={user.role} />
+
+          <div className="h-7 w-px bg-[#F2DED4] hidden sm:block" />
+
+          <div className="flex items-center gap-2.5 group cursor-pointer">
+            <div className="text-right hidden sm:block">
+              <p className="text-[10px] font-black text-[#330101]/40 uppercase tracking-widest leading-none mb-0.5">
+                {user.role === "admin" ? "Admin" : user.role === "caretaker" ? "Caretaker" : "Tenant"}
+              </p>
+              <p className="text-xs font-bold text-[#330101] leading-none truncate max-w-[120px]">
+                {user.fullName || user.userName}
+              </p>
+            </div>
+            <div className="h-9 w-9 rounded-xl bg-[#FDF2ED] border border-[#F2DED4] flex items-center justify-center text-[#D96648] font-black text-xs shadow-sm group-hover:bg-[#5c1f10] group-hover:text-white group-hover:border-[#5c1f10] transition-all">
+              {initials}
+            </div>
           </div>
         </div>
+
       </div>
     </div>
   );
