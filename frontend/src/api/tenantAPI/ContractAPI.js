@@ -1,15 +1,8 @@
-import axios from "axios";
-
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000/api";
+import api from "../config";
 
 export const fetchUserContracts = async () => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.get(`${API_BASE_URL}/users/contracts`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await api.get("/users/contracts");
     return response.data;
   } catch (error) {
     console.error("Error fetching contracts:", error);

@@ -1,370 +1,464 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import {
-  FaSearch, FaDoorOpen, FaDoorClosed, FaUsers,
-  FaEdit, FaTimes, FaPlus, FaUserCircle,
-} from "react-icons/fa";
+  MdDeleteForever, MdEdit, MdPeople, MdSearchOff,
+  MdMeetingRoom, MdNoMeetingRoom, MdOutlineBedroomParent, MdPerson
+} from "react-icons/md";
+import { HiPlus } from "react-icons/hi";
 import { IoSettingsSharp } from "react-icons/io5";
-import { MdMeetingRoom } from "react-icons/md";
+import { FaSearch } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { fetchAllUnits, updateUnit } from "../../api/adminAPI/unitsAPI";
+import { fetchAllUnits, createUnit, updateUnit, deleteUnit } from "../../api/adminAPI/unitsAPI";
 
 const FLOORS = ["Ground Floor", "Second Floor", "Third Floor", "Fourth Floor"];
+const FLOOR_NUM = { "Ground Floor": 1, "Second Floor": 2, "Third Floor": 3, "Fourth Floor": 4 };
 
-const floorColor = {
-  "Ground Floor":  { dot: "bg-blue-500",    badge: "text-blue-700 bg-blue-50 border-blue-200" },
-  "Second Floor":  { dot: "bg-violet-500",  badge: "text-violet-700 bg-violet-50 border-violet-200" },
-  "Third Floor":   { dot: "bg-amber-500",   badge: "text-amber-700 bg-amber-50 border-amber-200" },
-  "Fourth Floor":  { dot: "bg-emerald-500", badge: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-};
-
-export default function AdminUnits() {
-  const [units, setUnits]               = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [search, setSearch]             = useState("");
-  const [floorFilter, setFloorFilter]   = useState("All");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [configureMode, setConfigureMode] = useState(false);
-  const [editTarget, setEditTarget]     = useState(null);
-  const [saving, setSaving]             = useState(false);
-
-  // Add Unit modal state
+export default function AdminUnitsCards() {
+  const [units, setUnits] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [isConfigureMode, setIsConfigureMode] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newUnit, setNewUnit]           = useState({ unit_number: "", floor: 1, max_capacity: 2 });
-  const [adding, setAdding]             = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [editingUnit, setEditingUnit] = useState(null);
+  const [newUnit, setNewUnit] = useState({ number: "", floor: "Ground Floor", capacity: 2 });
+  const [saving, setSaving] = useState(false);
 
-  const load = async () => {
+  const loadUnits = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetchAllUnits();
-      setUnits(res.units || []);
-    } catch {
-      toast.error("Failed to load units.");
+      if (res.success) setUnits(res.units);
+      else toast.error("Failed to load units");
+    } catch (err) {
+      console.error("fetchAllUnits error:", err);
+      toast.error(err?.response?.data?.message || "Failed to load units");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { loadUnits(); }, [loadUnits]);
 
-  const filtered = units.filter((u) => {
-    const q = search.toLowerCase();
-    const matchSearch = String(u.unitNumber).includes(q) || u.floor.toLowerCase().includes(q);
-    const matchFloor  = floorFilter === "All" || u.floor === floorFilter;
-    const matchStatus = statusFilter === "All"
-      || (statusFilter === "Occupied" && u.occupied)
-      || (statusFilter === "Vacant"   && !u.occupied);
-    return matchSearch && matchFloor && matchStatus;
-  });
-
-  const totalOccupied = units.filter((u) => u.occupied).length;
-  const totalVacant   = units.filter((u) => !u.occupied).length;
-
-  const handleSave = async () => {
-    if (!editTarget) return;
+  const handleAddUnit = async () => {
+    if (!newUnit.number || !newUnit.floor) return toast.warn("Unit number and floor are required");
     try {
       setSaving(true);
-      await updateUnit(editTarget.id, {
-        max_capacity: editTarget.maxCapacity,
-        is_active:    editTarget.isActive,
+      const res = await createUnit({
+        unit_number: parseInt(newUnit.number),
+        floor: FLOOR_NUM[newUnit.floor],
+        max_capacity: newUnit.capacity,
       });
-      toast.success(`Unit ${editTarget.unitNumber} updated.`);
-      setEditTarget(null);
-      load();
-    } catch (e) {
-      toast.error(e?.response?.data?.message || "Update failed.");
+      if (res.success) {
+        toast.success("Unit created successfully");
+        setShowAddModal(false);
+        setNewUnit({ number: "", floor: "Ground Floor", capacity: 2 });
+        await loadUnits();
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to create unit");
     } finally {
       setSaving(false);
     }
   };
 
-  return (
-    <div className="font-NunitoSans text-[#1a1a2e] space-y-5">
+  const handleSaveEdit = async () => {
+    if (!editingUnit) return;
+    try {
+      setSaving(true);
+      const res = await updateUnit(editingUnit.id, {
+        max_capacity: editingUnit.maxCapacity,
+        is_active: editingUnit.isActive,
+      });
+      if (res.success) {
+        toast.success("Unit updated");
+        setShowEditModal(false);
+        setEditingUnit(null);
+        await loadUnits();
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to update unit");
+    } finally {
+      setSaving(false);
+    }
+  };
 
-      {/* STAT CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon={<MdMeetingRoom size={20} />} label="Total Units" value={units.length}  color="text-blue-600"    bg="bg-blue-50" />
-        <StatCard icon={<FaDoorClosed  size={20} />} label="Occupied"    value={totalOccupied} color="text-red-500"     bg="bg-red-50" />
-        <StatCard icon={<FaDoorOpen    size={20} />} label="Vacant"      value={totalVacant}   color="text-emerald-600" bg="bg-emerald-50" />
-      </div>
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    try {
+      const res = await deleteUnit(confirmDelete.id);
+      if (res.success) {
+        toast.success(`Unit ${confirmDelete.unitNumber} deleted`);
+        setConfirmDelete(null);
+        await loadUnits();
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to delete unit");
+    }
+  };
 
-      {/* TOOLBAR */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-          {/* Search */}
-          <div className="relative flex-1 max-w-sm">
-            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={13} />
-            <input
-              type="text"
-              placeholder="Search unit number or floor..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747]"
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-2 items-center">
-            {/* Floor filters */}
-            {["All", ...FLOORS].map((f) => (
-              <button key={f} onClick={() => setFloorFilter(f)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors
-                  ${floorFilter === f ? "bg-[#db6747] text-white shadow-sm" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
-                {f === "All" ? "All Floors" : f.replace(" Floor", "")}
-              </button>
-            ))}
-            <div className="h-5 w-px bg-gray-200" />
-            {/* Status filters */}
-            {["All", "Occupied", "Vacant"].map((s) => (
-              <button key={s} onClick={() => setStatusFilter(s)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors
-                  ${statusFilter === s ? "bg-[#3a0f08] text-white shadow-sm" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
-                {s}
-              </button>
-            ))}
-            <div className="h-5 w-px bg-gray-200" />
-            {/* Add Unit */}
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold bg-[#db6747] text-white hover:bg-[#c45a3c] transition-colors shadow-sm"
-            >
-              <FaPlus size={11} /> Add Unit
-            </button>
-            {/* Configure */}
-            <button
-              onClick={() => setConfigureMode((p) => !p)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors
-                ${configureMode ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-[#3a0f08] text-white hover:bg-[#4a1a10]"}`}
-            >
-              <IoSettingsSharp className={configureMode ? "animate-spin" : ""} size={13} />
-              {configureMode ? "Exit Configure" : "Configure"}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* FLOOR SECTIONS */}
-      {loading ? (
-        <div className="flex items-center justify-center h-48">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#db6747]" />
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-20 text-center text-gray-400">
-          No units found.
-        </div>
-      ) : (
-        FLOORS.map((floor) => {
-          const floorUnits = filtered.filter((u) => u.floor === floor);
-          if (floorUnits.length === 0) return null;
-          const fc = floorColor[floor];
-          return (
-            <div key={floor} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
-                <span className={`w-3 h-3 rounded-full ${fc.dot} shrink-0`} />
-                <h3 className="text-sm font-black text-[#1a1a2e] uppercase tracking-widest">{floor}</h3>
-                <span className={`ml-auto text-xs font-bold px-2.5 py-1 rounded-full border ${fc.badge}`}>
-                  {floorUnits.length} units
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 p-4">
-                {floorUnits.map((u) => (
-                  <UnitCard
-                    key={u.id}
-                    unit={u}
-                    configureMode={configureMode}
-                    onEdit={() => setEditTarget({ ...u })}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })
-      )}
-
-      {/* ── ADD UNIT MODAL ── */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-7">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-black text-[#1a1a2e]">Add New Unit</h3>
-              <button onClick={() => setShowAddModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
-                <FaTimes size={14} />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Unit Number</label>
-                <input
-                  type="number"
-                  placeholder="e.g. 101"
-                  value={newUnit.unit_number}
-                  onChange={(e) => setNewUnit({ ...newUnit, unit_number: e.target.value })}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747]"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Floor</label>
-                <select
-                  value={newUnit.floor}
-                  onChange={(e) => setNewUnit({ ...newUnit, floor: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747]"
-                >
-                  <option value={1}>Ground Floor</option>
-                  <option value={2}>Second Floor</option>
-                  <option value={3}>Third Floor</option>
-                  <option value={4}>Fourth Floor</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Max Capacity</label>
-                <input
-                  type="number" min={1} max={10}
-                  value={newUnit.max_capacity}
-                  onChange={(e) => setNewUnit({ ...newUnit, max_capacity: parseInt(e.target.value) || 1 })}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747]"
-                />
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowAddModal(false)} disabled={adding}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
-                Cancel
-              </button>
-              <button
-                disabled={adding || !newUnit.unit_number}
-                onClick={async () => {
-                  try {
-                    setAdding(true);
-                    // NOTE: Add unit endpoint not yet implemented — wire up when backend ready
-                    toast.info("Add unit endpoint coming soon.");
-                    setShowAddModal(false);
-                  } finally {
-                    setAdding(false);
-                  }
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-[#db6747] text-white text-sm font-bold hover:bg-[#c45a3c] transition-colors disabled:opacity-60"
-              >
-                {adding ? "Adding..." : "Add Unit"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── EDIT UNIT MODAL ── */}
-      {editTarget && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-7">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-black text-[#1a1a2e]">Edit Unit {editTarget.unitNumber}</h3>
-              <button onClick={() => setEditTarget(null)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
-                <FaTimes size={14} />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Max Capacity</label>
-                <input
-                  type="number" min={1} max={10}
-                  value={editTarget.maxCapacity}
-                  onChange={(e) => setEditTarget({ ...editTarget, maxCapacity: parseInt(e.target.value) || 1 })}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747]"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Status</label>
-                <select
-                  value={editTarget.isActive ? "active" : "inactive"}
-                  onChange={(e) => setEditTarget({ ...editTarget, isActive: e.target.value === "active" })}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747]"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setEditTarget(null)} disabled={saving}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
-                Cancel
-              </button>
-              <button onClick={handleSave} disabled={saving}
-                className="flex-1 py-2.5 rounded-xl bg-[#db6747] text-white text-sm font-bold hover:bg-[#c45a3c] transition-colors disabled:opacity-60">
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+  const filtered = units.filter((u) =>
+    String(u.unitNumber).includes(search) ||
+    u.floor.toLowerCase().includes(search.toLowerCase())
   );
-}
 
-/* ── Unit Card ── */
-function UnitCard({ unit, configureMode, onEdit }) {
-  const occupied = unit.occupied;
+  const byFloor = (floor) => filtered.filter((u) => u.floor === floor);
+  const totalUnits = units.length;
+  const occupiedUnits = units.filter((u) => u.occupied).length;
+  const vacantUnits = totalUnits - occupiedUnits;
+  const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
+
   return (
-    <div className={`relative rounded-xl border p-4 flex flex-col gap-2.5 transition-all hover:shadow-md
-      ${occupied ? "border-red-100 bg-red-50/30" : "border-emerald-100 bg-emerald-50/20"}`}>
+    <div className="w-full bg-[#f4f6f9] p-4 md:p-6 text-slate-800 font-sans flex flex-col gap-5 min-h-screen">
 
-      {/* Header row */}
-      <div className="flex items-center justify-between">
-        <span className="text-base font-black text-[#1a1a2e]">{unit.unitNumber}</span>
-        {configureMode && (
-          <button onClick={onEdit} title="Edit"
-            className="p-1.5 rounded-lg bg-white border border-gray-200 text-gray-400 hover:text-[#db6747] hover:border-[#db6747] transition-colors shadow-sm">
-            <FaEdit size={11} />
-          </button>
-        )}
-      </div>
-
-      {/* Status badge */}
-      <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-widest w-fit
-        ${occupied ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-700"}`}>
-        {occupied ? "Occupied" : "Vacant"}
-      </span>
-
-      {/* Occupancy count */}
-      <div className="flex items-center gap-1.5 text-xs text-gray-500">
-        <FaUsers size={11} className="shrink-0" />
-        <span className="font-bold text-[#1a1a2e]">{unit.currentTenants}</span>
-        <span>/ {unit.maxCapacity}</span>
-      </div>
-
-      {/* Capacity bar */}
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${occupied ? "bg-red-400" : "bg-emerald-400"}`}
-          style={{ width: unit.maxCapacity > 0 ? `${(unit.currentTenants / unit.maxCapacity) * 100}%` : "0%" }}
+      {/* ── STAT CARDS ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={<MdOutlineBedroomParent size={22} />}
+          label="Total Units"
+          value={loading ? "—" : totalUnits}
+          color="text-[#5c1f10]"
+          bg="bg-[#5c1f10]/10"
+          accent="#5c1f10"
+        />
+        <StatCard
+          icon={<MdMeetingRoom size={22} />}
+          label="Occupied"
+          value={loading ? "—" : occupiedUnits}
+          color="text-blue-600"
+          bg="bg-blue-50"
+          accent="#2563eb"
+        />
+        <StatCard
+          icon={<MdNoMeetingRoom size={22} />}
+          label="Vacant"
+          value={loading ? "—" : vacantUnits}
+          color="text-emerald-600"
+          bg="bg-emerald-50"
+          accent="#059669"
+        />
+        <StatCard
+          icon={<MdPeople size={22} />}
+          label="Occupancy Rate"
+          value={loading ? "—" : `${occupancyRate}%`}
+          color="text-[#db6747]"
+          bg="bg-[#db6747]/10"
+          accent="#db6747"
         />
       </div>
 
-      {/* Tenant list */}
-      {unit.tenants?.length > 0 && (
-        <div className="mt-1 space-y-1.5 border-t border-gray-100 pt-2">
-          {unit.tenants.map((t) => (
-            <div key={t.ID} className="flex items-center gap-1.5">
-              <FaUserCircle size={12} className="text-gray-400 shrink-0" />
-              <span className="text-[11px] text-gray-600 truncate">{t.fullName}</span>
-            </div>
-          ))}
+      {/* ── TOOLBAR ── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+          <div className="relative flex-1 max-w-sm">
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+            <input
+              type="text"
+              placeholder="Search unit or floor..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#db6747]/25 focus:border-[#db6747] transition-all bg-slate-50 placeholder:text-slate-400"
+            />
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-white border-2 border-slate-200 text-slate-600 hover:border-[#db6747] hover:text-[#db6747] transition-all uppercase tracking-widest"
+            >
+              <HiPlus size={15} /> Add Unit
+            </button>
+            <button
+              onClick={() => setIsConfigureMode(!isConfigureMode)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-widest
+                ${isConfigureMode
+                  ? "bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-200"
+                  : "bg-[#5c1f10] text-white hover:bg-[#4a1809] shadow-md shadow-[#5c1f10]/30"}`}
+            >
+              <IoSettingsSharp size={14} className={isConfigureMode ? "animate-spin" : ""} />
+              {isConfigureMode ? "Done Editing" : "Configure"}
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* ── FLOOR BLOCKS ── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:p-6 flex-1">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-28 gap-4 text-slate-400">
+            <div className="w-10 h-10 border-4 border-slate-100 border-t-[#db6747] rounded-full animate-spin" />
+            <p className="text-xs font-bold uppercase tracking-widest">Loading units...</p>
+          </div>
+        ) : filtered.length > 0 ? (
+          FLOORS.map((floor) => (
+            <FloorBlock
+              key={floor}
+              label={floor}
+              floorUnits={byFloor(floor)}
+              isConfigureMode={isConfigureMode}
+              onEdit={(u) => { setEditingUnit({ ...u }); setShowEditModal(true); }}
+              onDelete={(u) => setConfirmDelete(u)}
+            />
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center py-28 text-slate-400 gap-3">
+            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center">
+              <MdSearchOff size={30} className="text-slate-300" />
+            </div>
+            <p className="text-xs font-bold uppercase tracking-widest">No units found{search ? ` for "${search}"` : ""}</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── ADD MODAL ── */}
+      {showAddModal && (
+        <Modal>
+          <ModalHeader icon={<HiPlus size={18} />} iconBg="bg-[#db6747]/10 text-[#db6747]" title="Add New Unit" onClose={() => setShowAddModal(false)} />
+          <div className="flex flex-col gap-4 mt-5">
+            <Field label="Unit Number">
+              <input type="number" placeholder="e.g. 108" className={inputCls} onChange={(e) => setNewUnit({ ...newUnit, number: e.target.value })} />
+            </Field>
+            <Field label="Floor Level">
+              <select className={inputCls} value={newUnit.floor} onChange={(e) => setNewUnit({ ...newUnit, floor: e.target.value })}>
+                {FLOORS.map(f => <option key={f}>{f}</option>)}
+              </select>
+            </Field>
+            <Field label="Max Capacity">
+              <select className={inputCls} value={newUnit.capacity} onChange={(e) => setNewUnit({ ...newUnit, capacity: parseInt(e.target.value) })}>
+                <option value={1}>1 Person</option>
+                <option value={2}>2 Persons</option>
+              </select>
+            </Field>
+          </div>
+          <ModalFooter onCancel={() => setShowAddModal(false)} onConfirm={handleAddUnit} confirmLabel="Save Unit" loading={saving} confirmCls="bg-[#db6747] hover:bg-[#c45a3d] shadow-[#db6747]/30" />
+        </Modal>
       )}
 
-      {/* Inactive label */}
-      {!unit.isActive && (
-        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Inactive</span>
+      {/* ── EDIT MODAL ── */}
+      {showEditModal && editingUnit && (
+        <Modal>
+          <ModalHeader icon={<MdEdit size={17} />} iconBg="bg-blue-50 text-blue-600" title="Edit Unit" subtitle={`Unit ${editingUnit.unitNumber} · ${editingUnit.floor}`} onClose={() => setShowEditModal(false)} />
+          <div className="flex flex-col gap-4 mt-5">
+            <Field label="Max Capacity">
+              <input type="number" min="1" className={inputCls} value={editingUnit.maxCapacity} onChange={(e) => setEditingUnit({ ...editingUnit, maxCapacity: parseInt(e.target.value) || 1 })} />
+            </Field>
+            <Field label="Status">
+              <select className={inputCls} value={editingUnit.isActive ? "active" : "inactive"} onChange={(e) => setEditingUnit({ ...editingUnit, isActive: e.target.value === "active" })}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </Field>
+          </div>
+          <ModalFooter onCancel={() => setShowEditModal(false)} onConfirm={handleSaveEdit} confirmLabel="Save Changes" loading={saving} confirmCls="bg-blue-600 hover:bg-blue-700 shadow-blue-200" />
+        </Modal>
+      )}
+
+      {/* ── DELETE CONFIRM ── */}
+      {confirmDelete && (
+        <Modal maxW="max-w-sm">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mb-4">
+              <MdDeleteForever className="text-red-500" size={28} />
+            </div>
+            <h2 className="text-lg font-black text-slate-900 mb-2">Delete Unit {confirmDelete.unitNumber}?</h2>
+            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+              All data associated with this unit will be permanently removed. This cannot be undone.
+            </p>
+            <div className="flex gap-3 w-full">
+              <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+              <button onClick={handleDelete} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors shadow-md shadow-red-200">Delete</button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );
 }
 
-function StatCard({ icon, label, value, color, bg }) {
+/* ── FloorBlock ── */
+function FloorBlock({ label, floorUnits, isConfigureMode, onEdit, onDelete }) {
+  if (floorUnits.length === 0) return null;
+  const occupied = floorUnits.filter(u => u.occupied).length;
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
-      <div className={`p-3.5 ${bg} ${color} rounded-xl shrink-0`}>{icon}</div>
-      <div>
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{label}</p>
-        <p className="text-2xl font-black text-[#1a1a2e] leading-none">{value}</p>
+    <div className="mb-8 last:mb-0">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex-1 h-px bg-slate-100" />
+        <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 rounded-full border border-slate-200">
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{label}</span>
+          <span className="text-[10px] font-bold text-slate-400">·</span>
+          <span className="text-[10px] font-bold text-slate-400">{occupied}/{floorUnits.length} occupied</span>
+        </div>
+        <div className="flex-1 h-px bg-slate-100" />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+        {floorUnits.map((unit) => (
+          <UnitCard
+            key={unit.id}
+            unit={unit}
+            isConfigureMode={isConfigureMode}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
       </div>
     </div>
   );
 }
+
+/* ── UnitCard ── */
+function UnitCard({ unit, isConfigureMode, onEdit, onDelete }) {
+  const primaryTenantId = unit.tenants?.[0]?.ID ?? null;
+  const fillPct = unit.maxCapacity > 0 ? (unit.currentTenants / unit.maxCapacity) * 100 : 0;
+
+  return (
+    <div className={`relative bg-white rounded-2xl flex flex-col overflow-hidden transition-all duration-200
+      ${isConfigureMode
+        ? "border-2 border-amber-400 shadow-lg shadow-amber-100"
+        : unit.occupied
+          ? "border border-[#db6747]/25 shadow-sm hover:shadow-lg hover:shadow-[#db6747]/10 hover:-translate-y-0.5"
+          : "border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5"}`}
+    >
+      {/* Top color strip */}
+      <div className={`h-1 w-full ${unit.occupied ? "bg-gradient-to-r from-[#db6747] to-[#e8845f]" : "bg-gradient-to-r from-emerald-400 to-emerald-500"}`} />
+
+      <div className="p-3.5 flex flex-col gap-2.5 flex-1">
+        {/* Unit number + badge */}
+        <div className="flex items-start justify-between gap-1">
+          {unit.occupied && primaryTenantId ? (
+            <Link
+              to={`/admin/tenants/${primaryTenantId}`}
+              className="text-2xl font-black text-[#db6747] leading-none hover:text-[#c45a3d] transition-colors"
+              title="View tenant profile"
+            >
+              {unit.unitNumber}
+            </Link>
+          ) : (
+            <span className="text-2xl font-black text-slate-300 leading-none">{unit.unitNumber}</span>
+          )}
+          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0 mt-0.5
+            ${unit.occupied ? "bg-[#db6747]/10 text-[#db6747]" : "bg-emerald-50 text-emerald-600"}`}>
+            {unit.occupied ? "Occupied" : "Vacant"}
+          </span>
+        </div>
+
+        {/* Capacity bar */}
+        <div>
+          <div className="w-full bg-slate-100 rounded-full h-1 overflow-hidden mb-1">
+            <div
+              className={`h-1 rounded-full transition-all ${unit.occupied ? "bg-[#db6747]" : "bg-emerald-400"}`}
+              style={{ width: `${fillPct}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-slate-400 font-semibold">
+            {unit.currentTenants}/{unit.maxCapacity} pax
+          </p>
+        </div>
+
+        {/* Tenant list */}
+        {unit.tenants && unit.tenants.length > 0 && (
+          <div className="flex flex-col gap-1 pt-2 border-t border-slate-100">
+            {unit.tenants.map((t) => (
+              <Link
+                key={t.ID}
+                to={`/admin/tenants/${t.ID}`}
+                className="flex items-center gap-1.5 group/t"
+              >
+                <div className="w-5 h-5 rounded-full bg-[#db6747]/10 flex items-center justify-center shrink-0">
+                  <MdPerson size={11} className="text-[#db6747]" />
+                </div>
+                <span className="text-[10px] text-slate-500 font-semibold truncate group-hover/t:text-[#db6747] transition-colors leading-tight">
+                  {t.fullName || t.publicUserID}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Configure buttons */}
+      {isConfigureMode && (
+        <div className="flex border-t border-amber-100">
+          <button
+            onClick={() => onEdit(unit)}
+            className="flex-1 flex items-center justify-center gap-1 py-2 text-[10px] font-bold text-blue-600 hover:bg-blue-50 transition-colors"
+          >
+            <MdEdit size={12} /> Edit
+          </button>
+          <div className="w-px bg-amber-100" />
+          <button
+            onClick={() => onDelete(unit)}
+            className="flex-1 flex items-center justify-center gap-1 py-2 text-[10px] font-bold text-red-500 hover:bg-red-50 transition-colors"
+          >
+            <MdDeleteForever size={12} /> Del
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── StatCard ── */
+function StatCard({ icon, label, value, color, bg }) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-5 flex items-center gap-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+      <div className={`p-3 ${bg} ${color} rounded-xl shrink-0`}>{icon}</div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 truncate">{label}</p>
+        <p className="text-2xl font-black text-slate-800 leading-none">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Modal ── */
+function Modal({ children, maxW = "max-w-md" }) {
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+      <div className={`bg-white rounded-2xl p-6 w-full ${maxW} shadow-2xl border border-slate-100`}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ── ModalHeader ── */
+function ModalHeader({ icon, iconBg, title, subtitle, onClose }) {
+  return (
+    <div className="flex items-start justify-between">
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>{icon}</div>
+        <div>
+          <h2 className="text-base font-black text-slate-900 leading-tight">{title}</h2>
+          {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+        </div>
+      </div>
+      <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors text-lg leading-none mt-0.5">✕</button>
+    </div>
+  );
+}
+
+/* ── Field ── */
+function Field({ label, children }) {
+  return (
+    <div>
+      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+/* ── ModalFooter ── */
+function ModalFooter({ onCancel, onConfirm, confirmLabel, loading, confirmCls }) {
+  return (
+    <div className="flex justify-end gap-3 mt-6 pt-5 border-t border-slate-100">
+      <button onClick={onCancel} className="px-5 py-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors uppercase tracking-widest">
+        Cancel
+      </button>
+      <button onClick={onConfirm} disabled={loading} className={`px-5 py-2.5 rounded-xl text-white text-xs font-bold transition-all uppercase tracking-widest shadow-md disabled:opacity-60 ${confirmCls}`}>
+        {loading ? "Saving..." : confirmLabel}
+      </button>
+    </div>
+  );
+}
+
+const inputCls = "w-full border-2 border-slate-200 p-2.5 rounded-xl text-sm focus:ring-0 focus:border-[#db6747] outline-none transition-all bg-white placeholder:text-slate-300";
