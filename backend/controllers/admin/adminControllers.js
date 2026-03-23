@@ -215,6 +215,57 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+/* GET SINGLE TENANT PROFILE */
+export const getTenantProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenant = await User.findOne({
+      where: { ID: id, role: "tenant" },
+      include: [{
+        model: Contract,
+        as: "contracts",
+        where: { status: "Active" },
+        required: false,
+        include: [{ model: Unit, as: "unit" }],
+      }],
+    });
+
+    if (!tenant) return res.status(404).json({ success: false, message: "Tenant not found" });
+
+    const activeContract = tenant.contracts?.[0] ?? null;
+
+    return res.status(200).json({
+      success: true,
+      tenant: {
+        id: tenant.ID,
+        publicUserID: tenant.publicUserID,
+        fullName: tenant.fullName,
+        emailAddress: tenant.emailAddress,
+        contactNumber: tenant.contactNumber,
+        unitNumber: tenant.unitNumber,
+        numberOfTenants: tenant.numberOfTenants,
+        userName: tenant.userName,
+        status: tenant.status,
+        createdAt: tenant.created_at,
+        contract: activeContract ? {
+          id: activeContract.ID,
+          startDate: activeContract.start_date,
+          endDate: activeContract.end_date,
+          rentAmount: activeContract.rent_amount,
+          status: activeContract.status,
+          unit: activeContract.unit ? {
+            id: activeContract.unit.ID,
+            unitNumber: activeContract.unit.unit_number,
+            floor: activeContract.unit.floor,
+          } : null,
+        } : null,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to fetch tenant profile" });
+  }
+};
+
 /* GET PENDING TENANTS */
 export const getPendingUsers = async (req, res) => {
   try {

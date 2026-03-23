@@ -1,6 +1,4 @@
-import Unit from "../../models/unit.js";
-import Contract from "../../models/contract.js";
-import User from "../../models/user.js";
+import { Unit, Contract, User } from "../../models/index.js";
 import { createActivityLog } from "../../services/activityLogService.js";
 
 const FLOOR_MAP = { 1: "Ground Floor", 2: "Second Floor", 3: "Third Floor", 4: "Fourth Floor" };
@@ -38,6 +36,47 @@ export const getAllUnits = async () => {
       tenants,
       contractId:   activeContract?.ID ?? null,
     };
+  });
+};
+
+/* CREATE UNIT */
+export const createUnit = async (data, adminId) => {
+  const { unit_number, floor, max_capacity } = data;
+  if (!unit_number || !floor) throw new Error("unit_number and floor are required");
+
+  const existing = await Unit.findOne({ where: { unit_number } });
+  if (existing) throw new Error(`Unit ${unit_number} already exists`);
+
+  const unit = await Unit.create({
+    unit_number,
+    floor,
+    max_capacity: max_capacity ?? 2,
+    is_active: true,
+  });
+
+  await createActivityLog({
+    userId: adminId, role: "admin",
+    action: "CREATE_UNIT",
+    description: `Created unit ${unit.unit_number}`,
+    referenceId: unit.ID, referenceType: "unit",
+  });
+
+  return unit;
+};
+
+/* DELETE UNIT */
+export const deleteUnit = async (unitId, adminId) => {
+  const unit = await Unit.findByPk(unitId);
+  if (!unit) throw new Error("Unit not found");
+
+  const unitNumber = unit.unit_number;
+  await unit.destroy();
+
+  await createActivityLog({
+    userId: adminId, role: "admin",
+    action: "DELETE_UNIT",
+    description: `Deleted unit ${unitNumber}`,
+    referenceId: unitId, referenceType: "unit",
   });
 };
 

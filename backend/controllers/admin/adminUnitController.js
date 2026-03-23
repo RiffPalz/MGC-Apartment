@@ -1,4 +1,4 @@
-import { getAllUnits, updateUnit } from "../../services/admin/adminUnitService.js";
+import { getAllUnits, createUnit, updateUnit, deleteUnit } from "../../services/admin/adminUnitService.js";
 
 /* GET ALL UNITS */
 export const fetchAllUnits = async (req, res) => {
@@ -11,6 +11,17 @@ export const fetchAllUnits = async (req, res) => {
   }
 };
 
+/* CREATE UNIT */
+export const createUnitController = async (req, res) => {
+  try {
+    const adminId = req.admin?.id;
+    const unit = await createUnit(req.body, adminId);
+    return res.status(201).json({ success: true, message: "Unit created", unit });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 /* UPDATE UNIT */
 export const updateUnitController = async (req, res) => {
   try {
@@ -18,6 +29,18 @@ export const updateUnitController = async (req, res) => {
     const adminId = req.admin?.id;
     const unit = await updateUnit(id, req.body, adminId);
     return res.status(200).json({ success: true, message: "Unit updated", unit });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+/* DELETE UNIT */
+export const deleteUnitController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const adminId = req.admin?.id;
+    await deleteUnit(id, adminId);
+    return res.status(200).json({ success: true, message: "Unit deleted" });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
   }
