@@ -276,7 +276,7 @@ export const getTenantsOverview = async (req, res) => {
           include: [{ model: Unit, as: "unit" }]
         }
       ],
-      order: [["fullName", "ASC"]],
+      order: [["created_at", "DESC"]],
     });
 
     return res.status(200).json({

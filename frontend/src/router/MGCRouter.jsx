@@ -26,6 +26,13 @@ import TenantActivityLogs from "../pages/TenantPage/ActivityLogs.jsx";
 import AdminLayout from "../layout/AdminLayout.jsx";
 import AdminDashboard from "../pages/AdminPage/Dashboard.jsx";
 import AdminTenants from "../pages/AdminPage/Tenants.jsx";
+import AdminUnits from "../pages/AdminPage/Units.jsx";
+import AdminMaintenance from "../pages/AdminPage/Maintenance.jsx";
+import AdminAnnouncement from "../pages/AdminPage/Announcement.jsx";
+import AdminContract from "../pages/AdminPage/Contract.jsx";
+import AdminPayment from "../pages/AdminPage/Payment.jsx";
+import AdminApplicationRequest from "../pages/AdminPage/ApplicationRequest.jsx";
+
 
 // Redirect login based on role
 const LoginRedirect = () => {
@@ -80,8 +87,15 @@ export default function MGCRouter() {
             {/* Admin Protected Routes */}
             <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
               <Route path="/admin" element={<AdminLayout />}>
-                <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="tenants" element={<AdminTenants />} />
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard"          element={<AdminDashboard />} />
+                <Route path="tenants"            element={<AdminTenants />} />
+                <Route path="units"              element={<AdminUnits />} />
+                <Route path="maintenance"        element={<AdminMaintenance />} />
+                <Route path="announcement"       element={<AdminAnnouncement />} />
+                <Route path="contract"           element={<AdminContract />} />
+                <Route path="payments"           element={<AdminPayment />} />
+                <Route path="applicationrequest" element={<AdminApplicationRequest />} />
               </Route>
             </Route>
 

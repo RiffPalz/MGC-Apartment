@@ -29,6 +29,10 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Detect role from input to swap field label
+  const lowerUsername = username.toLowerCase();
+  const isAdmin = lowerUsername.startsWith("admin@") || lowerUsername.includes("@");
+
   // Modal States
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -54,24 +58,23 @@ const Login = () => {
 
     try {
       // 🧠 SMART ROUTING LOGIC
-      // Determines the role based on the username prefix to hit the correct backend route
-      let assignedRole = "user"; // Defaults to tenant
+      let assignedRole = "user";
       const lowerUsername = username.toLowerCase();
 
-      if (lowerUsername.startsWith("admin")) {
+      if (lowerUsername.includes("@")) {
+        // Email input → admin login
         assignedRole = "admin";
       } else if (lowerUsername.startsWith("ct") || lowerUsername.startsWith("caretaker")) {
         assignedRole = "caretaker";
       }
 
-      // 🔐 Centralized login call with the exact payload the backend expects
-      const response = await login({
-        role: assignedRole,
-        credentials: {
-          userName: username, 
-          password,
-        },
-      });
+      // Build credentials based on role
+      const credentials =
+        assignedRole === "admin"
+          ? { email: username, password }
+          : { userName: username, password };
+
+      const response = await login({ role: assignedRole, credentials });
 
       // ================= ROLE-BASED REDIRECT =================
       if (assignedRole === "admin") {
@@ -170,13 +173,13 @@ const Login = () => {
           <form onSubmit={handleSubmit} className="space-y-8">
             <div data-aos="fade-up" data-aos-delay="200">
               <label className="block text-[9px] font-bold tracking-[2px] text-gray-400 mb-2 uppercase font-RegularMilk">
-                Username
+                {isAdmin ? "Email Address" : "Username"}
               </label>
               <div className="flex items-center border-b border-gray-200 focus-within:border-[#db6747] transition-all py-2 group">
                 <FaUser className="text-gray-300 group-focus-within:text-[#db6747] mr-3 transition-colors" />
                 <input
-                  type="text"
-                  placeholder="Enter unique ID"
+                  type={isAdmin ? "email" : "text"}
+                  placeholder={isAdmin ? "admin@email.com" : "Enter unique ID"}
                   className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-200"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}

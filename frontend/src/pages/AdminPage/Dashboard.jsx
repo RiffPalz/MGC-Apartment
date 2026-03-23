@@ -1,254 +1,366 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  FaUsers, FaTools, FaMoneyBillWave, FaClipboardList,
+  FaCheckCircle, FaClock, FaExclamationTriangle, FaArrowRight,
+  FaUserCheck, FaChartLine,
+} from "react-icons/fa";
+import { MdPendingActions } from "react-icons/md";
 import {
   Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
+  CategoryScale, LinearScale,
+  PointElement, LineElement,
+  Title, Tooltip, Legend, Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { useNavigate } from "react-router-dom";
-import { useMemo } from "react";
+import api from "../../api/config";
 
-// Placeholder images - replace with your actual imports
-import dashboardBg from "../../assets/images/dashboardbackground.png";
-import totaltenantbg from "../../assets/images/totaltenantsbg.png";
-import totalunits from "../../assets/images/totalunitsbg.png";
-import maintreq from "../../assets/images/maintreqbg.png";
-import appointreq from "../../assets/images/appointreqbg.png";
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-);
+const fmt = (n) =>
+  `₱${parseFloat(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
 
-export default function AdminDashboardCards() {
+const MONTHS_FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+export default function AdminDashboard() {
   const navigate = useNavigate();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
-  // --- CHART CONFIGURATION ---
-  const monthNames = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  const monthlyEarnings = [
-    4000, 2000, 3000, 4500, 7000, 10000, 9500, 6000, 7500, 8500, 9000, 8200,
-  ];
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
-  const earningsData = {
-    labels: monthNames,
-    datasets: [
-      {
-        label: "Earnings",
-        data: monthlyEarnings,
-        borderColor: "#ffffff", // White line
-        backgroundColor: (context) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-          gradient.addColorStop(0, "rgba(255, 255, 255, 0.4)");
-          gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-          return gradient;
-        },
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: "#ffffff",
-        pointRadius: 4,
-        borderWidth: 2,
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [tenantsRes, pendingRes, paymentRes, maintenanceRes] = await Promise.all([
+          api.get("/admin/tenants/overview"),
+          api.get("/admin/users/pending"),
+          api.get("/admin/payments/dashboard"),
+          api.get("/admin/maintenance"),
+        ]);
+        setData({
+          tenants: tenantsRes.data,
+          pending: pendingRes.data,
+          payments: paymentRes.data.dashboard ?? paymentRes.data,
+          maintenance: maintenanceRes.data,
+        });
+      } catch (e) {
+        console.error("Dashboard load error:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#db6747]" />
+      </div>
+    );
+  }
+
+  const totalTenants = data?.tenants?.count ?? 0;
+  const pendingCount = data?.pending?.count ?? 0;
+  const payDash = data?.payments ?? {};
+  const maintenance = data?.maintenance?.requests ?? [];
+  const pendingMaint = maintenance.filter((m) => m.status === "Pending").length;
+  const inProgressMaint = maintenance.filter((m) => m.status === "In Progress").length;
+  const doneMaint = maintenance.filter((m) => m.status === "Done").length;
+
+  const revenueMap = {};
+  (payDash.monthlyRevenue || []).forEach((r) => {
+    const d = new Date(r.billing_month);
+    revenueMap[`${d.getFullYear()}-${d.getMonth()}`] = parseFloat(r.total || 0);
+  });
+  const currentYear = new Date().getFullYear();
+  const chartLabels = isMobile ? MONTHS_SHORT : MONTHS_FULL;
+  const chartValues = MONTHS_FULL.map((_, i) => revenueMap[`${currentYear}-${i}`] ?? 0);
+
+  const chartData = {
+    labels: chartLabels,
+    datasets: [{
+      label: "Revenue",
+      data: chartValues,
+      borderColor: "#db6747",
+      backgroundColor: (ctx) => {
+        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+        g.addColorStop(0, "rgba(219,103,71,0.25)");
+        g.addColorStop(1, "rgba(219,103,71,0)");
+        return g;
       },
-    ],
+      borderWidth: 2,
+      pointBackgroundColor: "#db6747",
+      pointBorderColor: "#fff",
+      pointBorderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      tension: 0.4,
+      fill: true,
+    }],
   };
 
-  const earningsOptions = {
+  const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "#1a1a2e",
+        titleColor: "#9ca3af",
+        bodyColor: "#fff",
+        padding: 10,
+        callbacks: { label: (ctx) => ` ₱${ctx.raw.toLocaleString()}` },
+      },
+    },
     scales: {
       x: {
-        ticks: { color: "rgba(255,255,255,0.7)", font: { size: 10 } },
         grid: { display: false },
+        border: { display: false },
+        ticks: { color: "#9ca3af", font: { size: 11 } },
       },
       y: {
-        ticks: { color: "rgba(255,255,255,0.7)", font: { size: 10 } },
-        grid: { color: "rgba(255, 255, 255, 0.1)" },
+        grid: { color: "#f3f4f6", drawBorder: false },
+        border: { display: false },
+        ticks: {
+          color: "#9ca3af",
+          font: { size: 11 },
+          callback: (v) => `₱${(v / 1000).toFixed(0)}k`,
+        },
         beginAtZero: true,
       },
     },
   };
 
+  const recentMaint = maintenance.slice(0, 5);
+  const hasAlerts = payDash.pendingVerification > 0 || payDash.overduePayments > 0 || payDash.unpaidBills > 0;
+
   return (
-    // MAIN WRAPPER: 'min-h-screen' ensures full height background
-    <div className="bg-[#FFF4EC] w-full min-h-screen px-4 sm:px-6 py-6 flex flex-col gap-6">
-      {/* 1. HEADER */}
-      <div
-        className="flex flex-col bg-cover bg-center items-center sm:items-start text-white px-8 py-8 shadow-[6px_6px_0px_#330101] rounded-3xl w-full"
-        style={{
-          backgroundImage: `url(${dashboardBg})`,
-          backgroundColor: "#DD7255",
-        }}
-      >
-        <h2 className="font-LightMilk text-sm tracking-wider mb-1">
-          WELCOME ADMIN!
-        </h2>
-        <h1 className="font-BoldMilk text-4xl tracking-[6px] uppercase">
-          DASHBOARD
-        </h1>
+    <div className="w-full h-full bg-[#f8fafc] p-4 md:p-6 text-slate-800 font-sans flex flex-col gap-4">
+
+      {/* ── STAT CARDS ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={<FaUsers size={18} />}
+          label="Total Tenants" value={totalTenants}
+          color="text-blue-500" bg="bg-blue-50"
+          onClick={() => navigate("/admin/tenants")}
+        />
+        <StatCard
+          icon={<MdPendingActions size={18} />}
+          label="Pending Approvals" value={pendingCount}
+          color="text-amber-500" bg="bg-amber-50"
+          onClick={() => navigate("/admin/approvalpage")}
+          badge={pendingCount > 0}
+        />
+        <StatCard
+          icon={<FaTools size={18} />}
+          label="Open Maintenance" value={pendingMaint + inProgressMaint}
+          color="text-[#db6747]" bg="bg-orange-50"
+          onClick={() => navigate("/admin/maintenance")}
+        />
+        <StatCard
+          icon={<FaMoneyBillWave size={18} />}
+          label="Total Collected" value={fmt(payDash.totalCollected)}
+          color="text-emerald-500" bg="bg-emerald-50"
+        />
       </div>
 
-      {/* 2. MAIN GRID */}
-      <div className="flex flex-col lg:flex-row gap-6 w-full flex-1">
-        {/* === LEFT COLUMN (Light Cards) === */}
-        <div className="flex flex-col gap-6 w-full lg:w-[65%]">
-          {/* Row A: Total Tenants */}
-          <div
-            className="bg-linear-to-r from-[#FFF4EC] to-[#FDE8D7] shadow-[6px_6px_0px_#330101] rounded-3xl p-6 md:p-8 flex flex-col justify-center min-h-40"
-            style={{
-              backgroundImage: `url(${totaltenantbg})`,
-              backgroundSize: "cover",
-            }}
-          >
-            <h3 className="text-[#330101] font-RegularMilk text-xs uppercase tracking-widest mb-2">
-              Total Tenants
-            </h3>
-            <p className="text-[#330101] font-BoldMilk text-6xl">20</p>
+      {/* ── ALERTS ── */}
+      {hasAlerts && (
+        <div className="flex flex-wrap gap-2">
+          {payDash.pendingVerification > 0 && (
+            <AlertChip icon={<FaClock size={11} />}
+              label={`${payDash.pendingVerification} pending verification`}
+              cls="text-[#db6747] bg-white border-orange-200"
+              onClick={() => navigate("/admin/payments")} />
+          )}
+        </div>
+      )}
+
+      {/* ── MIDDLE ROW: Chart + Maintenance ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-[320px]">
+        {/* Chart */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-[#db6747]">
+              <div className="p-1.5 bg-orange-50 rounded-md"><FaChartLine size={14} /></div>
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Monthly Revenue</h3>
+                <p className="text-[10px] text-slate-400 uppercase">Collected payments · {currentYear}</p>
+              </div>
+            </div>
+            <NavBtn onClick={() => navigate("/admin/payments")} />
           </div>
-
-          {/* Row B: Total Units */}
-          <div
-            className="bg-linear-to-r from-[#FFF4EC] to-[#FDE8D7] shadow-[6px_6px_0px_#330101] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 min-h-40"
-            style={{
-              backgroundImage: `url(${totalunits})`,
-              backgroundSize: "cover",
-            }}
-          >
-            <div className="flex flex-col w-full md:w-auto">
-              <h3 className="text-[#330101] font-RegularMilk text-xs uppercase tracking-widest mb-2">
-                Total Units
-              </h3>
-              <p className="text-[#330101] font-BoldMilk text-6xl">35</p>
-            </div>
-
-            {/* Pills */}
-            <div className="flex gap-4 w-full md:w-auto justify-end">
-              <div className="text-center">
-                <p className="text-[10px] font-BoldMilk text-[#330101] mb-1">
-                  OCCUPIED
-                </p>
-                <div className="bg-white px-5 py-2 rounded-2xl shadow-sm border border-[#330101]/10">
-                  <p className="text-xl font-BoldMilk text-[#330101]">15</p>
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="text-[10px] font-BoldMilk text-[#330101] mb-1">
-                  VACANT
-                </p>
-                <div className="bg-white px-5 py-2 rounded-2xl shadow-sm border border-[#330101]/10">
-                  <p className="text-xl font-BoldMilk text-[#330101]">20</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Row C: Requests (Split) */}
-          <div className="flex flex-col sm:flex-row gap-6 w-full">
-            {/* Maintenance */}
-            <div
-              className="bg-[#FFF4EC] shadow-[6px_6px_0px_#330101] rounded-3xl p-6 w-full flex flex-col justify-between min-h-40"
-              style={{
-                backgroundImage: `url(${maintreq})`,
-                backgroundSize: "cover",
-              }}
-            >
-              <h3 className="text-[#330101] font-RegularMilk text-xs uppercase tracking-widest">
-                Maintenance Requests
-              </h3>
-              <div className="flex justify-between items-end mt-4">
-                <p className="text-[#330101] font-BoldMilk text-5xl">5</p>
-                <button
-                  onClick={() => navigate("/adminmaintenance")}
-                  className="bg-[#330101] text-[#ffede1] text-[10px] font-BoldMilk px-6 py-2 rounded-full hover:bg-white hover:text-[#330101] transition-all"
-                >
-                  VIEW
-                </button>
-              </div>
-            </div>
-
-            {/* Appointment */}
-            <div
-              className="bg-[#FFF4EC] shadow-[6px_6px_0px_#330101] rounded-3xl p-6 w-full flex flex-col justify-between min-h-40"
-              style={{
-                backgroundImage: `url(${appointreq})`,
-                backgroundSize: "cover",
-              }}
-            >
-              <h3 className="text-[#330101] font-RegularMilk text-xs uppercase tracking-widest">
-                Appointment Requests
-              </h3>
-              <div className="flex justify-between items-end mt-4">
-                <p className="text-[#330101] font-BoldMilk text-5xl">2</p>
-                <button
-                  onClick={() => navigate("/adminapplicationrequest")}
-                  className="bg-[#330101] text-[#ffede1] text-[10px] font-BoldMilk px-6 py-2 rounded-full hover:bg-white hover:text-[#330101] transition-all"
-                >
-                  VIEW
-                </button>
-              </div>
-            </div>
+          <div className="flex-1 w-full min-h-[220px]">
+            <Line data={chartData} options={chartOptions} />
           </div>
         </div>
 
-        {/* === RIGHT COLUMN (Dark Cards) === */}
-        <div className="flex flex-col gap-6 w-full lg:w-[35%]">
-          {/* Chart Card */}
-          <div className="bg-[#330101] shadow-[6px_6px_0px_#bc7d6f] rounded-3xl p-6 flex flex-col flex-1 min-h-[350px]">
-            <div className="flex-1 w-full relative">
-              <Line data={earningsData} options={earningsOptions} />
+        {/* Maintenance Breakdown */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2 text-[#db6747]">
+              <div className="p-1.5 bg-orange-50 rounded-md"><FaTools size={14} /></div>
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Maintenance</h3>
+                <p className="text-[10px] text-slate-400 uppercase">Request breakdown</p>
+              </div>
             </div>
-            <div className="mt-4 border-t border-white/20 pt-4 text-center">
-              <h3 className="text-[#ffede1] text-[10px] font-RegularMilk uppercase tracking-widest">
-                Rent Collected This Month (Jan)
-              </h3>
-              <p className="text-[#ffede1] font-BoldMilk text-2xl mt-1">
-                ₱4,000{" "}
-                <span className="text-[#ffede1]/50 text-lg">/ ₱10,000</span>
-              </p>
-            </div>
+            <NavBtn onClick={() => navigate("/admin/maintenance")} />
+          </div>
+          
+          <div className="space-y-5 flex-1 mt-2">
+            <MaintStat label="Pending" value={pendingMaint} color="bg-amber-400" />
+            <MaintStat label="In Progress" value={inProgressMaint} color="bg-blue-400" />
+            <MaintStat label="Done" value={doneMaint} color="bg-emerald-400" />
           </div>
 
-          {/* Due Rent Card */}
-          <div className="bg-[#330101] shadow-[6px_6px_0px_#bc7d6f] rounded-3xl p-6 flex flex-col justify-between min-h-[140px]">
-            <h3 className="text-[#ffede1] font-RegularMilk text-xs uppercase tracking-widest">
-              Due Rent Today
-            </h3>
-            <div className="flex justify-between items-end mt-2">
-              <p className="text-[#ffede1] font-BoldMilk text-5xl">4</p>
-              <button
-                onClick={() => navigate("/adminpayments")}
-                className="bg-[#ffede1] text-[#330101] text-[10px] font-BoldMilk px-6 py-2 rounded-full hover:bg-[#bc7d6f] hover:text-white transition-all"
-              >
-                VIEW
-              </button>
-            </div>
+          <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Total</p>
+            <p className="text-2xl font-black text-slate-800">{maintenance.length}</p>
           </div>
         </div>
+      </div>
+
+      {/* ── BOTTOM ROW: Requests + Approvals ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        
+        {/* Recent Requests */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-2 text-[#db6747]">
+              <div className="p-1.5 bg-orange-50 rounded-md"><FaClipboardList size={14} /></div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Recent Requests</h3>
+            </div>
+            <NavBtn onClick={() => navigate("/admin/maintenance")} />
+          </div>
+          
+          <div className="divide-y divide-slate-100 flex-1">
+            {recentMaint.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-xs">No pending requests.</div>
+            ) : (
+              recentMaint.map((m) => (
+                <div key={m.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">{m.title}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{m.tenant?.fullName} · {m.category}</p>
+                  </div>
+                  <StatusBadge status={m.status} />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Approvals */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-2 text-[#db6747]">
+              <div className="p-1.5 bg-orange-50 rounded-md"><FaUserCheck size={14} /></div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Account Approvals</h3>
+            </div>
+            <NavBtn onClick={() => navigate("/admin/approvalpage")} />
+          </div>
+
+          <div className="divide-y divide-slate-100 flex-1">
+            {pendingCount === 0 ? (
+              <div className="p-8 flex flex-col items-center justify-center">
+                <FaCheckCircle className="text-emerald-400 mb-2" size={24} />
+                <p className="text-xs text-slate-400">All caught up</p>
+              </div>
+            ) : (
+              (data?.pending?.users || []).slice(0, 5).map((u) => (
+                <div key={u.ID} className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 transition-colors">
+                  <div className="w-8 h-8 rounded-md bg-orange-50 text-[#db6747] flex items-center justify-center font-bold text-sm shrink-0">
+                    {(u.fullName || u.userName || "?")[0].toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-slate-800 truncate">{u.fullName || u.userName}</p>
+                    <p className="text-xs text-slate-400 truncate">{u.emailAddress}</p>
+                  </div>
+                  <StatusBadge status="Pending" />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
       </div>
     </div>
+  );
+}
+
+/* ── Sub-components ── */
+
+function StatCard({ icon, label, value, color, bg, onClick, badge }) {
+  return (
+    <div
+      onClick={onClick}
+      className={`bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4 relative shadow-sm
+        ${onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
+    >
+      <div className={`p-3.5 ${bg} ${color} rounded-lg shrink-0 relative`}>
+        {icon}
+        {badge && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white -translate-y-1/2 translate-x-1/2" />}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 truncate">{label}</p>
+        <p className="text-2xl font-black text-slate-800 leading-none truncate">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function AlertChip({ icon, label, cls, onClick }) {
+  return (
+    <button onClick={onClick}
+      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-bold shadow-sm transition-opacity hover:opacity-80 ${cls}`}>
+      {icon} {label}
+    </button>
+  );
+}
+
+function NavBtn({ onClick }) {
+  return (
+    <button onClick={onClick}
+      className="text-[10px] font-bold text-[#db6747] flex items-center gap-1 uppercase tracking-widest hover:opacity-70 transition-opacity">
+      View <FaArrowRight size={8} />
+    </button>
+  );
+}
+
+function MaintStat({ label, value, color }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${color}`} />
+          <span className="text-sm text-slate-600">{label}</span>
+        </div>
+        <span className="text-sm font-bold text-slate-800">{value}</span>
+      </div>
+      <div className="h-1 bg-slate-100 rounded-full w-full overflow-hidden">
+        {/* Placeholder bar, you can calculate real width if preferred */}
+        <div className={`h-full ${color} rounded-full`} style={{ width: value > 0 ? "100%" : "0%" }} />
+      </div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }) {
+  const isPending = status?.toLowerCase() === "pending";
+  return (
+    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shrink-0 
+      ${isPending ? "bg-orange-50 text-[#db6747]" : "bg-slate-100 text-slate-500"}`}>
+      {status}
+    </span>
   );
 }

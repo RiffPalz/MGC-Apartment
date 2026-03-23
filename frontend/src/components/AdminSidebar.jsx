@@ -58,7 +58,7 @@ export default function AdminSidebar({ open = true, setOpen }) {
 
   return (
     <aside
-      className={`relative h-screen bg-[#3a0f08] text-white shadow-2xl transition-all duration-500 ease-in-out flex flex-col font-NunitoSans z-50 overflow-hidden
+      className={`relative h-screen bg-[#5c1f10] text-white shadow-2xl transition-all duration-500 ease-in-out flex flex-col font-NunitoSans z-50 overflow-hidden
       ${open ? "w-72" : "w-20"} `}
     >
       {/* 1. BRAND HEADER */}
@@ -149,7 +149,7 @@ export default function AdminSidebar({ open = true, setOpen }) {
       </nav>
 
       {/* 3. FOOTER / LOGOUT */}
-      <div className="p-4 border-t border-white/10 bg-[#2d0b06] shrink-0">
+      <div className="p-4 border-t border-white/10 bg-[#4a1809] shrink-0">
         <button
           onClick={handleLogout}
           className={`

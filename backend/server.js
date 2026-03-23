@@ -21,6 +21,7 @@ import adminContractRoutes from "./routes/admin/adminContractRoutes.js";
 import adminPaymentRoutes from "./routes/admin/adminPaymentRoutes.js";
 import adminAnnouncementRoutes from "./routes/admin/adminAnnouncementRoutes.js";
 import adminApplicationRoutes from "./routes/admin/adminAppRequestRoutes.js";
+import adminUnitRoutes from "./routes/admin/adminUnitRoutes.js";
 
 import caretakerRoutes from "./routes/caretaker/caretakerRoute.js";
 import caretakerMaintenanceRoutes from "./routes/caretaker/caretakerMaintenanceRoutes.js";
@@ -129,6 +130,7 @@ app.use("/api/admin/contracts", adminContractRoutes);
 app.use("/api/admin/payments", adminPaymentRoutes);
 app.use("/api/admin/announcements", adminAnnouncementRoutes);
 app.use("/api/admin/applications", adminApplicationRoutes);
+app.use("/api/admin/units", adminUnitRoutes);
 
 app.use("/api/caretaker", caretakerRoutes);
 app.use("/api/caretaker/maintenance", caretakerMaintenanceRoutes);
