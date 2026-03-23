@@ -13,22 +13,27 @@ import {
   FaHourglassHalf,
 } from "react-icons/fa";
 import { fetchUserContracts } from "../../api/tenantAPI/ContractAPI";
+import { fetchTenantProfile } from "../../api/tenantAPI/tenantAuth";
 
 export default function ContractCards() {
   const [contract, setContract] = useState(null);
+  const [profile, setProfile]   = useState(null);
   const [loading, setLoading]   = useState(true);
   const [pdfModal, setPdfModal] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetchUserContracts();
-        if (res.success && res.contracts.length > 0) {
-          // prefer active, fallback to latest
-          const active = res.contracts.find((c) => c.status === "Active")
-            || res.contracts[0];
+        const [contractRes, profileRes] = await Promise.all([
+          fetchUserContracts(),
+          fetchTenantProfile(),
+        ]);
+        if (contractRes.success && contractRes.contracts.length > 0) {
+          const active = contractRes.contracts.find((c) => c.status === "Active")
+            || contractRes.contracts[0];
           setContract(active);
         }
+        if (profileRes.user) setProfile(profileRes.user);
       } catch (e) {
         console.error(e);
       } finally {
@@ -88,36 +93,33 @@ export default function ContractCards() {
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* STAT TILES */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <StatTile icon={<FaCalendarAlt />} label="Start Date"  value={fmt(contract.start_date)}  color="text-indigo-500" bg="bg-indigo-50" />
           <StatTile icon={<FaCalendarAlt />} label="End Date"    value={fmt(contract.end_date)}    color="text-[#D96648]"  bg="bg-[#FDF2ED]" />
           <StatTile icon={<FaMoneyBillWave />} label="Monthly Rent"
             value={`₱${parseFloat(contract.rent_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
             color="text-emerald-600" bg="bg-emerald-50"
           />
-          <div className="bg-[#5c1f10] p-5 rounded-3xl shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-white/10 rounded-2xl shrink-0" style={{ color: st.text }}>
+          <div className="bg-[#5c1f10] p-4 sm:p-5 rounded-3xl shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 bg-white/10 rounded-2xl shrink-0" style={{ color: st.text }}>
               {st.icon}
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Status</p>
-              <p className="text-base font-black text-white uppercase tracking-tight">{contract.status}</p>
+              <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight truncate">{contract.status}</p>
             </div>
           </div>
         </div>
 
         {/* UNIT INFO STRIP */}
-        {contract.unit && (
+        {profile?.unitNumber && (
           <div className="bg-white border border-[#F2DED4] rounded-2xl px-6 py-4 flex items-center gap-4 shadow-sm">
             <div className="p-2.5 bg-[#FDF2ED] text-[#D96648] rounded-xl shrink-0">
               <FaHome size={16} />
             </div>
             <div>
               <p className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest">Assigned Unit</p>
-              <p className="font-black text-[#330101]">
-                Unit {contract.unit.unit_number}
-                {contract.unit.floor ? ` — Floor ${contract.unit.floor}` : ""}
-              </p>
+              <p className="font-black text-[#330101]">Unit {profile.unitNumber}</p>
             </div>
           </div>
         )}
@@ -247,13 +249,13 @@ export default function ContractCards() {
 
 function StatTile({ icon, label, value, color, bg }) {
   return (
-    <div className="bg-white px-5 py-4 rounded-3xl border border-[#F2DED4] shadow-sm flex items-center gap-4">
-      <div className={`p-3 ${bg} ${color} rounded-2xl shrink-0`}>
+    <div className="bg-white px-4 sm:px-5 py-4 rounded-3xl border border-[#F2DED4] shadow-sm flex items-center gap-3 sm:gap-4">
+      <div className={`p-2.5 sm:p-3 ${bg} ${color} rounded-2xl shrink-0`}>
         {icon}
       </div>
       <div className="min-w-0">
         <p className="text-[9px] font-bold text-[#330101]/40 uppercase tracking-widest mb-1">{label}</p>
-        <h3 className="text-sm font-black text-[#330101] truncate">{value}</h3>
+        <h3 className="text-xs sm:text-sm font-black text-[#330101] truncate">{value}</h3>
       </div>
     </div>
   );

@@ -2,14 +2,28 @@ import { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import TenantSidebar from "../components/TenantSidebar.jsx";
 import UserHeader from "../components/Header.jsx";
-import Notification from "../components/Notification.jsx";
-
+import { useSocket } from "../context/SocketContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+import { getToken, setAuth } from "../api/authStorage.js";
 
 export default function TenantLayout() {
-  // Initialize state based on screen width
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const location = useLocation();
+  const socket = useSocket();
+  const { updateUser } = useAuth();
+
+  // Sync profile updates from socket → AuthContext (single socket, no duplicates)
+  useEffect(() => {
+    if (!socket) return;
+    const handler = (updated) => {
+      updateUser(updated);
+      // keep localStorage in sync too
+      setAuth(getToken(), updated, updated.role);
+    };
+    socket.on("profile_updated", handler);
+    return () => socket.off("profile_updated", handler);
+  }, [socket, updateUser]);
 
   // 1. Resize Listener: Auto-switch between "Mobile Drawer" and "Desktop Sidebar"
   useEffect(() => {

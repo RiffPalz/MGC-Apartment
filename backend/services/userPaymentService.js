@@ -175,7 +175,7 @@ export const uploadPaymentReceipt = async (
         userId,
         role: "tenant",
         action: "UPLOAD_PAYMENT_RECEIPT",
-        description: `Tenant uploaded receipt for payment ID ${payment.ID}`,
+        description: `You uploaded receipt for payment ID ${payment.ID}`,
         referenceId: payment.ID,
         referenceType: "payment"
     });

@@ -8,7 +8,7 @@ import {
 /* GET USER NOTIFICATIONS (Tenant) */
 export const getUserNotificationsController = async (req, res) => {
   try {
-    const userId = req.user?.ID || req.user?.id;
+    const userId = req.auth?.ID || req.auth?.id;
 
     if (!userId) {
       return res.status(401).json({
@@ -38,7 +38,7 @@ export const getUserNotificationsController = async (req, res) => {
 /* GET ROLE NOTIFICATIONS (Admin / Caretaker) */
 export const getRoleNotificationsController = async (req, res) => {
   try {
-    const role = req.user?.role;
+    const role = req.auth?.role;
 
     if (!role) {
       return res.status(401).json({
@@ -91,8 +91,8 @@ export const markNotificationAsReadController = async (req, res) => {
 /* MARK ALL USER NOTIFICATIONS AS READ */
 export const markAllNotificationsAsReadController = async (req, res) => {
   try {
-    const userId = req.user?.ID || req.user?.id;
-    const userRole = req.user?.role;
+    const userId = req.auth?.ID || req.auth?.id;
+    const userRole = req.auth?.role;
 
     if (!userId || !userRole) {
       return res.status(401).json({

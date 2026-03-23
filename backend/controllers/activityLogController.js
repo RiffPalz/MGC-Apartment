@@ -7,7 +7,7 @@ export const fetchActivityLogsController = async (req, res) => {
     const queryFilters = { ...req.query };
 
     // Logged-in user from auth middleware
-    const loggedInUser = req.user;
+    const loggedInUser = req.auth;
 
     // Restrict logs to the current user
     queryFilters.userId = loggedInUser.id;

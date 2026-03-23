@@ -78,6 +78,7 @@ export const getUserProfile = async (req, res) => {
         userName: user.userName,
         contactNumber: user.contactNumber,
         unitNumber: user.unitNumber,
+        numberOfTenants: user.numberOfTenants,
         role: user.role,
       },
     });
@@ -96,10 +97,15 @@ export const updateUserProfile = async (req, res) => {
   try {
     const user = await updateUserProfileService(req.auth.id, req.body);
 
-    emitEvent(req, "dataUpdated", {
-      type: "USER",
-      action: "UPDATED",
-      publicUserID: user.publicUserID,
+    emitEvent(req, "profile_updated", {
+      userId: user.ID,
+      fullName: user.fullName,
+      emailAddress: user.emailAddress,
+      userName: user.userName,
+      contactNumber: user.contactNumber,
+      unitNumber: user.unitNumber,
+      numberOfTenants: user.numberOfTenants,
+      role: user.role,
     });
 
     return res.status(200).json({
@@ -113,13 +119,13 @@ export const updateUserProfile = async (req, res) => {
         userName: user.userName,
         contactNumber: user.contactNumber,
         unitNumber: user.unitNumber,
+        numberOfTenants: user.numberOfTenants,
         role: user.role,
       },
     });
 
   } catch (error) {
     console.error("Update User Error:", error);
-
     return res.status(400).json({
       success: false,
       message: error.message

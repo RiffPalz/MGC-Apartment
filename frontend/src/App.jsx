@@ -1,6 +1,7 @@
 import MGCRouter from "./router/MGCRouter.jsx";
 import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; 
+import { Bounce } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
 
 function App() {
@@ -18,7 +19,7 @@ function App() {
         draggable
         pauseOnHover
         theme="light"
-        transition="bounce"
+        transition={Bounce}
       />
     </>
   );

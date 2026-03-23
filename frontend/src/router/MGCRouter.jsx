@@ -20,6 +20,7 @@ import TenantMaintenance from "../pages/TenantPage/Maintenance.jsx";
 import TenantContract from "../pages/TenantPage/Contract.jsx";
 import TenantPaymentHistory from "../pages/TenantPage/PaymentHistory.jsx";
 import TenantAccountSettings from "../pages/TenantPage/AccountSetting.jsx";
+import TenantActivityLogs from "../pages/TenantPage/ActivityLogs.jsx";
 
 // Admin Pages
 import AdminLayout from "../layout/AdminLayout.jsx";
@@ -72,6 +73,7 @@ export default function MGCRouter() {
                 <Route path="contract" element={<TenantContract />} />
                 <Route path="payment" element={<TenantPaymentHistory />} />
                 <Route path="myAccount" element={<TenantAccountSettings />} />
+                <Route path="activityLogs" element={<TenantActivityLogs />} />
               </Route>
             </Route>
 

@@ -49,8 +49,8 @@ export const createMaintenance = async (userId, data) => {
   await createActivityLog({
     userId,
     role: "tenant",
-    action: "CREATE_MAINTENANCE",
-    description: `Tenant created maintenance request: ${title}`,
+    action: "CREATE MAINTENANCE",
+    description: `You created maintenance request: ${title}`,
     referenceId: request.ID,
     referenceType: "maintenance"
   });

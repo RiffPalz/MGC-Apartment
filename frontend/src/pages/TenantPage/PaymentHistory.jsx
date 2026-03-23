@@ -123,9 +123,8 @@ export default function PaymenthisCards() {
           </div>
 
           {/* Filters */}
-          <div className="px-6 py-4 border-b border-[#F2DED4] flex flex-col sm:flex-row gap-3 flex-wrap">
-            {/* Search */}
-            <div className="relative flex-1 min-w-40">
+          <div className="px-6 py-4 border-b border-[#F2DED4] flex flex-col gap-3">
+            <div className="relative">
               <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#330101]/30" size={12} />
               <input
                 type="text"
@@ -135,32 +134,28 @@ export default function PaymenthisCards() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-
-            {/* Category filter */}
-            <select
-              className="bg-[#FFF9F6] border border-[#F2DED4] rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-[#f7b094] outline-none cursor-pointer"
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-            >
-              <option value="All">All Categories</option>
-              <option value="Rent">Rent</option>
-              <option value="Utilities">Utilities</option>
-            </select>
-
-            {/* Status filter */}
-            <select
-              className="bg-[#FFF9F6] border border-[#F2DED4] rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-[#f7b094] outline-none cursor-pointer"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="All">All Status</option>
-              <option value="Paid">Paid</option>
-              <option value="Pending Verification">Pending</option>
-              <option value="Unpaid">Unpaid</option>
-              <option value="Overdue">Overdue</option>
-            </select>
-
-            {/* Date range */}
+            <div className="flex gap-3">
+              <select
+                className="flex-1 bg-[#FFF9F6] border border-[#F2DED4] rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-[#f7b094] outline-none cursor-pointer"
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+              >
+                <option value="All">All Categories</option>
+                <option value="Rent">Rent</option>
+                <option value="Utilities">Utilities</option>
+              </select>
+              <select
+                className="flex-1 bg-[#FFF9F6] border border-[#F2DED4] rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-[#f7b094] outline-none cursor-pointer"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="All">All Status</option>
+                <option value="Paid">Paid</option>
+                <option value="Pending Verification">Pending</option>
+                <option value="Unpaid">Unpaid</option>
+                <option value="Overdue">Overdue</option>
+              </select>
+            </div>
           </div>
 
           {/* Table — desktop */}

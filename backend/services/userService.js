@@ -102,14 +102,25 @@ export const updateUserProfileService = async (userId, updateData) => {
   const user = await User.findByPk(userId);
   if (!user) throw new Error("User not found");
 
-  const { fullName, emailAddress, contactNumber } = updateData;
+  const { fullName, emailAddress, contactNumber, numberOfTenants, currentPassword, newPassword } = updateData;
 
   if (fullName) user.fullName = fullName;
-  if (contactNumber) user.contactNumber = contactNumber;
+  if (contactNumber !== undefined) user.contactNumber = contactNumber;
+  if (numberOfTenants !== undefined) user.numberOfTenants = numberOfTenants;
+
   if (emailAddress && emailAddress !== user.emailAddress) {
     const emailExists = await User.findOne({ where: { emailAddress } });
     if (emailExists) throw new Error("Email already in use");
     user.emailAddress = emailAddress;
+  }
+
+  // Password change
+  if (newPassword) {
+    if (!currentPassword) throw new Error("Current password is required");
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) throw new Error("Current password is incorrect");
+    if (newPassword.length < 6) throw new Error("New password must be at least 6 characters");
+    user.password_hash = newPassword; // beforeUpdate hook will hash it
   }
 
   await user.save();
@@ -117,8 +128,8 @@ export const updateUserProfileService = async (userId, updateData) => {
   await createActivityLog({
     userId: user.ID,
     role: user.role,
-    action: "UPDATE_PROFILE",
-    description: "Tenant updated their personal account information.",
+    action: "UPDATE PROFILE",
+    description: "You updated your personal account information.",
     referenceId: user.ID,
     referenceType: "user",
   });

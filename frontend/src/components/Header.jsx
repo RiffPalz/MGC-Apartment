@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FaBars } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import NotificationBell from "./Notification";
@@ -8,16 +8,18 @@ const PAGE_TITLES = {
   "/tenant/maintenance": { title: "Maintenance",   subtitle: "Submit and track repair requests" },
   "/tenant/contract":    { title: "My Contract",   subtitle: "View your lease agreement" },
   "/tenant/payment":     { title: "Payments",      subtitle: "Manage your bills and receipts" },
-  "/tenant/myAccount":   { title: "Profile",       subtitle: "Manage your account settings" },
+  "/tenant/myAccount":   { title: "Account Settings", subtitle: "Manage your account settings" },
+  "/tenant/activityLogs":{ title: "Activity Logs",    subtitle: "Track your recent account activity" },
   "/admin/dashboard":    { title: "Dashboard",     subtitle: "Admin overview" },
   "/caretaker/dashboard":{ title: "Dashboard",     subtitle: "Caretaker overview" },
 };
 
 const UserHeader = ({ onMenuClick }) => {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  if (loading || !user) {
+  if (!user) {
     return (
       <div className="bg-white/90 backdrop-blur-md sticky top-0 z-30 border-b border-[#F2DED4] px-5 py-3.5">
         <div className="flex items-center justify-between animate-pulse">
@@ -47,7 +49,7 @@ const UserHeader = ({ onMenuClick }) => {
 
   return (
     <div className="bg-white/90 backdrop-blur-md sticky top-0 z-30 border-b border-[#F2DED4] px-5 sm:px-6 py-3">
-      <div className="flex items-center justify-between gap-4">
+      <div className="relative flex items-center justify-between gap-4">
 
         {/* HAMBURGER — mobile only */}
         {onMenuClick && (
@@ -60,9 +62,9 @@ const UserHeader = ({ onMenuClick }) => {
           </button>
         )}
 
-        {/* LEFT: page title */}
-        <div className="min-w-0">
-          <h2 className="text-sm sm:text-base font-black text-[#330101] tracking-tight leading-tight truncate">
+        {/* CENTER: page title — absolutely centered */}
+        <div className="absolute left-1/2 -translate-x-1/2 text-center pointer-events-none">
+          <h2 className="text-sm sm:text-base font-black text-[#330101] tracking-tight leading-tight whitespace-nowrap">
             {pageTitle}
           </h2>
           {pageSub && (
@@ -73,12 +75,15 @@ const UserHeader = ({ onMenuClick }) => {
         </div>
 
         {/* RIGHT: notifications + avatar */}
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0 ml-auto">
           <NotificationBell userRole={user.role} />
 
           <div className="h-7 w-px bg-[#F2DED4] hidden sm:block" />
 
-          <div className="flex items-center gap-2.5 group cursor-pointer">
+          <div
+            className="flex items-center gap-2.5 group cursor-pointer"
+            onClick={() => user.role === "tenant" && navigate("/tenant/myAccount")}
+          >
             <div className="text-right hidden sm:block">
               <p className="text-[10px] font-black text-[#330101]/40 uppercase tracking-widest leading-none mb-0.5">
                 {user.role === "admin" ? "Admin" : user.role === "caretaker" ? "Caretaker" : "Tenant"}

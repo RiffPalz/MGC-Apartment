@@ -3,15 +3,13 @@ import logo from "../assets/images/logo.png";
 import {
   FaBars,
   FaMoneyCheckAlt,
-  FaUserCog,
   FaSignOutAlt,
   FaHome,
-  FaChevronLeft, // Added for the "Close/Collapse" state
+  FaChevronLeft,
+  FaHistory,
 } from "react-icons/fa";
 import { GrVmMaintenance } from "react-icons/gr";
 import { TbContract } from "react-icons/tb";
-
-// API
 import { logout } from "../api/authService";
 
 export default function TenantSidebar({ open = true, setOpen }) {
@@ -19,15 +17,11 @@ export default function TenantSidebar({ open = true, setOpen }) {
   const navigate = useNavigate();
 
   const menuItems = [
-    { name: "Dashboard", icon: <FaHome />, path: "/tenant/dashboard" },
-    {
-      name: "Maintenance",
-      icon: <GrVmMaintenance />,
-      path: "/tenant/maintenance",
-    },
-    { name: "My Contract", icon: <TbContract />, path: "/tenant/contract" },
-    { name: "Payments", icon: <FaMoneyCheckAlt />, path: "/tenant/payment" },
-    { name: "Profile", icon: <FaUserCog />, path: "/tenant/myAccount" },
+    { name: "Dashboard",    icon: <FaHome />,         path: "/tenant/dashboard" },
+    { name: "Maintenance",  icon: <GrVmMaintenance />, path: "/tenant/maintenance" },
+    { name: "My Contract",  icon: <TbContract />,      path: "/tenant/contract" },
+    { name: "Payments",     icon: <FaMoneyCheckAlt />, path: "/tenant/payment" },
+    { name: "Activity Logs",icon: <FaHistory />,       path: "/tenant/activityLogs" },
   ];
 
   const handleLogout = () => {

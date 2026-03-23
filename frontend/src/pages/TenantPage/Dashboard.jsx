@@ -17,11 +17,9 @@ import { fetchTenantProfile } from "../../api/tenantAPI/tenantAuth";
 import { fetchAnnouncements, fetchSingleAnnouncement } from "../../api/tenantAPI/AnnouncementAPI";
 import { fetchMyPayments, uploadReceipt } from "../../api/tenantAPI/PaymentAPI";
 import { fetchUserContracts } from "../../api/tenantAPI/ContractAPI";
-import { getUser } from "../../api/authStorage";
 
 export default function DashboardCards() {
-  const localUser = getUser();
-  const [profile, setProfile] = useState(localUser || null);
+  const [profile, setProfile] = useState(null);
   const [announcements, setAnnouncements] = useState({});
   const [bills, setBills] = useState({ rent: null, utilities: null });
   const [countdown, setCountdown] = useState("");
@@ -186,132 +184,69 @@ export default function DashboardCards() {
   };
 
   return (
-    <div className="bg-[#FFF9F6] w-full min-h-screen font-sans text-[#330101] px-4 sm:px-6 md:px-12 py-6 md:py-8 lg:py-10">
-      <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
+    <div className="bg-[#FFF9F6] w-full min-h-screen font-sans text-[#330101] px-4 sm:px-6 py-5 sm:py-8">
+      <div className="max-w-[1600px] mx-auto space-y-5">
         {/* MAIN GRID */}
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 md:gap-6 flex-1 min-h-0">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-5">
           {/* LEFT CONTENT (8 cols) */}
-          <div className="lg:col-span-8 flex flex-col gap-5 h-auto lg:h-[800px] pr-0 lg:pr-2 mb-4 lg:mb-0">
+          <div className="lg:col-span-8 flex flex-col gap-4">
             {/* TOP STATS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <StatCard
-                icon={<FaHome />}
-                label="Unit Assigned"
-                value={profile?.unitNumber || "---"}
-                color="text-[#D96648]"
-                bg="bg-[#FDF2ED]"
-              />
-              <StatCard
-                icon={<FaUsers />}
-                label="Residents"
-                value={profile?.numberOfTenants || "1"}
-                color="text-[#330101]"
-                bg="bg-[#F5E6E0]"
-              />
-              <StatCard
-                icon={<FaReceipt />}
-                label="Active Bills"
-                value={
-                  Object.values(bills).filter((b) => b && b.status !== "Paid")
-                    .length
-                }
-                color="text-amber-600"
-                bg="bg-amber-50"
-              />
+            <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              <StatCard icon={<FaHome />}    label="Unit"        value={profile?.unitNumber ?? "---"}  color="text-[#D96648]"  bg="bg-[#FDF2ED]" />
+              <StatCard icon={<FaUsers />}   label="Residents"   value={profile?.numberOfTenants ?? "---"} color="text-[#330101]" bg="bg-[#F5E6E0]" />
+              <StatCard icon={<FaReceipt />} label="Active Bills" value={Object.values(bills).filter((b) => b && b.status !== "Paid").length} color="text-amber-600" bg="bg-amber-50" />
             </div>
 
             {/* BILLS SECTION */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
-              <PaymentCard
-                title="Monthly Rent"
-                bill={bills.rent}
-                onUpload={(e) => {
-                  setSelectedFile(e.target.files[0]);
-                  setUploadModal({
-                    isOpen: true,
-                    paymentId: bills.rent?.id || bills.rent?.ID,
-                    billName: "Rent",
-                  });
-                }}
-              />
-              <PaymentCard
-                title="Utilities (Electricity & Water)"
-                bill={bills.utilities}
-                onUpload={(e) => {
-                  setSelectedFile(e.target.files[0]);
-                  setUploadModal({
-                    isOpen: true,
-                    paymentId: bills.utilities?.id || bills.utilities?.ID,
-                    billName: "Utilities",
-                  });
-                }}
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <PaymentCard title="Monthly Rent" bill={bills.rent}
+                onUpload={(e) => { setSelectedFile(e.target.files[0]); setUploadModal({ isOpen: true, paymentId: bills.rent?.id || bills.rent?.ID, billName: "Rent" }); }} />
+              <PaymentCard title="Utilities (Electricity & Water)" bill={bills.utilities}
+                onUpload={(e) => { setSelectedFile(e.target.files[0]); setUploadModal({ isOpen: true, paymentId: bills.utilities?.id || bills.utilities?.ID, billName: "Utilities" }); }} />
             </div>
 
-            {/* CONTRACT COUNTDOWN SECTION */}
-            <div className="bg-white px-8 py-6 rounded-3xl shadow-sm border border-[#F2DED4] flex-1 flex items-center min-h-[100px]">
-              <div className="flex items-center gap-5 w-full">
-                <div className="p-4 bg-[#FDF2ED] text-[#D96648] rounded-2xl shrink-0">
-                  <FaCalendarAlt size={22} />
+            {/* CONTRACT COUNTDOWN */}
+            <div className="bg-white px-5 sm:px-8 py-5 rounded-3xl shadow-sm border border-[#F2DED4] flex items-center">
+              <div className="flex items-center gap-4 w-full">
+                <div className="p-3.5 bg-[#FDF2ED] text-[#D96648] rounded-2xl shrink-0">
+                  <FaCalendarAlt size={20} />
                 </div>
-                <div>
-                  <p className="text-[#330101]/40 text-[10px] font-bold uppercase tracking-widest mb-1">
-                    Contract Ends In
-                  </p>
-                  <h3 className="text-xl font-black text-[#330101]">{countdown}</h3>
+                <div className="min-w-0">
+                  <p className="text-[#330101]/40 text-[10px] font-bold uppercase tracking-widest mb-1">Contract Ends In</p>
+                  <h3 className="text-base sm:text-xl font-black text-[#330101] truncate">{countdown}</h3>
                 </div>
               </div>
             </div>
-
           </div>
 
           {/* RIGHT: Announcements (4 cols) */}
-          <div className="lg:col-span-4 h-full">
-            <div className="bg-[#7a2e1a] rounded-3xl lg:rounded-[2.5rem] p-4 sm:p-7 text-[#FFEDE1] shadow-2xl h-[350px] sm:h-[500px] lg:h-[800px] flex flex-col relative overflow-hidden">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="flex items-center gap-3 font-bold text-lg">
+          <div className="lg:col-span-4">
+            <div className="bg-[#7a2e1a] rounded-3xl p-5 sm:p-7 text-[#FFEDE1] shadow-2xl flex flex-col relative overflow-hidden" style={{ minHeight: "320px", height: "100%" }}>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="flex items-center gap-2 font-bold text-base">
                   <FaBullhorn className="text-[#f7b094]" /> Announcements
                 </h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleCategorySwitch("prev")}
-                    className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full transition"
-                  >
+                <div className="flex gap-1">
+                  <button onClick={() => handleCategorySwitch("prev")} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full transition">
                     <FaChevronLeft size={12} />
                   </button>
-                  <button
-                    onClick={() => handleCategorySwitch("next")}
-                    className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full transition"
-                  >
+                  <button onClick={() => handleCategorySwitch("next")} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full transition">
                     <FaChevronRight size={12} />
                   </button>
                 </div>
               </div>
-
-              <p className="text-[10px] font-bold text-[#f7b094] uppercase tracking-[2px] mb-4">
-                {currentCategory} Updates
-              </p>
-
-              <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[600px]">
+              <p className="text-[10px] font-bold text-[#f7b094] uppercase tracking-[2px] mb-4">{currentCategory} Updates</p>
+              <div className="space-y-3 flex-1 overflow-y-auto pr-1 custom-scrollbar">
                 {currentMessages.length > 0 ? (
                   currentMessages.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => handleAnnouncementClick(item.id)}
-                      className="bg-white/5 border border-white/10 p-5 rounded-2xl transition-all group cursor-pointer hover:bg-white/10"
-                    >
-                      <p className="text-sm leading-relaxed mb-3 group-hover:text-white">
-                        {item.message}
-                      </p>
-                      <span className="text-[10px] text-white/30 font-bold uppercase">
-                        {item.date}
-                      </span>
+                    <div key={item.id} onClick={() => handleAnnouncementClick(item.id)}
+                      className="bg-white/5 border border-white/10 p-4 rounded-2xl transition-all group cursor-pointer hover:bg-white/10">
+                      <p className="text-sm leading-relaxed mb-2 group-hover:text-white">{item.message}</p>
+                      <span className="text-[10px] text-white/30 font-bold uppercase">{item.date}</span>
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-20 text-white/20 text-sm">
-                    No updates found.
-                  </div>
+                  <div className="text-center py-12 text-white/20 text-sm">No updates found.</div>
                 )}
               </div>
             </div>
@@ -482,15 +417,15 @@ export default function DashboardCards() {
 // Sub-components - MODIFIED FOR PADDING
 function StatCard({ icon, label, value, color, bg }) {
   return (
-    <div className="bg-white px-6 py-5 rounded-3xl shadow-sm border border-[#F2DED4] flex items-center gap-5 transition-all hover:-translate-y-1 hover:shadow-md">
-      <div className={`p-3.5 ${bg} ${color} rounded-2xl shrink-0`}>
-        {React.cloneElement(icon, { size: 22 })}
+    <div className="bg-white px-4 sm:px-6 py-4 sm:py-5 rounded-3xl shadow-sm border border-[#F2DED4] flex items-center gap-3 sm:gap-5 transition-all hover:-translate-y-1 hover:shadow-md">
+      <div className={`p-2.5 sm:p-3.5 ${bg} ${color} rounded-2xl shrink-0`}>
+        {React.cloneElement(icon, { size: 18 })}
       </div>
-      <div>
-        <p className="text-[#330101]/40 text-[9px] font-bold uppercase tracking-widest mb-1">
+      <div className="min-w-0">
+        <p className="text-[#330101]/40 text-[8px] sm:text-[9px] font-bold uppercase tracking-widest mb-0.5 truncate">
           {label}
         </p>
-        <h3 className="text-2xl font-black text-[#330101] leading-none">{value}</h3>
+        <h3 className="text-xl sm:text-2xl font-black text-[#330101] leading-none">{value}</h3>
       </div>
     </div>
   );
