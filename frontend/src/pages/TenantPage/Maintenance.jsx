@@ -11,6 +11,7 @@ import { useSocket } from "../../context/SocketContext";
 import {
   submitMaintenanceRequest,
   fetchMyMaintenanceHistory,
+  followUpMaintenanceRequest,
 } from "../../api/tenantAPI/maintenanceAPI";
 
 const CATEGORIES = [
@@ -30,6 +31,7 @@ function MaintenanceCards() {
   const [isLoading, setIsLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [followedUp, setFollowedUp] = useState([]);
+  const [followingUpId, setFollowingUpId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => { loadMaintenanceHistory(); }, []);
@@ -190,7 +192,7 @@ function MaintenanceCards() {
                   maintenanceRequests.map((item, index) => {
                     const style = getStatusStyle(item.status);
                     const isCompleted = item.status === "Done";
-                    const isFollowedUp = followedUp.includes(index);
+                    const isFollowedUp = followedUp.includes(item.id) || item.followedUp;
 
                     return (
                       <div
@@ -231,15 +233,34 @@ function MaintenanceCards() {
                               </p>
                             </div>
                             <button
-                              disabled={isCompleted || isFollowedUp}
+                              disabled={isCompleted || isFollowedUp || item.followedUp || followingUpId === item.id}
                               className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                isCompleted || isFollowedUp
+                                isCompleted || isFollowedUp || item.followedUp
                                   ? "bg-white/5 text-white/20 cursor-not-allowed"
                                   : "bg-[#f7b094] text-[#330101] hover:scale-105 active:scale-95 shadow-md"
                               }`}
-                              onClick={() => setFollowedUp([...followedUp, index])}
+                              onClick={async () => {
+                                if (!item.id) return;
+                                setFollowingUpId(item.id);
+                                try {
+                                  await followUpMaintenanceRequest(item.id);
+                                  setFollowedUp([...followedUp, item.id]);
+                                  await loadMaintenanceHistory(true);
+                                } catch {
+                                  // silently fail — already followed up
+                                  setFollowedUp([...followedUp, item.id]);
+                                } finally {
+                                  setFollowingUpId(null);
+                                }
+                              }}
                             >
-                              {isCompleted ? "Completed" : isFollowedUp ? "Notified" : "Follow Up"}
+                              {isCompleted
+                                ? "Completed"
+                                : (isFollowedUp || item.followedUp)
+                                  ? "Notified ✓"
+                                  : followingUpId === item.id
+                                    ? "Sending..."
+                                    : "Follow Up"}
                             </button>
                           </div>
                         </div>

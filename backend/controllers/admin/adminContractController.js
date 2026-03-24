@@ -12,17 +12,16 @@ import {
 export const createContractAdmin = async (req, res) => {
     try {
         const adminId = req.admin?.id || req.auth?.id;
+        const { unit_id } = req.params;
         const { 
-            unit_id, 
             rent_amount, 
             start_date, 
             end_date, status, 
             tenancy_rules, 
             termination_renewal_conditions, 
-            tenantIds 
         } = req.body;
 
-        const contract_file = req.file ? req.file.path : null;
+        const contract_file = req.file ? (req.file.secure_url || req.file.path) : null;
 
         const contract = await createContractByAdmin({
             unit_id,
@@ -32,9 +31,8 @@ export const createContractAdmin = async (req, res) => {
             status,
             tenancy_rules,
             termination_renewal_conditions,
-            tenantIds: JSON.parse(tenantIds),
             contract_file,
-        }, adminId); // Pass Admin ID
+        }, adminId);
 
         return res.status(201).json({ 
             success: true,
@@ -80,7 +78,7 @@ export const renewContractAdmin = async (req, res) => {
         const { id } = req.params;
         const adminId = req.admin?.id || req.auth?.id;
         const { newStartDate, newEndDate } = req.body;
-        const contract_file = req.file ? req.file.path : null;
+        const contract_file = req.file ? (req.file.secure_url || req.file.path) : null;
 
         const newContract = await renewContract({
             oldContractId: id,
@@ -111,7 +109,7 @@ export const editContractAdmin = async (req, res) => {
         const adminId = req.admin?.id || req.auth?.id;
         const updates = { ...req.body };
 
-        if (req.file) updates.contract_file = req.file.path;
+        if (req.file) updates.contract_file = req.file.secure_url || req.file.path;
 
         const updatedContract = await editContract(id, updates, adminId); // Pass Admin ID
 

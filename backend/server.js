@@ -163,7 +163,9 @@ const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, async () => {
   try {
     await connectDB();
+    console.log("🔧 Beginning database synchronization...");
     await sequelize.sync();
+    console.log("✅ Database synchronized successfully");
     await runSeeders();
     startSystemCron();
 
@@ -171,6 +173,7 @@ httpServer.listen(PORT, async () => {
     console.log(`🔌 WebSocket ready for real-time notifications`);
   } catch (error) {
     console.error("❌ Server startup failed:", error.message);
+    console.error("💾 Error details:", error);
     process.exit(1);
   }
 });

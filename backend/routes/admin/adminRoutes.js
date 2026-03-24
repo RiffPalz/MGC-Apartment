@@ -14,6 +14,7 @@ import {
   updateUserApproval,
   getTenantsOverview,
   getTenantProfile,
+  getApprovedTenantsNoContract,
 } from "../../controllers/admin/adminControllers.js";
 
 const adminRouter = express.Router();
@@ -34,6 +35,7 @@ adminRouter.delete("/users/:userId", adminAuth, deleteUser);
 
 /* TENANT MANAGEMENT */
 adminRouter.get("/users/pending", adminAuth, getPendingUsers);
+adminRouter.get("/users/approved-no-contract", adminAuth, getApprovedTenantsNoContract);
 adminRouter.patch("/users/:userId/approval", adminAuth, updateUserApproval);
 adminRouter.get("/tenants/overview", adminAuth, getTenantsOverview);
 adminRouter.get("/tenants/:id", adminAuth, getTenantProfile);

@@ -6,6 +6,12 @@ export const fetchTenantsOverview = async () => {
   return response.data;
 };
 
+/** GET approved tenants with no active contract (for new contract creation) */
+export const fetchApprovedTenantsNoContract = async () => {
+  const response = await api.get("/admin/users/approved-no-contract");
+  return response.data;
+};
+
 /** POST create a new tenant */
 export const createTenant = async (payload) => {
   const response = await api.post("/admin/tenants", payload);

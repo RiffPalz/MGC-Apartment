@@ -18,9 +18,10 @@ const storage = new CloudinaryStorage({
 
     return {
       folder: `MGC-Building/contracts/unit_${unitId}`,
-      resource_type: "auto",
+      resource_type: "raw",
       allowed_formats: ["pdf"],
-      public_id: `contract_${date}_${Date.now()}`
+      public_id: `contract_${date}_${Date.now()}`,
+      type: "upload"
     };
   }
 });

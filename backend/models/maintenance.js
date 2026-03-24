@@ -62,6 +62,12 @@ const Maintenance = sequelize.define(
       allowNull: false,
       defaultValue: "Pending",
     },
+
+    followedUp: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
   },
   {
     tableName: "maintenance_requests",

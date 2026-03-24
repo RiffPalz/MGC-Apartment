@@ -65,6 +65,49 @@ export const createMaintenance = async (userId, data) => {
 };
 
 /**
+ * FOLLOW UP ON MAINTENANCE REQUEST (Tenant)
+ */
+export const followUpMaintenance = async (userId, maintenanceId) => {
+  const request = await Maintenance.findOne({ where: { ID: maintenanceId, userId } });
+  if (!request) throw new Error("Maintenance request not found");
+  if (request.status === "Done") throw new Error("Cannot follow up on a completed request");
+
+  request.followedUp = true;
+  await request.save();
+
+  // Notify admin
+  await createNotification({
+    role: "admin",
+    type: "maintenance_followup",
+    title: "Follow-Up Reminder",
+    message: `Tenant sent a follow-up on: ${request.title}`,
+    referenceId: request.ID,
+    referenceType: "maintenance",
+  });
+
+  // Notify caretaker
+  await createNotification({
+    role: "caretaker",
+    type: "maintenance_followup",
+    title: "Follow-Up Reminder",
+    message: `Tenant sent a follow-up on: ${request.title}`,
+    referenceId: request.ID,
+    referenceType: "maintenance",
+  });
+
+  await createActivityLog({
+    userId,
+    role: "tenant",
+    action: "FOLLOWUP_MAINTENANCE",
+    description: `Tenant followed up on maintenance request: ${request.title}`,
+    referenceId: request.ID,
+    referenceType: "maintenance",
+  });
+
+  return { message: "Follow-up sent successfully" };
+};
+
+/**
  * GET TENANT MAINTENANCE REQUESTS
  */
 export const getTenantMaintenance = async (userId) => {
@@ -81,5 +124,6 @@ export const getTenantMaintenance = async (userId) => {
     startDate: item.startDate,
     endDate: item.endDate,
     status: item.status,
+    followedUp: item.followedUp,
   }));
 };

@@ -3,6 +3,7 @@ import { authenticate, authorize } from "../middleware/auth.js";
 import {
     createMaintenanceRequest,
     getMyMaintenanceRequests,
+    followUpMaintenanceRequest,
 } from "../controllers/userMaintenanceController.js";
 
 const router = express.Router();
@@ -21,6 +22,14 @@ router.get(
     authenticate,
     authorize("tenant"),
     getMyMaintenanceRequests
+);
+
+// Follow up on a request
+router.patch(
+    "/:id/followup",
+    authenticate,
+    authorize("tenant"),
+    followUpMaintenanceRequest
 );
 
 export default router;

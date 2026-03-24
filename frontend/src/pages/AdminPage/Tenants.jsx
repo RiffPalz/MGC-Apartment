@@ -5,7 +5,7 @@ import {
   FaFileContract
 } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { fetchTenantsOverview, deleteTenant } from "../../api/adminAPI/tenantOverviewAPI";
+import { fetchTenantsOverview, deleteTenant } from "../../api/adminAPI/TenantOverviewAPI";
 import logo from "../../assets/images/logo.png";
 
 const PAGE_SIZE = 10;
@@ -248,7 +248,7 @@ export default function AdminTenants() {
                   <th className="px-5 py-4 font-bold">Unit</th>
                   <th className="px-5 py-4 font-bold">Tenant Profile</th>
                   <th className="px-5 py-4 font-bold">Contact</th>
-                  <th className="px-5 py-4 font-bold text-center">Pax</th>
+                  <th className="px-5 py-4 font-bold text-center">Occupancy</th>
                   <th className="px-5 py-4 font-bold">Lease Period</th>
                   <th className="px-5 py-4 font-bold">Status</th>
                   <th className="px-5 py-4 font-bold text-right">Actions</th>

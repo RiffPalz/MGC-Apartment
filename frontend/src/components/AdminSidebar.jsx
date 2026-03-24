@@ -34,7 +34,7 @@ export default function AdminSidebar({ open = true, setOpen }) {
     { name: "Announcement", icon: <GrAnnounce />, path: "/admin/announcement" },
     { name: "Contract", icon: <TbContract />, path: "/admin/contract" },
     {
-      name: "Payment History",
+      name: "Payment Overview",
       icon: <FaMoneyCheckAlt />,
       path: "/admin/payments",
     },

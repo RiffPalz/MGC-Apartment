@@ -266,6 +266,39 @@ export const getTenantProfile = async (req, res) => {
   }
 };
 
+/* GET APPROVED TENANTS WITHOUT ACTIVE CONTRACT */
+export const getApprovedTenantsNoContract = async (req, res) => {
+  try {
+    const tenants = await User.findAll({
+      where: { role: "tenant", status: "Approved" },
+      include: [{
+        model: Contract,
+        as: "contracts",
+        where: { status: "Active" },
+        required: false,
+      }],
+      order: [["created_at", "DESC"]],
+    });
+
+    // Only those with no active contract
+    const result = tenants
+      .filter((t) => !t.contracts || t.contracts.length === 0)
+      .map((t) => ({
+        ID: t.ID,
+        fullName: t.fullName,
+        emailAddress: t.emailAddress,
+        contactNumber: t.contactNumber,
+        unitNumber: t.unitNumber,
+        userName: t.userName,
+        publicUserID: t.publicUserID,
+      }));
+
+    return res.status(200).json({ success: true, tenants: result });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to fetch tenants" });
+  }
+};
+
 /* GET PENDING TENANTS */
 export const getPendingUsers = async (req, res) => {
   try {

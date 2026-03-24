@@ -4,6 +4,7 @@ import {
   updateAnnouncement,
   deleteAnnouncement,
 } from "../../services/admin/adminAnnouncementService.js";
+import { createNotification } from "../../services/notificationService.js";
 
 /* CREATE ANNOUNCEMENT */
 export const createAnnouncementController = async (req, res) => {
@@ -19,7 +20,24 @@ export const createAnnouncementController = async (req, res) => {
     });
 
     const io = req.app.get("io");
+
+    // Broadcast the announcement to all connected clients
     io.emit("newAnnouncement", announcement);
+
+    // Push a real-time notification to all tenants in the tenant room
+    const notificationPayload = {
+      ID: null,
+      user_id: null,
+      role: "tenant",
+      type: "announcement",
+      title: announcementTitle,
+      message: announcementMessage,
+      reference_id: announcement.ID,
+      reference_type: "announcement",
+      is_read: false,
+      created_at: new Date().toISOString(),
+    };
+    io.to("tenant").emit("new_notification", notificationPayload);
 
     return res
       .status(201)

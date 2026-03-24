@@ -59,7 +59,6 @@ export const approveMaintenance = async (maintenanceId, adminId) => {
   if (request.status !== "Pending") throw new Error("Only pending requests can be approved");
 
   request.status = "Approved";
-  request.startDate = new Date();
   await request.save();
 
   // Notify parties
@@ -103,11 +102,34 @@ export const updateMaintenance = async (maintenanceId, data, adminId) => {
 
   const allowedStatuses = ["Pending", "Approved", "In Progress", "Done"];
   if (status && !allowedStatuses.includes(status)) throw new Error("Invalid status value");
-  if (startDate && endDate && new Date(endDate) < new Date(startDate)) throw new Error("End date must be later than start date");
 
-  if (status) request.status = status;
-  if (startDate) request.startDate = startDate;
-  if (endDate) request.endDate = endDate;
+  const now = new Date();
+
+  if (status) {
+    request.status = status;
+
+    // Auto-set start date when moving to In Progress
+    if (status === "In Progress" && !request.startDate) {
+      request.startDate = startDate || now;
+    }
+
+    // Auto-set end date when marking Done
+    if (status === "Done") {
+      // If no start date yet (jumped straight from Pending → Done), set both
+      if (!request.startDate) {
+        request.startDate = startDate || now;
+      }
+      request.endDate = endDate || now;
+    }
+  }
+
+  // Allow manual overrides if explicitly passed
+  if (startDate && status !== "In Progress" && status !== "Done") request.startDate = startDate;
+  if (endDate && status !== "Done") request.endDate = endDate;
+
+  if (startDate && endDate && new Date(endDate) < new Date(startDate))
+    throw new Error("End date must be later than start date");
+
   await request.save();
 
   // Notify tenant and caretakers
@@ -160,6 +182,7 @@ export const getAllMaintenance = async () => {
     category: item.category,
     description: item.description,
     status: item.status,
+    followedUp: item.followedUp,
     requestedDate: item.dateRequested,
     startDate: item.startDate,
     endDate: item.endDate,
