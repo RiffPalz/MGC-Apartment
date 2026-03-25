@@ -39,14 +39,14 @@ export default function AdminSidebar({ open = true, setOpen }) {
       path: "/admin/payments",
     },
     {
-      name: "Application Requests",
-      icon: <VscGitStashApply />,
-      path: "/admin/applicationrequest",
-    },
-    {
       name: "Account Approval",
       icon: <MdSwitchAccount />,
       path: "/admin/approvalpage",
+    },
+    {
+      name: "Application Requests",
+      icon: <VscGitStashApply />,
+      path: "/admin/applicationrequest",
     },
     { name: "Settings", icon: <FaCog />, path: "/admin/settings" },
   ];

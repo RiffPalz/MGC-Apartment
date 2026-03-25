@@ -15,6 +15,7 @@ import {
   getTenantsOverview,
   getTenantProfile,
   getApprovedTenantsNoContract,
+  getStaffUsers,
 } from "../../controllers/admin/adminControllers.js";
 
 const adminRouter = express.Router();
@@ -31,6 +32,7 @@ adminRouter.patch("/profile/update", adminAuth, saveAdminProfile);
 /* USER MANAGEMENT */
 adminRouter.post("/caretaker", adminAuth, createCaretaker);
 adminRouter.post("/admin", adminAuth, createAdmin);
+adminRouter.get("/staff", adminAuth, getStaffUsers);
 adminRouter.delete("/users/:userId", adminAuth, deleteUser);
 
 /* TENANT MANAGEMENT */

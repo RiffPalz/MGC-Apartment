@@ -34,6 +34,7 @@ import AdminPayment from "../pages/AdminPage/Payment.jsx";
 import AdminApplicationRequest from "../pages/AdminPage/ApplicationRequest.jsx";
 import AdminTenantProfile from "../pages/AdminPage/TenantProfile.jsx";
 import AdminAccountApproval from "../pages/AdminPage/AccountApproval.jsx";
+import AdminSettings from "../pages/AdminPage/Settings.jsx";
 
 
 // Redirect login based on role
@@ -100,6 +101,7 @@ export default function MGCRouter() {
                 <Route path="applicationrequest" element={<AdminApplicationRequest />} />
                 <Route path="approvalpage"       element={<AdminAccountApproval />} />
                 <Route path="tenants/:id" element={<AdminTenantProfile />} />
+                <Route path="settings"           element={<AdminSettings />} />
               </Route>
             </Route>
 

@@ -13,6 +13,7 @@ import {
 } from "../../services/admin/adminService.js";
 
 import User from "../../models/user.js";
+import { Op } from "sequelize";
 import Contract from "../../models/contract.js";
 import Unit from "../../models/unit.js";
 import { emitEvent } from "../../utils/emitEvent.js";
@@ -296,6 +297,20 @@ export const getApprovedTenantsNoContract = async (req, res) => {
     return res.status(200).json({ success: true, tenants: result });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Failed to fetch tenants" });
+  }
+};
+
+/* GET STAFF (admins + caretakers) */
+export const getStaffUsers = async (req, res) => {
+  try {
+    const staff = await User.findAll({
+      where: { role: ["admin", "caretaker"] },
+      attributes: ["ID", "publicUserID", "fullName", "emailAddress", "userName", "contactNumber", "role", "status", "created_at"],
+      order: [["created_at", "DESC"]],
+    });
+    return res.status(200).json({ success: true, staff });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to fetch staff" });
   }
 };
 
