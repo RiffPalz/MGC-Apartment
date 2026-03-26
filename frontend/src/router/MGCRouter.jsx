@@ -39,6 +39,13 @@ import AdminActivityLogs from "../pages/AdminPage/ActivityLogs.jsx";
 import AdminProfile from "../pages/AdminPage/Profile.jsx";
 
 
+// Caretaker Pages
+import CaretakerLayout from "../layout/CaretakerLayout.jsx";
+import CaretakerDashboard from "../pages/CaretakerPage/Dashboard.jsx";
+import CaretakerMaintenance from "../pages/CaretakerPage/Maintenance.jsx";
+import CaretakerTenantOverview from "../pages/CaretakerPage/TenantOverview.jsx";
+import CaretakerPaymentOverview from "../pages/CaretakerPage/PaymentOverview.jsx";
+
 // Redirect login based on role
 const LoginRedirect = () => {
   const token = getToken();
@@ -109,14 +116,16 @@ export default function MGCRouter() {
               </Route>
             </Route>
 
-            {/* Caretaker Routes (future) */}
-            {/*
+            {/* Caretaker Protected Routes */}
             <Route element={<PrivateRoute allowedRoles={["caretaker"]} />}>
               <Route path="/caretaker" element={<CaretakerLayout />}>
-                <Route path="dashboard" element={<CaretakerDashboard />} />
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard"   element={<CaretakerDashboard />} />
+                <Route path="maintenance" element={<CaretakerMaintenance />} />
+                <Route path="tenants"     element={<CaretakerTenantOverview />} />
+                <Route path="payments"    element={<CaretakerPaymentOverview />} />
               </Route>
             </Route>
-            */}
           </Routes>
         </SocketProvider>
       </AuthProvider>

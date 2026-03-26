@@ -79,3 +79,17 @@ export const verifyPaymentController = async (req, res) => {
 
     }
 };
+
+// Delete a payment record
+export const deletePaymentController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const Payment = (await import("../../models/payment.js")).default;
+    const payment = await Payment.findByPk(id);
+    if (!payment) return res.status(404).json({ success: false, message: "Payment not found" });
+    await payment.destroy();
+    return res.status(200).json({ success: true, message: "Payment deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};

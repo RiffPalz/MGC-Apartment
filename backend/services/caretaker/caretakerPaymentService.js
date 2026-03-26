@@ -24,7 +24,7 @@ export const getAllPayments = async () => {
                     {
                         model: User,
                         as: "tenants",
-                        attributes: ["ID", "fullName", "publicUserID"],
+                        attributes: ["ID", "fullName", "publicUserID", "contactNumber"],
                         through: { attributes: [] }
                     }
                 ]
@@ -55,7 +55,7 @@ export const getPendingPayments = async () => {
                     {
                         model: User,
                         as: "tenants",
-                        attributes: ["ID", "fullName"],
+                        attributes: ["ID", "fullName", "contactNumber"],
                         through: { attributes: [] }
                     }
                 ]

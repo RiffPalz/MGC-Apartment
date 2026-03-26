@@ -3,16 +3,17 @@ import {
   loginCaretaker,
   fetchCaretakerProfile,
   saveCaretakerProfile,
+  getTenantsOverviewCaretaker,
+  getUnitsCaretaker,
 } from "../../controllers/caretaker/caretakerController.js";
 import caretakerAuth from "../../middleware/caretakerAuth.js";
 
 const caretakerRouter = express.Router();
 
-// Login endpoint
 caretakerRouter.post("/login", loginCaretaker);
-
-// Profile endpoints (protected by caretakerAuth middleware)
-caretakerRouter.get("/profile", caretakerAuth, fetchCaretakerProfile);
+caretakerRouter.get("/profile",        caretakerAuth, fetchCaretakerProfile);
 caretakerRouter.patch("/profile/update", caretakerAuth, saveCaretakerProfile);
+caretakerRouter.get("/tenants",        caretakerAuth, getTenantsOverviewCaretaker);
+caretakerRouter.get("/units",          caretakerAuth, getUnitsCaretaker);
 
 export default caretakerRouter;

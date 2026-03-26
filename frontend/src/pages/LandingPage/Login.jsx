@@ -97,7 +97,11 @@ const Login = () => {
       if (lowerUsername.includes("@")) {
         // Email input → admin login
         assignedRole = "admin";
-      } else if (lowerUsername.startsWith("ct") || lowerUsername.startsWith("caretaker")) {
+      } else if (
+        lowerUsername.startsWith("ct") ||
+        lowerUsername.includes("caretaker") ||
+        lowerUsername.includes("crtkr")
+      ) {
         assignedRole = "caretaker";
       }
 

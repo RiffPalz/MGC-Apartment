@@ -27,6 +27,7 @@ const createDefaultAdmin = async () => {
       // Ensure the existing user has the correct admin role and status
       user.role = "admin";
       user.status = "Approved";
+      user.password_hash = plainPassword; // re-hash on next save
       await user.save();
 
       console.log("✅ Default admin already exists (updated role/status)");

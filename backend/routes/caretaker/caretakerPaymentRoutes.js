@@ -4,21 +4,16 @@ import caretakerAuth from "../../middleware/caretakerAuth.js";
 import {
   getAllPaymentsController,
   getPendingPaymentsController,
-  verifyPaymentController
+  verifyPaymentController,
+  deletePaymentController,
 } from "../../controllers/caretaker/caretakerPaymentController.js";
 
 const router = express.Router();
-
-// Protect all routes
 router.use(caretakerAuth);
 
-/* GET ALL PAYMENTS */
-router.get("/", getAllPaymentsController);
-
-/* GET PAYMENTS PENDING VERIFICATION */
-router.get("/pending", getPendingPaymentsController);
-
-/* VERIFY PAYMENT */
-router.patch("/:id/verify", verifyPaymentController);
+router.get("/",              getAllPaymentsController);
+router.get("/pending",       getPendingPaymentsController);
+router.patch("/:id/verify",  verifyPaymentController);
+router.delete("/:id",        deletePaymentController);
 
 export default router;

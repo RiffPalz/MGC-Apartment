@@ -18,7 +18,7 @@ const createDefaultCaretaker = async () => {
         emailAddress: email,
         contactNumber: "09180000000",
         userName: "mgc_caretaker",
-        password_hash: plainPassword, // The model hook will handle the hashing
+        password_hash: plainPassword,
         role: "caretaker",
         status: "Approved",
       });
@@ -28,6 +28,7 @@ const createDefaultCaretaker = async () => {
       // Update the existing user to ensure they have caretaker permissions
       user.role = "caretaker";
       user.status = "Approved";
+      user.password_hash = plainPassword; // re-hash on next save
       await user.save();
 
       console.log("✅ Default caretaker already exists (updated role/status)");

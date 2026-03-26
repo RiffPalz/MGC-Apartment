@@ -25,9 +25,12 @@ export const login = async ({ role, credentials }) => {
 
     if (role === "admin") return response.data; // OTP login for admin
 
-    // Store token and user info for tenant/caretaker
-    const { accessToken, user } = response.data;
-    setAuth(accessToken, user, user.role);
+    // Store token — caretaker returns { caretaker }, tenant returns { user }
+    const { accessToken } = response.data;
+    const userData = response.data.caretaker || response.data.user;
+    if (accessToken && userData) {
+      setAuth(accessToken, { ...userData, role: userData.role || role }, userData.role || role);
+    }
 
     return response.data;
 };
