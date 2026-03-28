@@ -6,6 +6,7 @@ import {
   FaUserCheck, FaChartLine, FaFileAlt, FaEnvelope,
 } from "react-icons/fa";
 import { MdPendingActions } from "react-icons/md";
+import { MdApartment } from "react-icons/md";
 import {
   Chart as ChartJS,
   CategoryScale, LinearScale,
@@ -38,19 +39,23 @@ export default function AdminDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [tenantsRes, pendingRes, paymentRes, maintenanceRes, appReqRes] = await Promise.all([
+        const [tenantsRes, pendingRes, paymentRes, maintenanceRes, appReqRes, todayAppRes, unitsRes] = await Promise.all([
           api.get("/admin/tenants/overview"),
           api.get("/admin/users/pending"),
           api.get("/admin/payments/dashboard"),
           api.get("/admin/maintenance"),
           api.get("/admin/applications"),
+          api.get("/admin/applications/today"),
+          api.get("/admin/units"),
         ]);
         setData({
-          tenants: tenantsRes.data,
-          pending: pendingRes.data,
-          payments: paymentRes.data.dashboard ?? paymentRes.data,
+          tenants:     tenantsRes.data,
+          pending:     pendingRes.data,
+          payments:    paymentRes.data.dashboard ?? paymentRes.data,
           maintenance: maintenanceRes.data,
           appRequests: appReqRes.data,
+          todayApps:   todayAppRes.data,
+          units:       unitsRes.data,
         });
       } catch (e) {
         console.error("Dashboard load error:", e);
@@ -141,10 +146,25 @@ export default function AdminDashboard() {
     },
   };
 
-  const recentMaint = maintenance.slice(0, 5);
+  const recentMaint = maintenance.slice(0, 3);
+  const allUnits    = data?.units?.units ?? [];
+  const occupiedCount = allUnits.filter((u) => u.occupied).length;
+  const vacantCount   = allUnits.length - occupiedCount;
+  const totalUnits    = allUnits.length;
   const hasAlerts = payDash.pendingVerification > 0 || payDash.overduePayments > 0 || payDash.unpaidBills > 0;
-  const appRequests = data?.appRequests?.applications ?? [];
-  const appReqCount = data?.appRequests?.count ?? 0;
+  const appRequests    = data?.appRequests?.applications ?? [];
+  const appReqCount    = data?.appRequests?.count ?? 0;
+  const todayApps      = data?.todayApps?.applications ?? [];
+  const todayAppsCount = data?.todayApps?.count ?? 0;
+
+  // Account approvals — first 3 + overflow indicator
+  const pendingUsers    = data?.pending?.users ?? [];
+  const shownPending    = pendingUsers.slice(0, 3);
+  const extraPending    = Math.max(0, pendingCount - 3);
+
+  // Today's unread app requests — first 3 + overflow
+  const shownTodayApps  = todayApps.slice(0, 3);
+  const extraTodayApps  = Math.max(0, todayAppsCount - 3);
 
   return (
     <div className="w-full h-full bg-[#f8fafc] p-4 md:p-6 text-slate-800 font-sans flex flex-col gap-4">
@@ -208,28 +228,24 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Maintenance Breakdown */}
+        {/* Unit Occupancy */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col h-full">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2 text-[#db6747]">
-              <div className="p-1.5 bg-orange-50 rounded-md"><FaTools size={14} /></div>
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Maintenance</h3>
-                <p className="text-[10px] text-slate-400 uppercase">Request breakdown</p>
-              </div>
+          <div className="flex items-center gap-2 text-[#db6747] mb-6">
+            <div className="p-1.5 bg-orange-50 rounded-md"><MdApartment size={14} /></div>
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Unit Occupancy</h3>
+              <p className="text-[10px] text-slate-400 uppercase">Current status</p>
             </div>
-            <NavBtn onClick={() => navigate("/admin/maintenance")} />
           </div>
 
-          <div className="space-y-5 flex-1 mt-2">
-            <MaintStat label="Pending" value={pendingMaint} color="bg-amber-400" />
-            <MaintStat label="In Progress" value={inProgressMaint} color="bg-blue-400" />
-            <MaintStat label="Done" value={doneMaint} color="bg-emerald-400" />
+          <div className="flex-1 flex flex-col justify-center gap-5">
+            <OccupancyRow label="Occupied" value={occupiedCount} total={totalUnits} color="bg-[#db6747]" textColor="text-[#db6747]" />
+            <OccupancyRow label="Vacant"   value={vacantCount}   total={totalUnits} color="bg-slate-300"  textColor="text-slate-500" />
           </div>
 
-          <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Total</p>
-            <p className="text-2xl font-black text-slate-800">{maintenance.length}</p>
+          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Total Units</p>
+            <p className="text-2xl font-black text-slate-800">{totalUnits}</p>
           </div>
         </div>
       </div>
@@ -237,23 +253,34 @@ export default function AdminDashboard() {
       {/* ── BOTTOM ROW: Requests + Approvals + App Requests ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-        {/* Recent Maintenance Requests */}
+        {/* Recent Maintenance Requests — caretaker dashboard style */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2 text-[#db6747]">
-              <div className="p-1.5 bg-orange-50 rounded-md"><FaClipboardList size={14} /></div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Recent Requests</h3>
+              <div className="p-1.5 bg-orange-50 rounded-md"><FaClipboardList size={13} /></div>
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Recent Requests</h3>
+                <p className="text-[10px] text-slate-400 uppercase">Latest maintenance</p>
+              </div>
             </div>
             <NavBtn onClick={() => navigate("/admin/maintenance")} />
           </div>
           <div className="divide-y divide-slate-100 flex-1">
             {recentMaint.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-xs">No pending requests.</div>
+              <div className="p-8 flex flex-col items-center justify-center">
+                <FaCheckCircle className="text-emerald-300 mb-2" size={24} />
+                <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">No pending requests</p>
+              </div>
             ) : recentMaint.map((m) => (
-              <div key={m.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors">
-                <div>
-                  <p className="text-sm font-bold text-slate-800">{m.title}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{m.tenant?.fullName} · {m.category}</p>
+              <div key={m.id} className="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-orange-50 text-[#db6747] flex items-center justify-center shrink-0">
+                    <FaTools size={11} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800 truncate">{m.title}</p>
+                    <p className="text-[10px] text-slate-400 truncate">{m.tenant?.fullName} · {m.category}</p>
+                  </div>
                 </div>
                 <StatusBadge status={m.status} />
               </div>
@@ -263,10 +290,13 @@ export default function AdminDashboard() {
 
         {/* Account Approvals */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2 text-[#db6747]">
-              <div className="p-1.5 bg-orange-50 rounded-md"><FaUserCheck size={14} /></div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Account Approvals</h3>
+              <div className="p-1.5 bg-orange-50 rounded-md"><FaUserCheck size={13} /></div>
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Account Approvals</h3>
+                <p className="text-[10px] text-slate-400 uppercase">Pending review</p>
+              </div>
             </div>
             <NavBtn onClick={() => navigate("/admin/approvalpage")} />
           </div>
@@ -276,62 +306,77 @@ export default function AdminDashboard() {
                 <FaCheckCircle className="text-emerald-400 mb-2" size={24} />
                 <p className="text-xs text-slate-400">All caught up</p>
               </div>
-            ) : (data?.pending?.users || []).slice(0, 5).map((u) => (
-              <div key={u.ID} className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 transition-colors">
-                <div className="w-8 h-8 rounded-md bg-orange-50 text-[#db6747] flex items-center justify-center font-bold text-sm shrink-0">
+            ) : shownPending.map((u) => (
+              <div key={u.ID} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors">
+                <div className="w-7 h-7 rounded-lg bg-orange-50 text-[#db6747] flex items-center justify-center font-bold text-xs shrink-0">
                   {(u.fullName || u.userName || "?")[0].toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-slate-800 truncate">{u.fullName || u.userName}</p>
-                  <p className="text-xs text-slate-400 truncate">{u.emailAddress}</p>
+                  <p className="text-xs font-bold text-slate-800 truncate">{u.fullName || u.userName}</p>
+                  <p className="text-[10px] text-slate-400 truncate">{u.emailAddress}</p>
                 </div>
                 <StatusBadge status="Pending" />
               </div>
             ))}
           </div>
+          {extraPending > 0 && (
+            <button onClick={() => navigate("/admin/approvalpage")}
+              className="flex items-center justify-center gap-1.5 px-5 py-2.5 border-t border-slate-100 text-[11px] font-bold text-[#db6747] hover:bg-orange-50 transition-colors">
+              <span className="w-4 h-4 rounded-full bg-[#db6747] text-white text-[9px] flex items-center justify-center font-black">+</span>
+              {extraPending}+ more pending
+            </button>
+          )}
         </div>
 
-        {/* Application Requests */}
+        {/* Application Requests — today + unread only */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2 text-[#db6747]">
-              <div className="p-1.5 bg-orange-50 rounded-md"><FaFileAlt size={14} /></div>
+              <div className="p-1.5 bg-orange-50 rounded-md"><FaFileAlt size={13} /></div>
               <div>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">App. Requests</h3>
+                <p className="text-[10px] text-slate-400 uppercase">Today · Unread</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {appReqCount > 0 && (
+              {todayAppsCount > 0 && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 border border-purple-100">
-                  {appReqCount} new
+                  {todayAppsCount} new
                 </span>
               )}
               <NavBtn onClick={() => navigate("/admin/applicationrequest")} />
             </div>
           </div>
           <div className="divide-y divide-slate-100 flex-1">
-            {appRequests.length === 0 ? (
+            {shownTodayApps.length === 0 ? (
               <div className="p-8 flex flex-col items-center justify-center">
                 <FaFileAlt className="text-slate-300 mb-2" size={24} />
-                <p className="text-xs text-slate-400">No applications yet</p>
+                <p className="text-xs text-slate-400">No new requests today</p>
               </div>
-            ) : appRequests.slice(0, 5).map((a) => (
-              <div key={a.ID} className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 transition-colors">
-                <div className="w-8 h-8 rounded-md bg-purple-50 text-purple-500 flex items-center justify-center font-bold text-sm shrink-0">
+            ) : shownTodayApps.map((a) => (
+              <div key={a.ID} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors">
+                <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-500 flex items-center justify-center font-bold text-xs shrink-0">
                   {(a.fullName || "?")[0].toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-slate-800 truncate">{a.fullName}</p>
-                  <p className="text-xs text-slate-400 truncate flex items-center gap-1">
+                  <p className="text-xs font-bold text-slate-800 truncate">{a.fullName}</p>
+                  <p className="text-[10px] text-slate-400 truncate flex items-center gap-1">
                     <FaEnvelope size={9} /> {a.emailAddress}
                   </p>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-100 uppercase tracking-wider shrink-0">
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-100 uppercase tracking-wider shrink-0">
                   New
                 </span>
               </div>
             ))}
           </div>
+          {extraTodayApps > 0 && (
+            <button onClick={() => navigate("/admin/applicationrequest")}
+              className="flex items-center justify-center gap-1.5 px-5 py-2.5 border-t border-slate-100 text-[11px] font-bold text-purple-600 hover:bg-purple-50 transition-colors">
+              <span className="w-4 h-4 rounded-full bg-purple-500 text-white text-[9px] flex items-center justify-center font-black">+</span>
+              {extraTodayApps}+ more today
+            </button>
+          )}
         </div>
 
       </div>
@@ -403,5 +448,23 @@ function StatusBadge({ status }) {
       ${isPending ? "bg-orange-50 text-[#db6747]" : "bg-slate-100 text-slate-500"}`}>
       {status}
     </span>
+  );
+}
+
+function OccupancyRow({ label, value, total, color, textColor }) {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-bold text-slate-700">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className={`text-lg font-black ${textColor}`}>{value}</span>
+          <span className="text-xs text-slate-400">({pct}%)</span>
+        </div>
+      </div>
+      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
   );
 }

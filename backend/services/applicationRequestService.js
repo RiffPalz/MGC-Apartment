@@ -47,33 +47,19 @@ export const createApplicationRequest = async ({
 };
 
 
-/* CHECK APPLICATION STATUS BY EMAIL */
+/* CHECK APPLICATION STATUS BY EMAIL — registered users only */
 export const checkApplicationStatus = async (email) => {
-    // Check if they have a user account first
     const user = await User.findOne({ where: { emailAddress: email, role: "tenant" } });
-    if (user) {
-        return {
-            found: true,
-            type: "account",
-            fullName: user.fullName,
-            status: user.status,
-            submittedAt: user.created_at,
-        };
+
+    if (!user) {
+        throw new Error("No registered account found with this email address.");
     }
-
-    // Check application request
-    const application = await ApplicationRequest.findOne({
-        where: { emailAddress: email },
-        order: [["created_at", "DESC"]],
-    });
-
-    if (!application) throw new Error("No application found with this email address.");
 
     return {
         found: true,
-        type: "application",
-        fullName: application.fullName,
-        status: "Under Review",
-        submittedAt: application.created_at,
+        type: "account",
+        fullName: user.fullName,
+        status: user.status,
+        submittedAt: user.created_at,
     };
 };

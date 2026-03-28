@@ -29,7 +29,7 @@ export const submitApplicationRequestController = async (req, res) => {
         });
 
     } catch (error) {
-
+        console.error("Submit Application Error:", error);
         return res.status(400).json({
             success: false,
             message: error.message

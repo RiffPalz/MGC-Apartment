@@ -57,7 +57,7 @@ export default function CaretakerDashboard() {
 
                 if (unitsRes.status === "fulfilled" && unitsRes.value.success) {
                     const units = unitsRes.value.units || [];
-                    const occupied = units.filter((u) => u.status === "Occupied").length;
+                    const occupied = units.filter((u) => u.isOccupied).length;
                     setUnitStats({ total: units.length, occupied, vacant: units.length - occupied });
                 }
             } finally {

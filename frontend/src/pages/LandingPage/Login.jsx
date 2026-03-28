@@ -64,7 +64,7 @@ const Login = () => {
       );
       setCheckResult(res.data);
     } catch (err) {
-      setCheckError(err?.response?.data?.message || "No application found with this email.");
+      setCheckError(err?.response?.data?.message || "No registered account found with this email.");
     } finally {
       setCheckLoading(false);
     }

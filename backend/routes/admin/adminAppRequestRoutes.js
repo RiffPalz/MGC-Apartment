@@ -4,34 +4,18 @@ import adminAuth from "../../middleware/adminAuth.js";
 import {
   getAllApplicationRequestsController,
   deleteApplicationRequestController,
-  getApplicationRequestStatsController
+  getApplicationRequestStatsController,
+  getTodayUnreadController,
+  markApplicationReadController,
 } from "../../controllers/admin/adminAppRequestController.js";
 
 const router = express.Router();
 
-
-/* GET APPLICATION REQUEST STATS */
-router.get(
-  "/stats",
-  adminAuth,
-  getApplicationRequestStatsController
-);
-
-
-/* GET ALL APPLICATION REQUESTS */
-router.get(
-  "/",
-  adminAuth,
-  getAllApplicationRequestsController
-);
-
-
-/* DELETE APPLICATION REQUEST */
-router.delete(
-  "/:id",
-  adminAuth,
-  deleteApplicationRequestController
-);
+router.get("/stats",      adminAuth, getApplicationRequestStatsController);
+router.get("/today",      adminAuth, getTodayUnreadController);
+router.get("/",           adminAuth, getAllApplicationRequestsController);
+router.patch("/:id/read", adminAuth, markApplicationReadController);
+router.delete("/:id",     adminAuth, deleteApplicationRequestController);
 
 
 export default router;

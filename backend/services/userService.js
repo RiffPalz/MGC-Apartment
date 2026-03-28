@@ -136,3 +136,45 @@ export const updateUserProfileService = async (userId, updateData) => {
 
   return user;
 };
+
+/* ── FORGOT PASSWORD ── */
+export const forgotPasswordService = async (emailAddress) => {
+    const user = await User.findOne({ where: { emailAddress, role: "tenant" } });
+    if (!user) throw new Error("No registered account found with this email address.");
+
+    const { generateVerificationCode } = await import("../utils/codeGenerator.js");
+    const { sendMail } = await import("../utils/mailer.js");
+    const { passwordResetTemplate } = await import("../utils/emailTemplate.js");
+
+    const resetCode = generateVerificationCode();
+    user.resetPasswordCode = resetCode;
+    user.code_expires_at   = new Date(Date.now() + 15 * 60 * 1000); // 15 min
+    await user.save();
+
+    await sendMail({
+        to: user.emailAddress,
+        subject: "MGC Building — Password Reset Code",
+        html: passwordResetTemplate(user.fullName, resetCode),
+    });
+
+    return { message: "Password reset code sent to your email." };
+};
+
+/* ── RESET PASSWORD ── */
+export const resetPasswordService = async (emailAddress, resetCode, newPassword) => {
+    const user = await User.findOne({ where: { emailAddress, role: "tenant" } });
+    if (!user) throw new Error("Account not found.");
+
+    if (!user.resetPasswordCode || user.resetPasswordCode !== resetCode)
+        throw new Error("Invalid reset code.");
+
+    if (!user.code_expires_at || user.code_expires_at < new Date())
+        throw new Error("Reset code has expired. Please request a new one.");
+
+    user.password_hash    = newPassword; // beforeUpdate hook will re-hash
+    user.resetPasswordCode = null;
+    user.code_expires_at   = null;
+    await user.save();
+
+    return { message: "Password reset successfully." };
+};

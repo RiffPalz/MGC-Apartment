@@ -50,7 +50,6 @@ export default function AdminSidebar({ open = true, setOpen }) {
       path: "/admin/applicationrequest",
     },
     { name: "Activity Logs", icon: <FaHistory />, path: "/admin/activity-logs" },
-    { name: "Settings", icon: <FaCog />, path: "/admin/settings" },
   ];
 
   const handleLogout = () => {
@@ -149,34 +148,6 @@ export default function AdminSidebar({ open = true, setOpen }) {
           );
         })}
       </nav>
-
-      {/* 3. FOOTER / LOGOUT */}
-      <div className="p-4 border-t border-white/10 bg-[#4a1809] shrink-0">
-        <button
-          onClick={handleLogout}
-          className={`
-            w-full flex items-center rounded-xl px-4 py-4 transition-all duration-300 group
-            ${
-              open
-                ? "justify-start gap-4 bg-red-500/10 hover:bg-red-600 hover:text-white text-red-300"
-                : "justify-center hover:bg-red-600/20 text-red-400"
-            }
-          `}
-        >
-          <FaSignOutAlt
-            className={`text-xl shrink-0 transition-transform ${
-              open ? "" : "group-hover:scale-110"
-            }`}
-          />
-
-          <span
-            className={`font-OswaldRegular text-sm uppercase tracking-widest whitespace-nowrap transition-all duration-300 origin-left
-            ${open ? "opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"}`}
-          >
-            Log Out
-          </span>
-        </button>
-      </div>
 
       {/* Custom Scrollbar CSS */}
       <style>{`

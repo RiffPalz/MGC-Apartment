@@ -47,6 +47,11 @@ function Applypage() {
     e.preventDefault();
     setError("");
     if (!idFile) { setError("Please upload a valid ID."); return; }
+    if (!form.fullName.trim()) { setError("Full name is required."); return; }
+    if (!form.emailAddress.trim()) { setError("Email address is required."); return; }
+    if (!form.contactNumber.trim() || form.contactNumber.trim().length < 7) {
+      setError("Please enter a valid contact number (at least 7 digits)."); return;
+    }
 
     try {
       setLoading(true);

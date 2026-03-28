@@ -45,6 +45,10 @@ import CaretakerDashboard from "../pages/CaretakerPage/Dashboard.jsx";
 import CaretakerMaintenance from "../pages/CaretakerPage/Maintenance.jsx";
 import CaretakerTenantOverview from "../pages/CaretakerPage/TenantOverview.jsx";
 import CaretakerPaymentOverview from "../pages/CaretakerPage/PaymentOverview.jsx";
+import CaretakerAnnouncement from "../pages/CaretakerPage/announcement.jsx";
+import CaretakerActivityLogs from "../pages/CaretakerPage/ActivityLogs.jsx";
+import CaretakerProfile from "../pages/CaretakerPage/Profile.jsx";
+import CaretakerSettings from "../pages/CaretakerPage/Settings.jsx";
 
 // Redirect login based on role
 const LoginRedirect = () => {
@@ -123,7 +127,11 @@ export default function MGCRouter() {
                 <Route path="dashboard"   element={<CaretakerDashboard />} />
                 <Route path="maintenance" element={<CaretakerMaintenance />} />
                 <Route path="tenants"     element={<CaretakerTenantOverview />} />
-                <Route path="payments"    element={<CaretakerPaymentOverview />} />
+                <Route path="payments"       element={<CaretakerPaymentOverview />} />
+                <Route path="announcements"  element={<CaretakerAnnouncement />} />
+                <Route path="activity-logs"  element={<CaretakerActivityLogs />} />
+                <Route path="settings"       element={<CaretakerSettings />} />
+                <Route path="profile"        element={<CaretakerProfile />} />
               </Route>
             </Route>
           </Routes>
