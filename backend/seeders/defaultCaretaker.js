@@ -23,7 +23,7 @@ const createDefaultCaretaker = async () => {
         status: "Approved",
       });
 
-      console.log("✅ Default caretaker created successfully");
+      console.log("Default caretaker created successfully");
     } else {
       // Update the existing user to ensure they have caretaker permissions
       user.role = "caretaker";
@@ -31,10 +31,10 @@ const createDefaultCaretaker = async () => {
       user.password_hash = plainPassword; // re-hash on next save
       await user.save();
 
-      console.log("✅ Default caretaker already exists (updated role/status)");
+      console.log("Default caretaker already exists (updated role/status)");
     }
   } catch (error) {
-    console.error("❌ Failed to create default caretaker:", error);
+    console.error("Failed to create default caretaker:", error);
   }
 };
 

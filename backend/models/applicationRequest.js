@@ -58,6 +58,13 @@ const ApplicationRequest = sequelize.define(
             allowNull: true,
             defaultValue: "",
         },
+
+        is_read: {
+            type: DataTypes.BOOLEAN,
+            allowNull: true,
+            defaultValue: false,
+            field: "is_read",
+        },
     },
     {
         tableName: "application_requests",

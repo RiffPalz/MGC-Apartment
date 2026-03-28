@@ -3,6 +3,7 @@ import {
   FaSearch, FaTrashAlt, FaEye, FaFileAlt, FaPrint,
   FaUsers, FaCalendarDay, FaCalendarAlt,
   FaChevronLeft, FaChevronRight, FaIdCard, FaEnvelope, FaPhone, FaCommentAlt,
+  FaCheckDouble // <-- Added for the "Mark All as Read" button
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import logo from "../../assets/images/logo.png";
@@ -58,10 +59,17 @@ export default function AdminApplicationRequest() {
     finally { setDeleting(false); }
   };
 
+  // UI-only handler for Mark All as Read
+  const handleMarkAllAsRead = () => {
+    // Add your future backend call here
+    toast.success("All applications marked as read.");
+  };
+
   return (
     <>
       <style>{`@media print { @page{size:A4 landscape;margin:15mm} body{background:white!important} body *{visibility:hidden} #appreq-print-area,#appreq-print-area *{visibility:visible} #appreq-print-area{position:absolute;left:0;top:0;width:100%} *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important} .no-print{display:none!important} }`}</style>
 
+      {/* ── PRINT AREA ── */}
       <div id="appreq-print-area" className="hidden print:block">
         <div className="flex justify-between items-end border-b-[3px] border-slate-900 pb-5 mb-6">
           <div className="flex items-center gap-4">
@@ -96,6 +104,7 @@ export default function AdminApplicationRequest() {
         </div>
       </div>
 
+      {/* ── SCREEN UI ── */}
       <div className="w-full h-full bg-[#f8fafc] p-4 md:p-6 text-slate-800 font-sans flex flex-col gap-4 no-print min-h-screen">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard icon={<FaUsers size={18} />} label="Total Applications" value={stats.totalApplications ?? 0} color="text-blue-500" bg="bg-blue-50" />
@@ -103,6 +112,7 @@ export default function AdminApplicationRequest() {
           <StatCard icon={<FaCalendarAlt size={18} />} label="This Month" value={stats.monthApplications ?? 0} color="text-emerald-500" bg="bg-emerald-50" />
         </div>
 
+        {/* ── TOOLBAR ── */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
           <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
             <div className="relative flex-1 max-w-md">
@@ -111,17 +121,25 @@ export default function AdminApplicationRequest() {
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] transition-all bg-slate-50 hover:bg-white" />
             </div>
-            <div className="flex gap-2 items-center">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{filtered.length} records</span>
-              <div className="h-6 w-px bg-slate-200 mx-1" />
+
+            <div className="flex gap-2 items-center flex-wrap">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest hidden lg:inline">{filtered.length} records</span>
+              <div className="h-6 w-px bg-slate-200 mx-1 hidden lg:block" />
+
+              {/* Added Mark All as Read Button */}
+              <button onClick={handleMarkAllAsRead} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all shadow-sm">
+                <FaCheckDouble size={14} /> <span className="uppercase tracking-widest hidden sm:inline">Mark as Read</span>
+              </button>
+
               <button onClick={load} className="px-4 py-2.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all shadow-sm uppercase tracking-widest">Refresh</button>
               <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
-                <FaPrint size={12} /> <span className="uppercase tracking-widest">Print</span>
+                <FaPrint size={12} /> <span className="uppercase tracking-widest hidden sm:inline">Print</span>
               </button>
             </div>
           </div>
         </div>
 
+        {/* ── DATA TABLE ── */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
           <div className="overflow-x-auto flex-1">
             <table className="w-full text-left">
@@ -218,6 +236,7 @@ export default function AdminApplicationRequest() {
         </div>
       </div>
 
+      {/* ── MODALS ── */}
       {viewModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex justify-center items-center p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl border border-slate-100 overflow-hidden">

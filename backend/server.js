@@ -163,17 +163,17 @@ const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, async () => {
   try {
     await connectDB();
-    console.log("🔧 Beginning database synchronization...");
-    await sequelize.sync({ alter: true });
-    console.log("✅ Database synchronized successfully");
+    console.log("Beginning database synchronization...");
+    await sequelize.sync();
+    console.log("Database synchronized successfully");
     await runSeeders();
     startSystemCron();
 
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`🔌 WebSocket ready for real-time notifications`);
+    console.log(`Server running on port ${PORT}`);
+    console.log(`WebSocket ready for real-time notifications`);
   } catch (error) {
-    console.error("❌ Server startup failed:", error.message);
-    console.error("💾 Error details:", error);
+    console.error("Server startup failed:", error.message);
+    console.error("Error details:", error);
     process.exit(1);
   }
 });

@@ -22,7 +22,7 @@ const createDefaultAdmin = async () => {
         status: "Approved",
       });
 
-      console.log("✅ Default admin created successfully");
+      console.log("Default admin created successfully");
     } else {
       // Ensure the existing user has the correct admin role and status
       user.role = "admin";
@@ -30,10 +30,10 @@ const createDefaultAdmin = async () => {
       user.password_hash = plainPassword; // re-hash on next save
       await user.save();
 
-      console.log("✅ Default admin already exists (updated role/status)");
+      console.log("Default admin already exists (updated role/status)");
     }
   } catch (error) {
-    console.error("❌ Failed to create default admin:", error);
+    console.error("Failed to create default admin:", error);
   }
 };
 

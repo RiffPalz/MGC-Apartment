@@ -14,7 +14,7 @@ const User = sequelize.define(
         publicUserID: {
             type: DataTypes.STRING(50),
             allowNull: false,
-            unique: true,
+            unique: "custom_public_user_id_unique",
         },
 
         fullName: {
@@ -25,7 +25,7 @@ const User = sequelize.define(
         emailAddress: {
             type: DataTypes.STRING(150),
             allowNull: false,
-            unique: true,
+            unique: "custom_email_address_unique",
             validate: {
                 isEmail: true,
             },
@@ -62,7 +62,7 @@ const User = sequelize.define(
         userName: {
             type: DataTypes.STRING(100),
             allowNull: false,
-            unique: true,
+            unique: "custom_user_name_unique",
         },
 
         password_hash: {

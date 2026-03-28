@@ -117,8 +117,26 @@ export const getTenantsOverviewCaretaker = async (req, res) => {
 /** GET UNITS (caretaker-accessible) */
 export const getUnitsCaretaker = async (req, res) => {
   try {
-    const units = await Unit.findAll({ order: [["unit_number", "ASC"]] });
-    return res.status(200).json({ success: true, units });
+    const units = await Unit.findAll({
+      include: [{
+        model: Contract,
+        as: "contracts",
+        where: { status: "Active" },
+        required: false,
+        attributes: ["ID", "status"],
+      }],
+      order: [["unit_number", "ASC"]],
+    });
+
+    const result = units.map((u) => ({
+      ID:          u.ID,
+      unit_number: u.unit_number,
+      floor:       u.floor,
+      is_active:   u.is_active,
+      isOccupied:  (u.contracts ?? []).length > 0,
+    }));
+
+    return res.status(200).json({ success: true, units: result });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Failed to fetch units" });
   }
