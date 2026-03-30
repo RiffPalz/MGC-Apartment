@@ -144,7 +144,11 @@ export default function AdminMaintenance() {
       const matchStatus = statusFilter === "All" || r.status === statusFilter;
       return matchSearch && matchStatus;
     })
-    .sort((a, b) => (b.followedUp ? 1 : 0) - (a.followedUp ? 1 : 0));
+    .sort((a, b) => {
+      const aPin = a.followedUp && a.status !== "In Progress" && a.status !== "Done" ? 1 : 0;
+      const bPin = b.followedUp && b.status !== "In Progress" && b.status !== "Done" ? 1 : 0;
+      return bPin - aPin;
+    });
 
   const counts = {
     All: requests.length,
@@ -246,7 +250,8 @@ export default function AdminMaintenance() {
 
             {/* Filter tabs + actions */}
             <div className="flex flex-wrap gap-2 items-center">
-              <div className="flex bg-slate-100 p-1 rounded-lg">
+              <div className="overflow-x-auto">
+              <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
                 {["All", "Pending", "Approved", "In Progress", "Done"].map((f) => (
                   <button
                     key={f}
@@ -257,6 +262,7 @@ export default function AdminMaintenance() {
                     {f}
                   </button>
                 ))}
+              </div>
               </div>
               <div className="h-6 w-px bg-slate-200 hidden sm:block mx-1" />
               <button
@@ -314,7 +320,7 @@ export default function AdminMaintenance() {
                       <tr
                         key={req.id}
                         className={`hover:bg-slate-50/80 transition-colors group
-                          ${req.followedUp ? "bg-red-50/30 border-l-2 border-l-red-400" : ""}`}
+                          ${req.followedUp && req.status !== "In Progress" && req.status !== "Done" ? "bg-red-50/30 border-l-2 border-l-red-400" : ""}`}
                       >
                         {/* Unit */}
                         <td className="px-5 py-4 whitespace-nowrap">
@@ -330,7 +336,7 @@ export default function AdminMaintenance() {
                         <td className="px-5 py-4 max-w-[200px]">
                           <div className="flex items-center gap-2">
                             <p className="text-sm text-slate-800 truncate" title={req.title}>{req.title}</p>
-                            {req.followedUp && (
+                            {req.followedUp && req.status !== "In Progress" && req.status !== "Done" && (
                               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-600 uppercase tracking-widest shrink-0">
                                 Follow Up
                               </span>
@@ -350,12 +356,14 @@ export default function AdminMaintenance() {
 
                         {/* Timeline */}
                         <td className="px-5 py-4 whitespace-nowrap">
-                          {(req.startDate || req.endDate) ? (
+                          {(req.status === "In Progress" || req.status === "Done") ? (
                             <div className="flex flex-col gap-0.5">
                               <span className="text-[11px] text-slate-600"><span className="text-slate-400 w-8 inline-block">Start</span> {fmt(req.startDate)}</span>
                               <span className="text-[11px] text-slate-600"><span className="text-slate-400 w-8 inline-block">End</span> {fmt(req.endDate)}</span>
                             </div>
-                          ) : <span className="text-xs text-slate-400">—</span>}
+                          ) : (
+                            <span className="text-xs text-slate-400">—</span>
+                          )}
                         </td>
 
                         {/* Status Dropdown */}

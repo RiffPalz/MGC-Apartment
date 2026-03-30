@@ -7,6 +7,7 @@ import { clearAuth } from "../api/authStorage";
 
 const PAGE_TITLES = {
   "/caretaker/dashboard":     "Dashboard",
+  "/caretaker/tenants":       "Tenants",
   "/caretaker/maintenance":   "Maintenance",
   "/caretaker/payments":      "Payment Overview",
   "/caretaker/announcements": "Announcements",

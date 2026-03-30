@@ -114,7 +114,8 @@ export default function AdminActivityLogs() {
                             <FaFilter size={11} />
                             <span className="text-[10px] font-bold uppercase tracking-widest">Role</span>
                         </div>
-                        <div className="flex bg-slate-100 p-1 rounded-lg">
+                        <div className="overflow-x-auto">
+                        <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
                             {["All", "Admin", "Caretaker", "Tenant"].map((f) => (
                                 <button key={f} onClick={() => { setRoleFilter(f); setPage(1); }}
                                     className={`px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all
@@ -122,6 +123,7 @@ export default function AdminActivityLogs() {
                                     {f}
                                 </button>
                             ))}
+                        </div>
                         </div>
                         <button onClick={() => { setPage(1); load(); }}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all">

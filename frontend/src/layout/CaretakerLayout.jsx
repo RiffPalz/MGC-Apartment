@@ -23,9 +23,9 @@ export default function CaretakerLayout() {
       {open && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setOpen(false)} />
       )}
-      <div className={`fixed inset-y-0 left-0 z-50 lg:static lg:block transition-transform duration-300 ease-in-out
+      <div className={`fixed inset-y-0 left-0 z-50 lg:static lg:shrink-0 transition-transform duration-300 ease-in-out
         ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        ${open ? "w-72" : "w-20"}`}>
+        ${open ? "w-72" : "lg:w-20 w-72"}`}>
         <CaretakerSidebar open={open} setOpen={setOpen} />
       </div>
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

@@ -29,9 +29,9 @@ export const createMaintenance = async (data, caretakerId) => {
         category,
         title,
         description,
-        status: status || "In Progress",
-        startDate: startDate || new Date(),
-        endDate: endDate || null
+        status: status || "Pending",
+        startDate: null,
+        endDate: null,
     });
 
     await createNotification({
@@ -81,22 +81,37 @@ export const updateMaintenance = async (maintenanceId, data, caretakerId) => {
         throw new Error("Maintenance request not found");
     }
 
-    const allowedStatuses = ["In Progress", "Done"];
+    const allowedStatuses = ["Pending", "Approved", "In Progress", "Done"];
 
     if (status && !allowedStatuses.includes(status)) {
         throw new Error("Invalid status update");
     }
 
-    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
-        throw new Error("End date must be later than start date");
+    const now = new Date();
+
+    if (status) {
+        request.status = status;
+
+        // Auto-set startDate only when moving to In Progress
+        if (status === "In Progress" && !request.startDate) {
+            request.startDate = startDate || now;
+        }
+
+        // Auto-set endDate when marking Done
+        if (status === "Done") {
+            if (!request.startDate) request.startDate = startDate || now;
+            request.endDate = endDate || now;
+        }
+
+        // Clear dates if rolling back to Pending or Approved
+        if (status === "Pending" || status === "Approved") {
+            request.startDate = null;
+            request.endDate = null;
+        }
     }
 
-    if (status) request.status = status;
-    if (startDate) request.startDate = startDate;
-    if (endDate) request.endDate = endDate;
-
-    if (status === "Done" && !endDate) {
-        request.endDate = new Date();
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+        throw new Error("End date must be later than start date");
     }
 
     await request.save();
@@ -154,6 +169,7 @@ export const getAllMaintenance = async () => {
         category: item.category,
         description: item.description,
         status: item.status,
+        followedUp: item.followedUp,
         requestedDate: item.dateRequested,
         startDate: item.startDate,
         endDate: item.endDate,
@@ -176,15 +192,11 @@ export const deleteMaintenance = async (maintenanceId, caretakerId) => {
         throw new Error("Maintenance request not found");
     }
 
-    if (["In Progress", "Done"].includes(request.status)) {
-        throw new Error("Cannot delete active or completed maintenance");
-    }
-
     await createActivityLog({
         userId: caretakerId,
         role: "caretaker",
         action: "DELETE MAINTENANCE",
-        description: `Deleted maintenance ${request.ID}`,
+        description: `Deleted maintenance ${request.ID}: ${request.title}`,
         referenceId: request.ID,
         referenceType: "maintenance"
     });

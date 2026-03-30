@@ -40,4 +40,9 @@
   --font-BoldMilk: "BoldMilk";
   --font-OswaldRegular: "OswaldRegular";
   --font-NunitoSans: "NunitoSans";
+  /* Alias used in components */
+  --font-LemonMilkRegular: "RegularMilk";
+
+  /* Custom border-radius */
+  --radius-4xl: 2rem;
 }

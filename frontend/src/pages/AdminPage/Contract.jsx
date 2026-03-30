@@ -298,7 +298,8 @@ export default function AdminContract() {
               />
             </div>
             <div className="flex flex-wrap gap-2 items-center">
-              <div className="flex bg-slate-100 p-1 rounded-lg">
+              <div className="overflow-x-auto">
+              <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
                 {["All", "Active", "Completed", "Terminated"].map((f) => (
                   <button key={f} onClick={() => setStatusFilter(f)}
                     className={`px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all
@@ -306,6 +307,7 @@ export default function AdminContract() {
                     {f}
                   </button>
                 ))}
+              </div>
               </div>
               <div className="h-6 w-px bg-slate-200 hidden sm:block mx-1" />
               <button onClick={() => window.print()}

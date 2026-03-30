@@ -1,7 +1,5 @@
 import { caretakerLogin } from "../../services/caretaker/caretakerAuthService.js";
-import User from "../../models/user.js";
-import Unit from "../../models/unit.js";
-import Contract from "../../models/contract.js";
+import { User, Contract, Unit } from "../../models/index.js";
 import { emitEvent } from "../../utils/emitEvent.js";
 import { updateCaretakerProfile } from "../../services/caretaker/caretakerService.js";
 
@@ -139,5 +137,21 @@ export const getUnitsCaretaker = async (req, res) => {
     return res.status(200).json({ success: true, units: result });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Failed to fetch units" });
+  }
+};
+
+/** CREATE TENANT (caretaker-accessible) */
+export const createTenantCaretaker = async (req, res) => {
+  try {
+    const { createTenant } = await import("../../services/admin/adminAddTenantService.js");
+    const result = await createTenant(req.body, req.caretaker.id);
+    return res.status(201).json({
+      success: true,
+      message: result.message,
+      tenantId: result.tenantId,
+      publicUserID: result.publicUserID,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
   }
 };

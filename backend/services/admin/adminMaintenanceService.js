@@ -108,24 +108,23 @@ export const updateMaintenance = async (maintenanceId, data, adminId) => {
   if (status) {
     request.status = status;
 
-    // Auto-set start date when moving to In Progress
+    // Auto-set startDate only when moving to In Progress
     if (status === "In Progress" && !request.startDate) {
       request.startDate = startDate || now;
     }
 
-    // Auto-set end date when marking Done
+    // Auto-set endDate when marking Done
     if (status === "Done") {
-      // If no start date yet (jumped straight from Pending → Done), set both
-      if (!request.startDate) {
-        request.startDate = startDate || now;
-      }
+      if (!request.startDate) request.startDate = startDate || now;
       request.endDate = endDate || now;
     }
-  }
 
-  // Allow manual overrides if explicitly passed
-  if (startDate && status !== "In Progress" && status !== "Done") request.startDate = startDate;
-  if (endDate && status !== "Done") request.endDate = endDate;
+    // Clear dates if rolling back to Pending or Approved
+    if (status === "Pending" || status === "Approved") {
+      request.startDate = null;
+      request.endDate = null;
+    }
+  }
 
   if (startDate && endDate && new Date(endDate) < new Date(startDate))
     throw new Error("End date must be later than start date");

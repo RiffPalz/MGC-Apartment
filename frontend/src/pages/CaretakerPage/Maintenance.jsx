@@ -21,9 +21,7 @@ const CATEGORY_CONFIG = {
   "Electrical Maintenance": { bg: "bg-amber-100",  text: "text-amber-800",  dot: "bg-amber-400",  border: "border-amber-200" },
   "Water Interruptions":    { bg: "bg-sky-100",    text: "text-sky-800",    dot: "bg-sky-400",    border: "border-sky-200" },
   "Floor Renovation":       { bg: "bg-orange-100", text: "text-orange-800", dot: "bg-orange-400", border: "border-orange-200" },
-  "Plumbing":               { bg: "bg-cyan-100",   text: "text-cyan-800",   dot: "bg-cyan-400",   border: "border-cyan-200" },
   "Other":                  { bg: "bg-slate-100",  text: "text-slate-600",  dot: "bg-slate-400",  border: "border-slate-200" },
-  "Others":                 { bg: "bg-slate-100",  text: "text-slate-600",  dot: "bg-slate-400",  border: "border-slate-200" },
 };
 
 const fmt = (d) =>
@@ -133,22 +131,29 @@ export default function CaretakerMaintenance() {
     }
   };
 
-  const filtered = requests.filter((r) => {
-    const q = search.toLowerCase();
-    const matchSearch =
-      String(r.tenant?.unitNumber ?? "").includes(q) ||
-      (r.tenant?.fullName ?? "").toLowerCase().includes(q) ||
-      (r.title ?? "").toLowerCase().includes(q) ||
-      (r.category ?? "").toLowerCase().includes(q);
-    const matchStatus = statusFilter === "All" || r.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  const filtered = requests
+    .filter((r) => {
+      const q = search.toLowerCase();
+      const matchSearch =
+        String(r.tenant?.unitNumber ?? "").includes(q) ||
+        (r.tenant?.fullName ?? "").toLowerCase().includes(q) ||
+        (r.title ?? "").toLowerCase().includes(q) ||
+        (r.category ?? "").toLowerCase().includes(q);
+      const matchStatus = statusFilter === "All" || r.status === statusFilter;
+      return matchSearch && matchStatus;
+    })
+    .sort((a, b) => {
+      const aPin = a.followedUp && a.status !== "In Progress" && a.status !== "Done" ? 1 : 0;
+      const bPin = b.followedUp && b.status !== "In Progress" && b.status !== "Done" ? 1 : 0;
+      return bPin - aPin;
+    });
 
   const counts = {
-    All:          requests.length,
-    Pending:      requests.filter((r) => r.status === "Pending").length,
-    "In Progress":requests.filter((r) => r.status === "In Progress").length,
-    Done:         requests.filter((r) => r.status === "Done").length,
+    All:           requests.length,
+    Pending:       requests.filter((r) => r.status === "Pending").length,
+    Approved:      requests.filter((r) => r.status === "Approved").length,
+    "In Progress": requests.filter((r) => r.status === "In Progress").length,
+    Done:          requests.filter((r) => r.status === "Done").length,
   };
 
   return (
@@ -228,14 +233,16 @@ export default function CaretakerMaintenance() {
                 className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] transition-all bg-slate-50 hover:bg-white"/>
             </div>
             <div className="flex flex-wrap gap-2 items-center">
-              <div className="flex bg-slate-100 p-1 rounded-lg">
-                {["All","Pending","In Progress","Done"].map((f) => (
+              <div className="overflow-x-auto">
+              <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
+                {["All","Pending","Approved","In Progress","Done"].map((f) => (
                   <button key={f} onClick={() => setStatusFilter(f)}
                     className={`px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all
                       ${statusFilter === f ? "bg-white text-[#db6747] shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>
                     {f}
                   </button>
                 ))}
+              </div>
               </div>
               <div className="h-6 w-px bg-slate-200 hidden sm:block mx-1"/>
               <button onClick={load}
@@ -283,7 +290,8 @@ export default function CaretakerMaintenance() {
                   {filtered.map((req) => {
                     const sc = STATUS_CONFIG[req.status] ?? STATUS_CONFIG.Pending;
                     return (
-                      <tr key={req.id} className="hover:bg-slate-50/80 transition-colors group">
+                      <tr key={req.id} className={`hover:bg-slate-50/80 transition-colors group
+                          ${req.followedUp && req.status !== "In Progress" && req.status !== "Done" ? "bg-red-50/30 border-l-2 border-l-red-400" : ""}`}>
                         <td className="px-5 py-4 whitespace-nowrap">
                           <span className="text-sm font-black text-[#db6747]">{req.tenant?.unitNumber ?? "—"}</span>
                         </td>
@@ -291,18 +299,27 @@ export default function CaretakerMaintenance() {
                           <p className="text-sm font-bold text-slate-800">{req.tenant?.fullName ?? "—"}</p>
                         </td>
                         <td className="px-5 py-4 max-w-[200px]">
-                          <p className="text-sm text-slate-800 truncate" title={req.title}>{req.title}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-slate-800 truncate" title={req.title}>{req.title}</p>
+                            {req.followedUp && req.status !== "In Progress" && req.status !== "Done" && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-600 uppercase tracking-widest shrink-0">
+                                Follow Up
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-5 py-4 whitespace-nowrap">
                           <CategoryBadge category={req.category}/>
                         </td>
                         <td className="px-5 py-4 whitespace-nowrap">
-                          {(req.startDate || req.endDate) ? (
+                          {(req.status === "In Progress" || req.status === "Done") ? (
                             <div className="flex flex-col gap-0.5">
                               <span className="text-[11px] text-slate-600"><span className="text-slate-400 w-8 inline-block">Start</span>{fmt(req.startDate)}</span>
                               <span className="text-[11px] text-slate-600"><span className="text-slate-400 w-8 inline-block">End</span>{fmt(req.endDate)}</span>
                             </div>
-                          ) : <span className="text-xs text-slate-400">—</span>}
+                          ) : (
+                            <span className="text-xs text-slate-400">—</span>
+                          )}
                         </td>
                         <td className="px-5 py-4 whitespace-nowrap">
                           <div className="relative inline-flex items-center">
@@ -310,6 +327,7 @@ export default function CaretakerMaintenance() {
                               onChange={(e) => handleStatusChange(req, e.target.value)}
                               className={`appearance-none cursor-pointer pl-3 pr-6 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest border transition-all outline-none disabled:opacity-60 hover:opacity-80 ${sc.color}`}>
                               <option value="Pending">Pending</option>
+                              <option value="Approved">Approved</option>
                               <option value="In Progress">In Progress</option>
                               <option value="Done">Done</option>
                             </select>
@@ -424,8 +442,7 @@ export default function CaretakerMaintenance() {
                   <option value="Electrical Maintenance">Electrical Maintenance</option>
                   <option value="Water Interruptions">Water Interruptions</option>
                   <option value="Floor Renovation">Floor Renovation</option>
-                  <option value="Plumbing">Plumbing</option>
-                  <option value="Others">Others</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
               <div>

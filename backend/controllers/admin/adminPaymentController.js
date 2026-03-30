@@ -139,10 +139,10 @@ export const getPaymentDashboardAdmin = async (req, res) => {
     });
   
   } catch (error) {
-  
+    console.error("getPaymentDashboard error:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch dashboard data",
+      message: error.message || "Failed to fetch dashboard data",
     });
   }
 };

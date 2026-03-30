@@ -49,13 +49,13 @@ export default function AdminDashboard() {
           api.get("/admin/units"),
         ]);
         setData({
-          tenants:     tenantsRes.data,
-          pending:     pendingRes.data,
-          payments:    paymentRes.data.dashboard ?? paymentRes.data,
+          tenants: tenantsRes.data,
+          pending: pendingRes.data,
+          payments: paymentRes.data.dashboard ?? paymentRes.data,
           maintenance: maintenanceRes.data,
           appRequests: appReqRes.data,
-          todayApps:   todayAppRes.data,
-          units:       unitsRes.data,
+          todayApps: todayAppRes.data,
+          units: unitsRes.data,
         });
       } catch (e) {
         console.error("Dashboard load error:", e);
@@ -84,8 +84,11 @@ export default function AdminDashboard() {
 
   const revenueMap = {};
   (payDash.monthlyRevenue || []).forEach((r) => {
-    const d = new Date(r.billing_month);
-    revenueMap[`${d.getFullYear()}-${d.getMonth()}`] = parseFloat(r.total || 0);
+    const [year, month] = r.billing_month.split("-").map(Number);
+    const key = `${year}-${month - 1}`;
+    
+    // Fix: Add to the existing value instead of overwriting it
+    revenueMap[key] = (revenueMap[key] || 0) + parseFloat(r.total || 0);
   });
   const currentYear = new Date().getFullYear();
   const chartLabels = isMobile ? MONTHS_SHORT : MONTHS_FULL;
@@ -147,24 +150,24 @@ export default function AdminDashboard() {
   };
 
   const recentMaint = maintenance.slice(0, 3);
-  const allUnits    = data?.units?.units ?? [];
+  const allUnits = data?.units?.units ?? [];
   const occupiedCount = allUnits.filter((u) => u.occupied).length;
-  const vacantCount   = allUnits.length - occupiedCount;
-  const totalUnits    = allUnits.length;
+  const vacantCount = allUnits.length - occupiedCount;
+  const totalUnits = allUnits.length;
   const hasAlerts = payDash.pendingVerification > 0 || payDash.overduePayments > 0 || payDash.unpaidBills > 0;
-  const appRequests    = data?.appRequests?.applications ?? [];
-  const appReqCount    = data?.appRequests?.count ?? 0;
-  const todayApps      = data?.todayApps?.applications ?? [];
+  const appRequests = data?.appRequests?.applications ?? [];
+  const appReqCount = data?.appRequests?.count ?? 0;
+  const todayApps = data?.todayApps?.applications ?? [];
   const todayAppsCount = data?.todayApps?.count ?? 0;
 
   // Account approvals — first 3 + overflow indicator
-  const pendingUsers    = data?.pending?.users ?? [];
-  const shownPending    = pendingUsers.slice(0, 3);
-  const extraPending    = Math.max(0, pendingCount - 3);
+  const pendingUsers = data?.pending?.users ?? [];
+  const shownPending = pendingUsers.slice(0, 3);
+  const extraPending = Math.max(0, pendingCount - 3);
 
   // Today's unread app requests — first 3 + overflow
-  const shownTodayApps  = todayApps.slice(0, 3);
-  const extraTodayApps  = Math.max(0, todayAppsCount - 3);
+  const shownTodayApps = todayApps.slice(0, 3);
+  const extraTodayApps = Math.max(0, todayAppsCount - 3);
 
   return (
     <div className="w-full h-full bg-[#f8fafc] p-4 md:p-6 text-slate-800 font-sans flex flex-col gap-4">
@@ -240,7 +243,7 @@ export default function AdminDashboard() {
 
           <div className="flex-1 flex flex-col justify-center gap-5">
             <OccupancyRow label="Occupied" value={occupiedCount} total={totalUnits} color="bg-[#db6747]" textColor="text-[#db6747]" />
-            <OccupancyRow label="Vacant"   value={vacantCount}   total={totalUnits} color="bg-slate-300"  textColor="text-slate-500" />
+            <OccupancyRow label="Vacant" value={vacantCount} total={totalUnits} color="bg-slate-300" textColor="text-slate-500" />
           </div>
 
           <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">

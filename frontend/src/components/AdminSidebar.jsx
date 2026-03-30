@@ -4,10 +4,8 @@ import logo from "../assets/images/logo.png";
 import {
   FaBars,
   FaMoneyCheckAlt,
-  FaCog,
   FaHouseUser,
   FaDoorClosed,
-  FaSignOutAlt,
   FaChevronLeft,
   FaHistory,
 } from "react-icons/fa";
@@ -16,12 +14,9 @@ import { GrVmMaintenance, GrAnnounce } from "react-icons/gr";
 import { VscGitStashApply } from "react-icons/vsc";
 import { TbContract } from "react-icons/tb";
 
-// API
-import { logout } from "../api/authService";
 
 export default function AdminSidebar({ open = true, setOpen }) {
   const location = useLocation();
-  const navigate = useNavigate();
 
   const menuItems = [
     { name: "Dashboard", icon: <MdDashboard />, path: "/admin/dashboard" },
@@ -52,14 +47,10 @@ export default function AdminSidebar({ open = true, setOpen }) {
     { name: "Activity Logs", icon: <FaHistory />, path: "/admin/activity-logs" },
   ];
 
-  const handleLogout = () => {
-    logout(); // 🔐 clears token + role
-    navigate("/login", { replace: true });
-  };
 
   return (
     <aside
-      className={`relative h-screen bg-[#5c1f10] text-white shadow-2xl transition-all duration-500 ease-in-out flex flex-col font-NunitoSans z-50 overflow-hidden
+      className={`relative h-full bg-[#5c1f10] text-white shadow-2xl transition-all duration-500 ease-in-out flex flex-col font-NunitoSans z-50 overflow-hidden
       ${open ? "w-72" : "w-20"} `}
     >
       {/* 1. BRAND HEADER */}

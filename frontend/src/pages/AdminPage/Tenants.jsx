@@ -257,7 +257,8 @@ export default function AdminTenants() {
 
             {/* Filters & Actions */}
             <div className="flex flex-wrap gap-2 items-center">
-              <div className="flex bg-slate-100 p-1 rounded-lg">
+              <div className="overflow-x-auto">
+              <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
                 {["All", "Active", "Completed", "Terminated", "No Contract"].map((f) => (
                   <button
                     key={f}
@@ -268,6 +269,7 @@ export default function AdminTenants() {
                     {f}
                   </button>
                 ))}
+              </div>
               </div>
               <div className="h-6 w-px bg-slate-200 hidden sm:block mx-1" />
               <button

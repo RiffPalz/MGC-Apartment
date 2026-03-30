@@ -282,7 +282,8 @@ export default function AdminPayment() {
                 className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] transition-all bg-slate-50 hover:bg-white" />
             </div>
             <div className="flex flex-wrap gap-2 items-center">
-              <div className="flex bg-slate-100 p-1 rounded-lg">
+              <div className="overflow-x-auto">
+              <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
                 {["All", "Unpaid", "Pending Verification", "Paid", "Overdue"].map((f) => (
                   <button key={f} onClick={() => { setStatusFilter(f); setPage(1); }}
                     className={`px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all
@@ -290,6 +291,7 @@ export default function AdminPayment() {
                     {f === "Pending Verification" ? "Pending" : f}
                   </button>
                 ))}
+              </div>
               </div>
               <div className="h-6 w-px bg-slate-200 hidden sm:block mx-1" />
               <button onClick={() => window.print()}

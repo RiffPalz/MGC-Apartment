@@ -153,11 +153,15 @@ export const getPaymentDashboard = async () => {
   const unpaidBills = await Payment.count({ where: { status: "Unpaid" } });
 
   const monthlyRevenue = await Payment.findAll({
-    attributes: ["billing_month", [sequelize.fn("SUM", sequelize.col("amount")), "total"]],
-    where: { status: "Paid" },
-    group: ["billing_month"],
-    order: [["billing_month", "ASC"]]
-  });
+  attributes: [
+    [sequelize.fn("DATE_FORMAT", sequelize.col("billing_month"), "%Y-%m-01"), "billing_month"],
+    [sequelize.fn("SUM", sequelize.col("amount")), "total"],
+  ],
+  where: { status: "Paid" },
+  group: ["billing_month"], // <-- Change this to use the alias
+  order: [["billing_month", "ASC"]], // <-- Change this to use the alias
+  raw: true,
+});
 
   return { totalCollected, pendingVerification, overduePayments, unpaidBills, monthlyRevenue };
 };

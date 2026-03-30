@@ -94,22 +94,29 @@ export default function DashboardCards() {
         setCountdown("No active contract");
         return;
       }
-      const endDate = new Date(contractEndDate);
-      const now = new Date();
-      const diffMs = endDate - now;
-      if (diffMs <= 0) {
-        setCountdown("Contract Expired");
-        return;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // normalize to start of day
+
+      const end = new Date(contractEndDate);
+      end.setHours(0, 0, 0, 0);
+
+      const diffMs = end - today;
+      const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      if (daysLeft < 0) {
+        setCountdown("Expired");
+      } else if (daysLeft === 0) {
+        setCountdown("Ends today");
+      } else if (daysLeft === 1) {
+        setCountdown("1 day left");
+      } else {
+        setCountdown(`${daysLeft} days left`);
       }
-      const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      const years = Math.floor(totalDays / 365);
-      const remainingDays = totalDays % 365;
-      const months = Math.floor(remainingDays / 30);
-      const days = remainingDays % 30;
-      setCountdown(`${years} years ${months} months ${days} days`);
     };
+
     updateCountdown();
-    const interval = setInterval(updateCountdown, 60000); // update every minute
+    const interval = setInterval(updateCountdown, 60000);
     return () => clearInterval(interval);
   }, [contractEndDate]);
 
@@ -213,7 +220,16 @@ export default function DashboardCards() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[#330101]/40 text-[10px] font-bold uppercase tracking-widest mb-1">Contract Ends In</p>
-                  <h3 className="text-base sm:text-xl font-black text-[#330101] truncate">{countdown}</h3>
+                  <h3 className={`text-base sm:text-xl font-black truncate ${
+                    countdown === "Expired" ? "text-red-500" :
+                    countdown === "Ends today" ? "text-amber-500" :
+                    "text-[#330101]"
+                  }`}>{countdown}</h3>
+                  {contractEndDate && (
+                    <p className="text-[10px] text-[#330101]/40 mt-0.5">
+                      End date: {new Date(contractEndDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -478,7 +494,7 @@ function PaymentCard({ title, bill, onPay }) {
             disabled={!bill}
             className="w-full flex items-center justify-center gap-3 bg-[#330101] hover:bg-[#D96648] text-[#FFEDE1] text-xs font-bold py-4 rounded-2xl cursor-pointer transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed uppercase tracking-widest"
           >
-            <FaWallet size={16} /> Pay Now
+            <FaWallet size={16} /> Upload a Receipt
           </button>
         ) : (
           <div className="flex items-center justify-center gap-2 bg-[#F5E6E0] text-[#330101]/50 text-xs font-bold py-4 rounded-2xl border border-dashed border-[#330101]/10 uppercase">
