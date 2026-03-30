@@ -46,3 +46,11 @@
   /* Custom border-radius */
   --radius-4xl: 2rem;
 }
+
+/* ===== Modal blur: blurs the app root when a portal modal is open ===== */
+#root.modal-open {
+  filter: blur(4px);
+  transition: filter 0.15s ease;
+  /* prevent interaction with blurred content */
+  pointer-events: none;
+}

@@ -142,7 +142,7 @@ export default function TermsAndConditions({ isOpen, onClose }) {
         </div>
 
         {/* Internal Styles */}
-        <style jsx>{`
+        <style>{`
           .section-title {
             font-family: "LemonMilkRegular", sans-serif;
             font-weight: 700;

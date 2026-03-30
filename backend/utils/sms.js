@@ -1,0 +1,1 @@
+const SENDER_NAME = 'capstoneweb';

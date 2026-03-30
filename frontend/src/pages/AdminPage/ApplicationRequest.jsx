@@ -12,6 +12,7 @@ import {
   fetchApplicationStats,
   deleteApplicationRequest,
 } from "../../api/adminAPI/AppRequestAPI";
+import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 const PAGE_SIZE = 10;
 const fmt = (d) => d ? new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "---";
@@ -291,27 +292,16 @@ export default function AdminApplicationRequest() {
         </div>
       )}
 
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 border border-slate-100">
-            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-5">
-              <FaTrashAlt className="text-red-500" size={18} />
-            </div>
-            <h3 className="text-lg font-black text-slate-900 mb-2">Remove Application</h3>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-              Remove the application from <span className="font-bold text-slate-900">{deleteTarget.fullName}</span>? This cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} disabled={deleting}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-              <button onClick={handleDelete} disabled={deleting}
-                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors disabled:opacity-60 flex justify-center items-center">
-                {deleting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GeneralConfirmationModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        variant="delete"
+        title="Remove Application"
+        message={deleteTarget ? <>Remove the application from <span className="font-bold text-slate-900">{deleteTarget.fullName}</span>? This cannot be undone.</> : null}
+        confirmText="Confirm"
+        loading={deleting}
+      />
     </>
   );
 }

@@ -13,6 +13,7 @@ import {
   fetchMyMaintenanceHistory,
   followUpMaintenanceRequest,
 } from "../../api/tenantAPI/maintenanceAPI";
+import ModalPortal from "../../components/ModalPortal";
 
 const CATEGORIES = [
   "Electrical Maintenance",
@@ -278,7 +279,8 @@ function MaintenanceCards() {
 
       {/* SUCCESS MODAL */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-[#330101]/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+        <ModalPortal>
+        <div className="fixed inset-0 bg-[#330101]/70 flex items-center justify-center z-50 p-6">
           <div className="bg-white rounded-4xl p-10 shadow-2xl max-w-sm w-full text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-[#D96648]" />
             <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-5 text-2xl shadow-sm">
@@ -298,6 +300,7 @@ function MaintenanceCards() {
             </button>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

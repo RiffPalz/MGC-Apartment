@@ -4,6 +4,7 @@ import { FaBars, FaRegBell, FaBell, FaChevronDown, FaSignOutAlt, FaUserCircle, F
 import { useAuth } from "../context/AuthContext";
 import { fetchCaretakerNotifications, markNotificationRead, markAllNotificationsRead } from "../api/caretakerAPI/NotificationAPI";
 import { clearAuth } from "../api/authStorage";
+import GeneralConfirmationModal from "./GeneralConfirmationModal";
 
 const PAGE_TITLES = {
   "/caretaker/dashboard":     "Dashboard",
@@ -35,6 +36,7 @@ export default function CaretakerHeader({ open, setOpen }) {
   const [showNotifs, setShowNotifs]       = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notifsLoading, setNotifsLoading] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const title       = PAGE_TITLES[location.pathname] ?? "Caretaker Panel";
   const displayName = user?.fullName || user?.username || "Caretaker";
@@ -69,6 +71,7 @@ export default function CaretakerHeader({ open, setOpen }) {
   const handleLogout = () => { clearAuth(); navigate("/login", { replace: true }); };
 
   return (
+    <>
     <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 shrink-0">
       <div className="flex items-center gap-3 min-w-0">
         <button onClick={() => setOpen?.(!open)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg lg:hidden shrink-0">
@@ -155,7 +158,7 @@ export default function CaretakerHeader({ open, setOpen }) {
                   <FaUserCircle size={13} /> My Profile
                 </button>
                 <div className="h-px bg-gray-100 my-1" />
-                <button onClick={handleLogout}
+                <button onClick={() => { setShowMenu(false); setShowLogoutConfirm(true); }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">
                   <FaSignOutAlt size={13} /> Log Out
                 </button>
@@ -165,5 +168,16 @@ export default function CaretakerHeader({ open, setOpen }) {
         </div>
       </div>
     </header>
+
+    <GeneralConfirmationModal
+      isOpen={showLogoutConfirm}
+      onClose={() => setShowLogoutConfirm(false)}
+      onConfirm={handleLogout}
+      variant="logout"
+      title="Log Out"
+      message="Are you sure you want to log out of your session?"
+      confirmText="Log Out"
+    />
+    </>
   );
 }

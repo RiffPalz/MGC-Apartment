@@ -10,6 +10,7 @@ import {
   completeContract,
   renewContract,
 } from "../../api/adminAPI/ContractAPI";
+import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 const STATUS_CONFIG = {
   Active: { color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
@@ -696,29 +697,20 @@ export default function AdminContract() {
       )}
 
       {/* ── CONFIRM ACTION MODAL ── */}
-      {confirmModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-in zoom-in-95 duration-200 border border-slate-100">
-            <h3 className="text-lg font-black text-slate-900 mb-2">
-              {confirmModal.action === "terminate" ? "Terminate Contract" : "Complete Contract"}
-            </h3>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-              {confirmModal.action === "terminate"
-                ? <>Are you sure you want to <span className="font-bold text-red-600">terminate</span> the contract for Unit <span className="font-bold text-slate-900">{confirmModal.contract.unit_number}</span>? This cannot be undone.</>
-                : <>Mark the contract for Unit <span className="font-bold text-slate-900">{confirmModal.contract.unit_number}</span> as <span className="font-bold text-blue-600">completed</span>?</>}
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirmModal(null)} disabled={submitting}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-              <button onClick={handleConfirmAction} disabled={submitting}
-                className={`flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-colors shadow-sm disabled:opacity-60
-                  ${confirmModal.action === "terminate" ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"}`}>
-                {submitting ? "Processing..." : confirmModal.action === "terminate" ? "Terminate" : "Complete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GeneralConfirmationModal
+        isOpen={!!confirmModal}
+        onClose={() => setConfirmModal(null)}
+        onConfirm={handleConfirmAction}
+        variant={confirmModal?.action === "terminate" ? "reject" : "approve"}
+        title={confirmModal?.action === "terminate" ? "Terminate Contract" : "Complete Contract"}
+        message={confirmModal
+          ? confirmModal.action === "terminate"
+            ? <>Are you sure you want to <span className="font-bold text-red-600">terminate</span> the contract for Unit <span className="font-bold text-slate-900">{confirmModal.contract.unit_number}</span>? This cannot be undone.</>
+            : <>Mark the contract for Unit <span className="font-bold text-slate-900">{confirmModal.contract.unit_number}</span> as <span className="font-bold text-blue-600">completed</span>?</>
+          : null}
+        confirmText={confirmModal?.action === "terminate" ? "Terminate" : "Complete"}
+        loading={submitting}
+      />
     </>
   );
 }

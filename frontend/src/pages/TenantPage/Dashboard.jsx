@@ -17,6 +17,7 @@ import { fetchTenantProfile } from "../../api/tenantAPI/tenantAuth";
 import { fetchAnnouncements, fetchSingleAnnouncement } from "../../api/tenantAPI/AnnouncementAPI";
 import { fetchMyPayments, uploadReceipt } from "../../api/tenantAPI/PaymentAPI";
 import { fetchUserContracts } from "../../api/tenantAPI/ContractAPI";
+import ModalPortal from "../../components/ModalPortal";
 
 export default function DashboardCards() {
   const [profile, setProfile] = useState(null);
@@ -272,7 +273,8 @@ export default function DashboardCards() {
 
       {/* MODAL: CASH OR GCASH OPTION */}
       {uploadModal.isOpen && (
-        <div className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+        <ModalPortal>
+        <div className="fixed inset-0 bg-[#330101]/60 flex items-center justify-center z-50 p-6">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div className="bg-[#f7b094] h-2 w-full"></div>
             <div className="p-8">
@@ -369,11 +371,13 @@ export default function DashboardCards() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* MODAL: ANNOUNCEMENT DETAILS */}
       {announcementModal.isOpen && (
-        <div className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+        <ModalPortal>
+        <div className="fixed inset-0 bg-[#330101]/60 flex items-center justify-center z-50 p-6">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300 max-h-[90vh] overflow-y-auto">
             <div className="bg-[#f7b094] h-2 w-full"></div>
             <div className="p-8">
@@ -431,6 +435,7 @@ export default function DashboardCards() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

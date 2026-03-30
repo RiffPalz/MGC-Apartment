@@ -19,6 +19,7 @@ import {
 } from "react-icons/fa";
 import { fetchUserContracts } from "../../api/tenantAPI/ContractAPI";
 import { fetchTenantProfile } from "../../api/tenantAPI/tenantAuth";
+import ModalPortal from "../../components/ModalPortal";
 
 // Use the bundled worker from pdfjs-dist
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -225,7 +226,8 @@ export default function ContractCards() {
 
       {/* PDF VIEWER MODAL */}
       {pdfModal && contract.contract_file && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex flex-col">
+        <ModalPortal>
+        <div className="fixed inset-0 bg-black/70 z-50 flex flex-col">
           {/* Toolbar */}
           <div className="bg-[#5c1f10] px-5 py-3 flex items-center justify-between shrink-0">
             <span className="text-white font-black text-sm uppercase tracking-widest">Lease Agreement</span>
@@ -289,6 +291,7 @@ export default function ContractCards() {
             )}
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );
