@@ -165,15 +165,10 @@ httpServer.listen(PORT, async () => {
   try {
     await connectDB();
 
-    // Environment check for DB sync and seeders
-    if (process.env.NODE_ENV !== "production") {
-      console.log("Development mode: Synchronizing database...");
-      await sequelize.sync({ alter: true });
-      console.log("Database synchronized successfully");
-      await runSeeders();
-    } else {
-      console.log("Production mode: Database sync and seeders skipped.");
-    }
+    // Sync DB and run seeders
+    await sequelize.sync({ alter: true });
+    console.log("Database synchronized successfully");
+    await runSeeders();
 
     startSystemCron();
 
