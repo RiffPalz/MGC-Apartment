@@ -48,6 +48,7 @@ const allowedOrigins = [
   'http://localhost:5173', // Tenant UI
   'http://localhost:5174', // Admin UI
   'http://localhost:5175', // Caretaker UI
+  'https://mgc-aparment.vercel.app',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
