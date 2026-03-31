@@ -84,7 +84,7 @@ export const saveCaretakerProfile = async (req, res) => {
     });
 
   } catch (error) {
-   
+
     return res.status(400).json({
       success: false,
       message: error.message
@@ -127,11 +127,11 @@ export const getUnitsCaretaker = async (req, res) => {
     });
 
     const result = units.map((u) => ({
-      ID:          u.ID,
+      ID: u.ID,
       unit_number: u.unit_number,
-      floor:       u.floor,
-      is_active:   u.is_active,
-      isOccupied:  (u.contracts ?? []).length > 0,
+      floor: u.floor,
+      is_active: u.is_active,
+      isOccupied: (u.contracts ?? []).length > 0,
     }));
 
     return res.status(200).json({ success: true, units: result });

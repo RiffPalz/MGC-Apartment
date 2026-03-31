@@ -11,9 +11,9 @@ import {
 const router = express.Router();
 router.use(caretakerAuth);
 
-router.get("/",              getAllPaymentsController);
-router.get("/pending",       getPendingPaymentsController);
-router.patch("/:id/verify",  verifyPaymentController);
-router.delete("/:id",        deletePaymentController);
+router.get("/", getAllPaymentsController);
+router.get("/pending", getPendingPaymentsController);
+router.patch("/:id/verify", verifyPaymentController);
+router.delete("/:id", deletePaymentController);
 
 export default router;

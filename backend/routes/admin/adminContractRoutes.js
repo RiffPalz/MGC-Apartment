@@ -57,9 +57,9 @@ router.get(
 
 // Mark a contract as fully completed
 router.put(
-  "/:id/complete",
-  adminAuth,
-  completeContractAdmin
+   "/:id/complete",
+   adminAuth,
+   completeContractAdmin
 );
 
 export default router;

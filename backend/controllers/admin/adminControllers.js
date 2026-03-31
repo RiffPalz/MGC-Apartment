@@ -29,9 +29,9 @@ export const loginAdmin = async (req, res) => {
       message: result.message,
       adminId: result.adminId,
     });
-  
+
   } catch (error) {
-  
+
     return res.status(401).json({
       success: false,
       message: error.message
@@ -51,9 +51,9 @@ export const loginCodeVerify = async (req, res) => {
       accessToken: result.accessToken,
       admin: result.admin,
     });
-  
+
   } catch (error) {
-  
+
     return res.status(401).json({
       success: false,
       message: error.message
@@ -79,9 +79,9 @@ export const fetchAdminProfile = async (req, res) => {
         profilePicture: admin.profilePicture || null,
       },
     });
-  
+
   } catch (error) {
-  
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch admin profile"
@@ -115,9 +115,9 @@ export const saveAdminProfile = async (req, res) => {
       },
     });
 
-  
+
   } catch (error) {
-  
+
     return res.status(400).json({
       success: false,
       message: error.message
@@ -165,9 +165,9 @@ export const resendCodeController = async (req, res) => {
       success: true,
       message: "Verification code resent successfully"
     });
-  
+
   } catch (error) {
-  
+
     return res.status(400).json({
       success: false,
       message: error.message
@@ -186,9 +186,9 @@ export const createCaretaker = async (req, res) => {
       caretaker
     });
 
-  
+
   } catch (error) {
-  
+
     return res.status(400).json({
       success: false,
       message: error.message
@@ -207,9 +207,9 @@ export const createAdmin = async (req, res) => {
       admin
     });
 
-  
+
   } catch (error) {
-  
+
     return res.status(400).json({
       success: false,
       message: error.message
@@ -229,9 +229,9 @@ export const deleteUser = async (req, res) => {
       message: "User deleted successfully"
     });
 
-  
+
   } catch (error) {
-  
+
     return res.status(400).json({
       success: false,
       message: error.message
@@ -351,9 +351,9 @@ export const getPendingUsers = async (req, res) => {
       users
     });
 
-  
+
   } catch (error) {
-  
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch pending users"
@@ -374,9 +374,9 @@ export const updateUserApproval = async (req, res) => {
       message: `Tenant ${status} successfully`
     });
 
-  
+
   } catch (error) {
-  
+
     return res.status(400).json({
       success: false,
       message: error.message
@@ -407,9 +407,9 @@ export const getTenantsOverview = async (req, res) => {
       tenants
     });
 
-  
+
   } catch (error) {
-  
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch tenants overview"

@@ -151,7 +151,7 @@ app.get("/", (req, res) => {
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
   const isProd = process.env.NODE_ENV === "production";
-  
+
   res.status(err.status || 500).json({
     success: false,
     message: isProd ? "An unexpected internal server error occurred." : err.message
@@ -164,7 +164,7 @@ const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, async () => {
   try {
     await connectDB();
-    
+
     // Environment check for DB sync and seeders
     if (process.env.NODE_ENV !== "production") {
       console.log("Development mode: Synchronizing database...");

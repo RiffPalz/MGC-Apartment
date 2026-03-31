@@ -11,18 +11,18 @@ import { sendSMSBulk } from "../../utils/sms.js";
 import { sms } from "../../utils/smsTemplates.js";
 
 const getWorkingPdfUrl = (storedUrl, forDownload = false) => {
-  if (!storedUrl) return null;
-  try {
-    const match = storedUrl.match(/\/(?:image|raw|video)\/upload\/(?:v\d+\/)?(.+)$/);
-    if (!match) return storedUrl;
-    return cloudinary.url(match[1], {
-      resource_type: "raw",
-      secure: true,
-      ...(forDownload ? { flags: "attachment" } : {}),
-    });
-  } catch {
-    return storedUrl;
-  }
+    if (!storedUrl) return null;
+    try {
+        const match = storedUrl.match(/\/(?:image|raw|video)\/upload\/(?:v\d+\/)?(.+)$/);
+        if (!match) return storedUrl;
+        return cloudinary.url(match[1], {
+            resource_type: "raw",
+            secure: true,
+            ...(forDownload ? { flags: "attachment" } : {}),
+        });
+    } catch {
+        return storedUrl;
+    }
 };
 
 /* CREATE CONTRACT */
@@ -407,9 +407,9 @@ export const completeContract = async (contractId, adminId) => {
         });
 
         return contract;
-    
+
     } catch (error) {
-    
+
         await transaction.rollback();
         throw error;
     }

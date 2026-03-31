@@ -5,7 +5,7 @@ import Unit from "../models/unit.js";
 import { generateAccessToken, generateLoginToken } from "../utils/token.js";
 import { Op } from "sequelize";
 import { createActivityLog } from "../services/activityLogService.js";
-import { sendSMS } from "../utils/sms.js";
+import { sendSMS, sendSMSBulk } from "../utils/sms.js";
 import { sms } from "../utils/smsTemplates.js";
 
 // Generate unique tenant ID like TENANT-001, TENANT-002, etc.
@@ -32,8 +32,23 @@ export const registerUser = async (userData) => {
     throw new Error("All required fields must be provided");
   }
 
-  if (await User.findOne({ where: { emailAddress: email } })) throw new Error("Email already in use");
-  if (await User.findOne({ where: { userName } })) throw new Error("Username already in use");
+  const existingEmail = await User.findOne({ where: { emailAddress: email } });
+  if (existingEmail && existingEmail.status !== "Declined") {
+    throw new Error("Email already in use");
+  }
+
+  const existingUsername = await User.findOne({ where: { userName } });
+  if (existingUsername && existingUsername.status !== "Declined") {
+    throw new Error("This username already has an existing account.");
+  }
+
+  // Remove any old Declined records that would conflict on unique constraints
+  await User.destroy({
+    where: {
+      status: "Declined",
+      [Op.or]: [{ emailAddress: email }, { userName }],
+    },
+  });
 
   const unit = await Unit.findOne({ where: { unit_number: unitNumber } });
   if (!unit) throw new Error("Invalid unit number");
@@ -59,6 +74,16 @@ export const registerUser = async (userData) => {
 
   // SMS → tenant confirming registration received
   sendSMS(contactNumber, sms.registrationReceived(fullName));
+
+  // SMS → all admins notifying of new tenant registration
+  const admins = await User.findAll({
+    where: { role: "admin", status: "Approved" },
+    attributes: ["contactNumber"],
+  });
+  sendSMSBulk(
+    admins.map((a) => a.contactNumber),
+    `New tenant registration from ${fullName} (Unit ${unitNumber}). Please review and approve the account.`
+  );
 
   return user;
 };
@@ -140,6 +165,35 @@ export const updateUserProfileService = async (userId, updateData) => {
   });
 
   return user;
+};
+
+/* ── CHECK AVAILABILITY ── */
+export const checkAvailabilityService = async (userName) => {
+  // Units that already have at least one tenant account (any status)
+  const takenUsers = await User.findAll({
+    where: { role: "tenant", unitNumber: { [Op.ne]: null } },
+    attributes: ["unitNumber", "status"],
+  });
+
+  // A unit is "taken" if it has an Approved or Pending account
+  // (Declined accounts free the slot back up)
+  const takenUnits = [
+    ...new Set(
+      takenUsers
+        .filter((u) => u.status !== "Declined")
+        .map((u) => u.unitNumber)
+    ),
+  ];
+
+  let usernameTaken = false;
+  if (userName) {
+    const existing = await User.findOne({ where: { userName } });
+    if (existing && existing.status !== "Declined") {
+      usernameTaken = true;
+    }
+  }
+
+  return { takenUnits, usernameTaken };
 };
 
 /* ── FORGOT PASSWORD ── */

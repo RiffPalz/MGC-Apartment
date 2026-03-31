@@ -1,7 +1,7 @@
 import express from "express";
 import { authenticate, authorize } from "../middleware/auth.js";
 import {
-    getUserContractsController,
+  getUserContractsController,
 } from "../controllers/userContractController.js";
 
 const router = express.Router();
