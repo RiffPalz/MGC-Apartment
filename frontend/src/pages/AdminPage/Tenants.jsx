@@ -6,7 +6,7 @@ import {
   FaFileContract, FaPlus, FaEyeSlash,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { fetchTenantsOverview, deleteTenant, createTenant } from "../../api/adminAPI/tenantOverviewAPI";
+import { fetchTenantsOverview, deleteTenant, createTenant } from "../../api/adminAPI/TenantOverviewAPI";
 import logo from "../../assets/images/logo.png";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
