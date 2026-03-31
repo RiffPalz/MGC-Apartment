@@ -25,7 +25,7 @@ const CreateAcc = () => {
     fullName: "",
     email: "",
     phone: "",
-    unit: "101", // Default to a real unit number from your list
+    unit: "",
     tenants: "1",
     username: "",
     password: "",
@@ -94,7 +94,6 @@ const CreateAcc = () => {
       }
       setForm({ ...form, [name]: formatted });
     } else if (name === "unit") {
-      /* ===== Unit to Username Logic ===== */
       setForm({
         ...form,
         [name]: value,
@@ -268,6 +267,7 @@ const CreateAcc = () => {
                   value={form.unit}
                   onChange={handleChange}
                 >
+                  <option value="" disabled>Select unit...</option>
                   {/* Grouping units by floor */}
                   <optgroup
                     label="1st Floor"

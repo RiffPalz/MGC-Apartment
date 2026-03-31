@@ -16,6 +16,7 @@ const createDefaultAdmin = async () => {
         publicUserID: "PUBLIC-ADMIN-001",
         fullName: "MGC ADMIN",
         emailAddress: email,
+        contactNumber: "09291370767",
         userName: "mgc_admin",
         password_hash: plainPassword, // The model hook will handle hashing
         role: "admin",

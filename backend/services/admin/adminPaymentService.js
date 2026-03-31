@@ -5,18 +5,20 @@ import Unit from "../../models/unit.js";
 import User from "../../models/user.js";
 import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
+import { sendSMS, sendSMSBulk } from "../../utils/sms.js";
+import { sms } from "../../utils/smsTemplates.js";
 
 /* CREATE PAYMENT */
 export const createPayment = async ({ contract_id, category, billing_month, amount, due_date }, adminId) => {
   // Validate contract and tenant
   const contract = await Contract.findOne({
     where: { ID: contract_id },
-    include: [{ model: User, as: "tenants", attributes: ["ID"], through: { attributes: [] } }]
+    include: [{ model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } }]
   });
   if (!contract) throw new Error("Contract not found");
   if (!contract.tenants?.length) throw new Error("No tenant associated with this contract");
 
-  const tenantId = contract.tenants[0].ID;
+  const tenant = contract.tenants[0];
 
   // Validate due date
   const today = new Date().setHours(0, 0, 0, 0);
@@ -31,7 +33,7 @@ export const createPayment = async ({ contract_id, category, billing_month, amou
 
   // Notify tenant
   await createNotification({
-    userId: tenantId,
+    userId: tenant.ID,
     role: "tenant",
     type: "bill created",
     title: "New Bill Generated",
@@ -39,6 +41,9 @@ export const createPayment = async ({ contract_id, category, billing_month, amou
     referenceId: payment.ID,
     referenceType: "payment"
   });
+
+  // SMS → tenant
+  sendSMS(tenant.contactNumber, sms.billCreated(category, billing_month));
 
   // Log admin action
   await createActivityLog({
@@ -86,20 +91,20 @@ export const verifyPayment = async (paymentId, adminId) => {
     include: [{
       model: Contract,
       as: "contract",
-      include: [{ model: User, as: "tenants", attributes: ["ID"], through: { attributes: [] } }]
+      include: [{ model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } }]
     }]
   });
 
   if (!payment) throw new Error("Payment not found");
   if (payment.status !== "Pending Verification") throw new Error("Payment is not awaiting verification");
 
-  const tenantId = payment.contract.tenants[0].ID;
+  const tenant = payment.contract.tenants[0];
   payment.status = "Paid";
   await payment.save();
 
   // Notify tenant and caretaker
   await createNotification({
-    userId: tenantId,
+    userId: tenant.ID,
     role: "tenant",
     type: "payment verified",
     title: "Payment Verified",
@@ -116,6 +121,9 @@ export const verifyPayment = async (paymentId, adminId) => {
     referenceId: payment.ID,
     referenceType: "payment"
   });
+
+  // SMS → tenant
+  sendSMS(tenant.contactNumber, sms.paymentVerified(payment.category));
 
   // Log admin action
   await createActivityLog({

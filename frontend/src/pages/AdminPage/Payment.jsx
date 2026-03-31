@@ -25,6 +25,14 @@ const fmt = (d) =>
 const fmtMonth = (d) =>
   d ? new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "long" }) : "—";
 
+// Normalize any date value to YYYY-MM-DD for <input type="date">
+const toDateInput = (d) => {
+  if (!d) return "";
+  const date = new Date(d);
+  if (isNaN(date)) return "";
+  return date.toISOString().split("T")[0];
+};
+
 const STATUS_CFG = {
   Paid: { color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   Unpaid: { color: "bg-red-50 text-red-700 border-red-200" },
@@ -190,8 +198,8 @@ export default function AdminPayment() {
   const openEdit = (row) => {
     setEditForm({
       category: row.category,
-      billing_month: row.billingMonth ?? "",
-      due_date: row.dueDate ?? "",
+      billing_month: toDateInput(row.billingMonth),
+      due_date: toDateInput(row.dueDate),
       amount: row.amount,
       status: row.status,
       paymentType: row.paymentType ?? "",

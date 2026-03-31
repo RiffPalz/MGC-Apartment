@@ -5,6 +5,8 @@ import Unit from "../models/unit.js";
 import { generateAccessToken, generateLoginToken } from "../utils/token.js";
 import { Op } from "sequelize";
 import { createActivityLog } from "../services/activityLogService.js";
+import { sendSMS } from "../utils/sms.js";
+import { sms } from "../utils/smsTemplates.js";
 
 // Generate unique tenant ID like TENANT-001, TENANT-002, etc.
 const generatePublicUserID = async () => {
@@ -54,6 +56,9 @@ export const registerUser = async (userData) => {
     password_hash: password,
     role: "tenant",
   });
+
+  // SMS → tenant confirming registration received
+  sendSMS(contactNumber, sms.registrationReceived(fullName));
 
   return user;
 };

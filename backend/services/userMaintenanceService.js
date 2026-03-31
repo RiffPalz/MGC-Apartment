@@ -2,6 +2,8 @@ import Maintenance from "../models/maintenance.js";
 import User from "../models/user.js";
 import { createNotification } from "../services/notificationService.js";
 import { createActivityLog } from "../services/activityLogService.js";
+import { sendSMSBulk } from "../utils/sms.js";
+import { sms } from "../utils/smsTemplates.js";
 
 /**
  * CREATE MAINTENANCE REQUEST (Tenant)
@@ -45,6 +47,16 @@ export const createMaintenance = async (userId, data) => {
     referenceId: request.ID,
     referenceType: "maintenance"
   });
+
+  /* SMS → admin & caretaker */
+  const staffUsers = await User.findAll({
+    where: { role: ["admin", "caretaker"] },
+    attributes: ["contactNumber"],
+  });
+  sendSMSBulk(
+    staffUsers.map((u) => u.contactNumber),
+    sms.maintenanceSubmitted(user.fullName, user.unitNumber ?? "?", title)
+  );
 
   await createActivityLog({
     userId,

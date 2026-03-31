@@ -1,6 +1,9 @@
 import Announcement from "../../models/announcement.js";
+import User from "../../models/user.js";
 import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
+import { sendSMSBulk } from "../../utils/sms.js";
+import { sms } from "../../utils/smsTemplates.js";
 
 /* CREATE ANNOUNCEMENT */
 export const createAnnouncement = async ({ announcementTitle, announcementMessage, category, adminId }) => {
@@ -33,6 +36,16 @@ export const createAnnouncement = async ({ announcementTitle, announcementMessag
     referenceId: announcement.ID,
     referenceType: "announcement"
   });
+
+  // SMS → all approved tenants
+  const tenants = await User.findAll({
+    where: { role: "tenant", status: "Approved" },
+    attributes: ["contactNumber"],
+  });
+  sendSMSBulk(
+    tenants.map((t) => t.contactNumber),
+    sms.announcementPosted(announcementTitle, category || "General")
+  );
 
   // Log admin action
   await createActivityLog({

@@ -1,6 +1,8 @@
 import { Maintenance, User } from "../../models/index.js";
 import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
+import { sendSMS } from "../../utils/sms.js";
+import { sms } from "../../utils/smsTemplates.js";
 
 /* CREATE MAINTENANCE REQUEST */
 export const createMaintenance = async (data, adminId) => {
@@ -54,7 +56,9 @@ export const createMaintenance = async (data, adminId) => {
 
 /* APPROVE MAINTENANCE REQUEST */
 export const approveMaintenance = async (maintenanceId, adminId) => {
-  const request = await Maintenance.findByPk(maintenanceId);
+  const request = await Maintenance.findByPk(maintenanceId, {
+    include: [{ model: User, as: "user", attributes: ["contactNumber", "fullName", "unitNumber"] }],
+  });
   if (!request) throw new Error("Maintenance request not found");
   if (request.status !== "Pending") throw new Error("Only pending requests can be approved");
 
@@ -81,6 +85,9 @@ export const approveMaintenance = async (maintenanceId, adminId) => {
     referenceType: "maintenance",
   });
 
+  // SMS → tenant
+  sendSMS(request.user?.contactNumber, sms.maintenanceStatusUpdated(request.title, "Approved"));
+
   // Log approval
   await createActivityLog({
     userId: adminId,
@@ -97,7 +104,9 @@ export const approveMaintenance = async (maintenanceId, adminId) => {
 /* UPDATE MAINTENANCE REQUEST */
 export const updateMaintenance = async (maintenanceId, data, adminId) => {
   const { status, startDate, endDate } = data;
-  const request = await Maintenance.findByPk(maintenanceId);
+  const request = await Maintenance.findByPk(maintenanceId, {
+    include: [{ model: User, as: "user", attributes: ["contactNumber"] }],
+  });
   if (!request) throw new Error("Maintenance request not found");
 
   const allowedStatuses = ["Pending", "Approved", "In Progress", "Done"];
@@ -150,6 +159,11 @@ export const updateMaintenance = async (maintenanceId, data, adminId) => {
     referenceId: request.ID,
     referenceType: "maintenance",
   });
+
+  // SMS → tenant (only for meaningful status changes)
+  if (["Approved", "In Progress", "Done"].includes(request.status)) {
+    sendSMS(request.user?.contactNumber, sms.maintenanceStatusUpdated(request.title, request.status));
+  }
 
   // Log update
   await createActivityLog({

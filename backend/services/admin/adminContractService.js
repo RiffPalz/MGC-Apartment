@@ -7,6 +7,8 @@ import User from "../../models/user.js";
 import cloudinary from "../../config/cloudinary.js";
 import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
+import { sendSMSBulk } from "../../utils/sms.js";
+import { sms } from "../../utils/smsTemplates.js";
 
 const getWorkingPdfUrl = (storedUrl, forDownload = false) => {
   if (!storedUrl) return null;
@@ -96,6 +98,17 @@ export const createContractByAdmin = async (
             });
         }
 
+        // SMS → all tenants on this contract
+        const tenantContacts = candidates
+            .filter((u) => tenantIds.includes(u.ID))
+            .map((u) => u.contactNumber);
+        sendSMSBulk(tenantContacts, sms.contractCreated(unit.unit_number));
+
+        // If a PDF was already attached at creation, send the file-uploaded SMS too
+        if (contract_file) {
+            sendSMSBulk(tenantContacts, sms.contractFileUploaded(unit.unit_number));
+        }
+
         await createActivityLog({
             userId: adminId,
             role: "admin",
@@ -116,7 +129,13 @@ export const createContractByAdmin = async (
 export const terminateContract = async (contractId, adminId) => {
     const transaction = await sequelize.transaction();
     try {
-        const contract = await Contract.findByPk(contractId, { include: { model: User, as: "tenants" }, transaction });
+        const contract = await Contract.findByPk(contractId, {
+            include: [
+                { model: User, as: "tenants" },
+                { model: Unit, as: "unit", attributes: ["unit_number"] },
+            ],
+            transaction,
+        });
         if (!contract || contract.status !== "Active") throw new Error("Contract not eligible for termination.");
 
         await contract.update({ status: "Terminated" }, { transaction });
@@ -137,6 +156,9 @@ export const terminateContract = async (contractId, adminId) => {
                 referenceType: "contract",
             });
         }
+
+        // SMS → tenants
+        sendSMSBulk(contract.tenants.map((t) => t.contactNumber), sms.contractTerminated(contract.unit?.unit_number ?? ""));
 
         await createActivityLog({
             userId: adminId,
@@ -196,6 +218,12 @@ export const renewContract = async ({ oldContractId, newStartDate, newEndDate, c
             });
         }
 
+        // SMS → tenants
+        sendSMSBulk(
+            oldContract.tenants.map((t) => t.contactNumber),
+            sms.contractRenewed(oldContract.unit.unit_number, newEndDate)
+        );
+
         await createActivityLog({
             userId: adminId,
             role: "admin",
@@ -214,10 +242,24 @@ export const renewContract = async ({ oldContractId, newStartDate, newEndDate, c
 
 /* EDIT CONTRACT */
 export const editContract = async (contractId, updates, adminId) => {
-    const contract = await Contract.findByPk(contractId);
+    const contract = await Contract.findByPk(contractId, {
+        include: [
+            { model: Unit, as: "unit", attributes: ["unit_number"] },
+            { model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } },
+        ],
+    });
     if (!contract) throw new Error("Contract not found.");
 
+    const hadFile = !!contract.contract_file;
     await contract.update(updates);
+
+    // If a new PDF was just attached, notify tenants via SMS
+    if (updates.contract_file && !hadFile) {
+        sendSMSBulk(
+            contract.tenants.map((t) => t.contactNumber),
+            sms.contractFileUploaded(contract.unit?.unit_number ?? "")
+        );
+    }
 
     await createActivityLog({
         userId: adminId,

@@ -1,6 +1,8 @@
 import { Maintenance, User } from "../../models/index.js";
 import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
+import { sendSMS } from "../../utils/sms.js";
+import { sms } from "../../utils/smsTemplates.js";
 
 
 /* CREATE MAINTENANCE */
@@ -75,7 +77,9 @@ export const updateMaintenance = async (maintenanceId, data, caretakerId) => {
 
     const { status, startDate, endDate } = data;
 
-    const request = await Maintenance.findByPk(maintenanceId);
+    const request = await Maintenance.findByPk(maintenanceId, {
+        include: [{ model: User, as: "user", attributes: ["contactNumber"] }],
+    });
 
     if (!request) {
         throw new Error("Maintenance request not found");
@@ -134,6 +138,11 @@ export const updateMaintenance = async (maintenanceId, data, caretakerId) => {
         referenceId: request.ID,
         referenceType: "maintenance"
     });
+
+    // SMS → tenant (only for meaningful status changes)
+    if (["Approved", "In Progress", "Done"].includes(request.status)) {
+        sendSMS(request.user?.contactNumber, sms.maintenanceStatusUpdated(request.title, request.status));
+    }
 
     await createActivityLog({
         userId: caretakerId,

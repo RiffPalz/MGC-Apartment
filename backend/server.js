@@ -43,6 +43,14 @@ EventEmitter.defaultMaxListeners = 20;
 const app = express();
 const httpServer = createServer(app);
 
+// HTTP CORS & Middleware
+const allowedOrigins = [
+  'http://localhost:5173', // Tenant UI
+  'http://localhost:5174', // Admin UI
+  'http://localhost:5175', // Caretaker UI
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 // Socket.IO Setup
 const io = new Server(httpServer, {
   cors: {
@@ -50,11 +58,9 @@ const io = new Server(httpServer, {
       // Allow requests with no origin (Postman, server-to-server)
       if (!origin) return callback(null, true);
 
-      // Allow local development across multiple ports
-      if (origin.includes('localhost')) return callback(null, true);
-
-      // Allow production domain
-      if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+      // Secure Localhost & Production Check
+      const isLocalhost = /^https?:\/\/localhost:\d+$/.test(origin);
+      if (isLocalhost || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
@@ -70,14 +76,6 @@ const io = new Server(httpServer, {
 
 app.set("io", io);
 
-// HTTP CORS & Middleware
-const allowedOrigins = [
-  'http://localhost:5173', // Tenant UI
-  'http://localhost:5174', // Admin UI
-  'http://localhost:5175', // Caretaker UI
-  process.env.FRONTEND_URL
-].filter(Boolean);
-
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
@@ -92,29 +90,30 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 }));
 
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+// Adjusted payload limit to 5mb for security
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
 // Socket Events
 io.on("connection", (socket) => {
-  console.log(`🔌 Client connected: ${socket.id}`);
+  console.log(`Client connected: ${socket.id}`);
 
   socket.on("join_role", (role) => {
     socket.join(role);
-    console.log(`👤 ${socket.id} joined ${role} room`);
+    console.log(`${socket.id} joined ${role} room`);
   });
 
   socket.on("join_user", (userId) => {
     socket.join(`user_${userId}`);
-    console.log(`👤 ${socket.id} joined user_${userId}`);
+    console.log(`${socket.id} joined user_${userId}`);
   });
 
   socket.on("disconnect", (reason) => {
-    console.log(`🔴 Client disconnected: ${socket.id} (${reason})`);
+    console.log(`Client disconnected: ${socket.id} (${reason})`);
   });
 
   socket.on("connect_error", (error) => {
-    console.log(`❌ Socket error: ${error.message}`);
+    console.log(`Socket error: ${error.message}`);
   });
 });
 
@@ -145,15 +144,17 @@ app.use("/api/users/announcements", userAnnouncementRoutes);
 
 // Health Check
 app.get("/", (req, res) => {
-  res.send("API is running 🚀");
+  res.send("API is running");
 });
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error("❌ Server Error:", err);
+  console.error("Server Error:", err);
+  const isProd = process.env.NODE_ENV === "production";
+  
   res.status(err.status || 500).json({
     success: false,
-    message: err.message || "Internal Server Error"
+    message: isProd ? "An unexpected internal server error occurred." : err.message
   });
 });
 
@@ -163,10 +164,17 @@ const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, async () => {
   try {
     await connectDB();
-    console.log("Beginning database synchronization...");
-    await sequelize.sync({ alter: true });
-    console.log("Database synchronized successfully");
-    await runSeeders();
+    
+    // Environment check for DB sync and seeders
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Development mode: Synchronizing database...");
+      await sequelize.sync({ alter: true });
+      console.log("Database synchronized successfully");
+      await runSeeders();
+    } else {
+      console.log("Production mode: Database sync and seeders skipped.");
+    }
+
     startSystemCron();
 
     console.log(`Server running on port ${PORT}`);
