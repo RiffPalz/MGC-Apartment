@@ -33,8 +33,8 @@ export const getUserNotifications = async (userId) => {
     return await Notification.findAll({
         where: {
             [Op.or]: [
-                { user_id: userId },            
-                { role: "tenant", user_id: null } 
+                { user_id: userId },
+                { role: "tenant", user_id: null }
             ]
         },
         order: [["created_at", "DESC"]]

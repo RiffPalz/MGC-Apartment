@@ -23,18 +23,18 @@ export const getAllUnits = async () => {
 
   return units.map((u) => {
     const activeContract = u.contracts?.[0] ?? null;
-    const tenants        = activeContract?.tenants ?? [];
+    const tenants = activeContract?.tenants ?? [];
     return {
-      id:           u.ID,
-      unitNumber:   u.unit_number,
-      floor:        FLOOR_MAP[u.floor] ?? `Floor ${u.floor}`,
-      floorNum:     u.floor,
-      maxCapacity:  u.max_capacity,
-      isActive:     u.is_active,
-      occupied:     tenants.length > 0,
+      id: u.ID,
+      unitNumber: u.unit_number,
+      floor: FLOOR_MAP[u.floor] ?? `Floor ${u.floor}`,
+      floorNum: u.floor,
+      maxCapacity: u.max_capacity,
+      isActive: u.is_active,
+      occupied: tenants.length > 0,
       currentTenants: tenants.length,
       tenants,
-      contractId:   activeContract?.ID ?? null,
+      contractId: activeContract?.ID ?? null,
     };
   });
 };
@@ -86,7 +86,7 @@ export const updateUnit = async (unitId, data, adminId) => {
   if (!unit) throw new Error("Unit not found");
 
   if (data.max_capacity !== undefined) unit.max_capacity = data.max_capacity;
-  if (data.is_active    !== undefined) unit.is_active    = data.is_active;
+  if (data.is_active !== undefined) unit.is_active = data.is_active;
   await unit.save();
 
   await createActivityLog({

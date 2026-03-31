@@ -13,12 +13,12 @@ export const createContractAdmin = async (req, res) => {
     try {
         const adminId = req.admin?.id || req.auth?.id;
         const { unit_id } = req.params;
-        const { 
-            rent_amount, 
-            start_date, 
-            end_date, status, 
-            tenancy_rules, 
-            termination_renewal_conditions, 
+        const {
+            rent_amount,
+            start_date,
+            end_date, status,
+            tenancy_rules,
+            termination_renewal_conditions,
         } = req.body;
 
         const contract_file = req.file ? (req.file.secure_url || req.file.path) : null;
@@ -34,17 +34,17 @@ export const createContractAdmin = async (req, res) => {
             contract_file,
         }, adminId);
 
-        return res.status(201).json({ 
+        return res.status(201).json({
             success: true,
-            message: "Contract created successfully.", 
-            contract 
+            message: "Contract created successfully.",
+            contract
         });
-    
+
     } catch (error) {
-    
-        return res.status(400).json({ 
-            success: false, 
-            message: error.message 
+
+        return res.status(400).json({
+            success: false,
+            message: error.message
         });
     }
 };
@@ -57,17 +57,17 @@ export const terminateContractAdmin = async (req, res) => {
 
         const contract = await terminateContract(id, adminId); // Pass Admin ID
 
-        return res.status(200).json({ 
+        return res.status(200).json({
             success: true,
-            message: "Contract terminated successfully.", 
-            contract 
+            message: "Contract terminated successfully.",
+            contract
         });
-    
+
     } catch (error) {
-    
-        return res.status(400).json({ 
-            success: false, 
-            message: error.message 
+
+        return res.status(400).json({
+            success: false,
+            message: error.message
         });
     }
 };
@@ -87,17 +87,17 @@ export const renewContractAdmin = async (req, res) => {
             contract_file,
         }, adminId); // Pass Admin ID
 
-        return res.status(201).json({ 
+        return res.status(201).json({
             success: true,
-            message: "Contract renewed successfully.", 
-            contract: newContract 
+            message: "Contract renewed successfully.",
+            contract: newContract
         });
-    
+
     } catch (error) {
-    
-        return res.status(400).json({ 
-            success: false, 
-            message: error.message 
+
+        return res.status(400).json({
+            success: false,
+            message: error.message
         });
     }
 };
@@ -113,17 +113,17 @@ export const editContractAdmin = async (req, res) => {
 
         const updatedContract = await editContract(id, updates, adminId); // Pass Admin ID
 
-        return res.status(200).json({ 
+        return res.status(200).json({
             success: true,
-            message: "Contract updated successfully.", 
-            contract: updatedContract 
+            message: "Contract updated successfully.",
+            contract: updatedContract
         });
-    
+
     } catch (error) {
-    
-        return res.status(400).json({ 
-            success: false, 
-            message: error.message 
+
+        return res.status(400).json({
+            success: false,
+            message: error.message
         });
     }
 };
@@ -132,16 +132,16 @@ export const editContractAdmin = async (req, res) => {
 export const getAdminDashboard = async (req, res) => {
     try {
         const data = await getAdminDashboardData();
-        return res.status(200).json({ 
-            success: true, 
-            ...data 
+        return res.status(200).json({
+            success: true,
+            ...data
         });
-    
+
     } catch (error) {
-    
-        return res.status(400).json({ 
-            success: false, 
-            message: error.message 
+
+        return res.status(400).json({
+            success: false,
+            message: error.message
         });
     }
 };
@@ -150,18 +150,18 @@ export const getAdminDashboard = async (req, res) => {
 export const getExpiringContractsAdmin = async (req, res) => {
     try {
         const contracts = await getExpiringContracts();
-        return res.status(200).json({ 
-            success: true, 
-            count: contracts.length, 
-            contracts 
+        return res.status(200).json({
+            success: true,
+            count: contracts.length,
+            contracts
         });
-    
+
     } catch (error) {
         console.error("Expiring contract error:", error);
-    
-        return res.status(500).json({ 
-            success: false, 
-            message: error.message 
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
         });
     }
 };
@@ -174,17 +174,17 @@ export const completeContractAdmin = async (req, res) => {
 
         const contract = await completeContract(id, adminId); // Pass Admin ID
 
-        return res.status(200).json({ 
+        return res.status(200).json({
             success: true,
-            message: "Contract completed successfully.", 
-            contract 
+            message: "Contract completed successfully.",
+            contract
         });
-    
+
     } catch (error) {
-    
-        return res.status(400).json({ 
-            success: false, 
-            message: error.message 
+
+        return res.status(400).json({
+            success: false,
+            message: error.message
         });
     }
 };

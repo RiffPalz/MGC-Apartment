@@ -27,11 +27,11 @@ router.get(
 
 // Upload a receipt image for a payment
 router.post(
-  "/:id/upload-receipt",
-  authenticate,
-  authorize("tenant"),
-  uploadReceipt.single("receipt"),
-  uploadReceiptController
+    "/:id/upload-receipt",
+    authenticate,
+    authorize("tenant"),
+    uploadReceipt.single("receipt"),
+    uploadReceiptController
 );
 
 export default router;

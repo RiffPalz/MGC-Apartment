@@ -101,12 +101,12 @@ export const fetchAllMaintenance = async (req, res) => {
       count: result.length,
       requests: result
     });
-  
-  
+
+
   } catch (error) {
-  
+
     console.error("Fetch maintenance error:", error);
-  
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch maintenance requests"
