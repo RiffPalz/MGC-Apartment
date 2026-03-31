@@ -39,4 +39,3 @@ build/
 /database.sqlite
 storage/
 uploads/
-seeders/
