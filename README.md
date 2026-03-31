@@ -66,29 +66,6 @@ Built with modern full-stack technologies, the platform implements **role-based 
 - **Email notifications** via Resend (OTP, password reset, application confirmation)
 - **SMS notifications** via Semaphore for all critical events (see SMS section below)
 
----
-
-## 📱 SMS Notification Coverage
-
-| Event | Recipients |
-|---|---|
-| Tenant registers | Tenant (confirmation) + All admins (alert) |
-| Account approved | Tenant |
-| Account declined | Tenant |
-| New bill created | Tenant |
-| Payment receipt uploaded | All admins + caretakers |
-| Payment verified / marked Paid | Tenant |
-| Maintenance status → Approved / In Progress / Done | Tenant |
-| New maintenance request submitted by tenant | All admins + caretakers |
-| Contract created | Tenant(s) |
-| Contract PDF uploaded | Tenant(s) |
-| Contract renewed | Tenant(s) |
-| Contract terminated | Tenant(s) |
-| Contract expiring in 30 days | Tenant(s) + All admins + caretakers |
-| Contract expiring in 5 days | Tenant(s) + All admins + caretakers |
-| New announcement posted | All approved tenants |
-
----
 
 ## 🧱 System Architecture
 
