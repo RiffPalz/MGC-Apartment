@@ -2,6 +2,8 @@ import User from "../../models/user.js";
 import { Op } from "sequelize";
 import { createActivityLog } from "../../services/activityLogService.js";
 import { createNotification } from "../../services/notificationService.js";
+import { sendSMS } from "../../utils/sms.js";
+import { sms } from "../../utils/smsTemplates.js";
 
 /* Generate public ID for admin/caretaker */
 const generateStaffPublicID = async (role) => {
@@ -110,6 +112,13 @@ export const updateTenantApprovalService = async (adminUser, userId, status) => 
         referenceId: tenant.ID,
         referenceType: "user"
     });
+
+    // SMS → tenant based on approval result
+    if (status === "Approved") {
+        sendSMS(tenant.contactNumber, sms.accountApproved(tenant.fullName));
+    } else {
+        sendSMS(tenant.contactNumber, sms.accountDeclined(tenant.fullName));
+    }
 
     return tenant;
 };

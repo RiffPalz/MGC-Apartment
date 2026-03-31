@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  FaSearch, FaPrint, FaEye, FaTrashAlt,
+  FaSearch, FaPrint, FaEye,
   FaMoneyBillWave, FaExclamationCircle, FaCheckCircle, FaClock,
   FaChevronLeft, FaChevronRight,
 } from "react-icons/fa";
@@ -10,7 +10,6 @@ import {
   fetchAllPayments,
   fetchPendingPayments,
   verifyPayment,
-  deletePayment,
 } from "../../api/caretakerAPI/PaymentAPI";
 
 const PAGE_SIZE = 10;
@@ -56,8 +55,6 @@ export default function CaretakerPaymentOverview() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [page, setPage]               = useState(1);
   const [viewModal, setViewModal]     = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deleting, setDeleting]       = useState(false);
   const [verifying, setVerifying]     = useState(null);
 
   const load = useCallback(async () => {
@@ -126,19 +123,6 @@ export default function CaretakerPaymentOverview() {
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      setDeleting(true);
-      await deletePayment(deleteTarget.id);
-      toast.success("Payment deleted.");
-      setDeleteTarget(null);
-      load();
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to delete.");
-    } finally {
-      setDeleting(false);
-    }
-  };
 
   return (
     <>
@@ -220,7 +204,8 @@ export default function CaretakerPaymentOverview() {
                 className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] transition-all bg-slate-50 hover:bg-white"/>
             </div>
             <div className="flex flex-wrap gap-2 items-center">
-              <div className="flex bg-slate-100 p-1 rounded-lg">
+              <div className="overflow-x-auto">
+              <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
                 {["All","Unpaid","Pending Verification","Paid","Overdue"].map((f) => (
                   <button key={f} onClick={() => { setStatusFilter(f); setPage(1); }}
                     className={`px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all
@@ -228,6 +213,7 @@ export default function CaretakerPaymentOverview() {
                     {f === "Pending Verification" ? "Pending" : f}
                   </button>
                 ))}
+              </div>
               </div>
               <div className="h-6 w-px bg-slate-200 hidden sm:block mx-1"/>
               <button onClick={() => window.print()}
@@ -312,10 +298,6 @@ export default function CaretakerPaymentOverview() {
                           className="p-2 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
                           <FaEye size={13}/>
                         </button>
-                        <button title="Delete" onClick={() => setDeleteTarget(r)}
-                          className="p-2 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
-                          <FaTrashAlt size={13}/>
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -398,26 +380,6 @@ export default function CaretakerPaymentOverview() {
                   </a>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* DELETE MODAL */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-in zoom-in-95 duration-200 border border-slate-100">
-            <h3 className="text-lg font-black text-slate-900 mb-2">Delete Payment</h3>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-              Delete payment record for <span className="font-bold text-slate-900">{deleteTarget.fullName}</span> — Unit {deleteTarget.unitNumber}? This cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} disabled={deleting}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-              <button onClick={handleDelete} disabled={deleting}
-                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors disabled:opacity-60 flex justify-center items-center">
-                {deleting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : "Delete"}
-              </button>
             </div>
           </div>
         </div>

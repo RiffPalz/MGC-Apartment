@@ -16,7 +16,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 // Api
-import { registerTenant } from "../../api/tenantAPI/tenantAuth";
+import { registerTenant, checkAvailability } from "../../api/tenantAPI/tenantAuth";
 
 const CreateAcc = () => {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const CreateAcc = () => {
     fullName: "",
     email: "",
     phone: "",
-    unit: "101", // Default to a real unit number from your list
+    unit: "",
     tenants: "1",
     username: "",
     password: "",
@@ -38,6 +38,8 @@ const CreateAcc = () => {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [takenUnits, setTakenUnits] = useState([]);
+  const [usernameError, setUsernameError] = useState("");
 
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -49,6 +51,11 @@ const CreateAcc = () => {
       once: true,
       easing: "ease-in-out",
     });
+
+    // Load taken units on mount
+    checkAvailability().then((res) => {
+      if (res.takenUnits) setTakenUnits(res.takenUnits);
+    }).catch(() => {});
   }, []);
 
   /* ===== Progress Calculation ===== */
@@ -94,7 +101,6 @@ const CreateAcc = () => {
       }
       setForm({ ...form, [name]: formatted });
     } else if (name === "unit") {
-      /* ===== Unit to Username Logic ===== */
       setForm({
         ...form,
         [name]: value,
@@ -105,13 +111,48 @@ const CreateAcc = () => {
     }
   };
 
+  const handleUsernameBlur = async () => {
+    const username = form.username.trim();
+    if (!username) return;
+    try {
+      const res = await checkAvailability(username);
+      setUsernameError(res.usernameTaken ? "This username already has an existing account." : "");
+    } catch {
+      // silent — backend will catch it on submit
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
+    if (usernameError) return; // block if username already taken
+
     // Basic Validation
     if (form.password !== form.confirm) {
       setError("Passwords do not match.");
+      return;
+    }
+
+    // Password strength (mirrors backend rules)
+    if (form.password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      return;
+    }
+    if (!/[A-Z]/.test(form.password)) {
+      setError("Password must contain at least one uppercase letter.");
+      return;
+    }
+    if (!/[a-z]/.test(form.password)) {
+      setError("Password must contain at least one lowercase letter.");
+      return;
+    }
+    if (!/[0-9]/.test(form.password)) {
+      setError("Password must contain at least one number.");
+      return;
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(form.password)) {
+      setError('Password must contain at least one special character (!@#$%...).');
       return;
     }
 
@@ -268,14 +309,16 @@ const CreateAcc = () => {
                   value={form.unit}
                   onChange={handleChange}
                 >
+                  <option value="" disabled>Select unit...</option>
                   {/* Grouping units by floor */}
                   <optgroup
                     label="1st Floor"
                     className="text-[#db6747] font-bold bg-gray-50"
                   >
                     {[101, 102, 103, 104, 105, 106, 107].map((n) => (
-                      <option key={n} value={n} className="text-gray-700">
-                        Unit {n}
+                      <option key={n} value={n} disabled={takenUnits.includes(n)}
+                        className="text-gray-700">
+                        Unit {n}{takenUnits.includes(n) ? " (taken)" : ""}
                       </option>
                     ))}
                   </optgroup>
@@ -285,8 +328,9 @@ const CreateAcc = () => {
                     className="text-[#db6747] font-bold bg-gray-50"
                   >
                     {[201, 202, 203, 204, 205, 206].map((n) => (
-                      <option key={n} value={n} className="text-gray-700">
-                        Unit {n}
+                      <option key={n} value={n} disabled={takenUnits.includes(n)}
+                        className="text-gray-700">
+                        Unit {n}{takenUnits.includes(n) ? " (taken)" : ""}
                       </option>
                     ))}
                   </optgroup>
@@ -299,8 +343,9 @@ const CreateAcc = () => {
                       301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311,
                       312, 313, 314, 315, 316,
                     ].map((n) => (
-                      <option key={n} value={n} className="text-gray-700">
-                        Unit {n}
+                      <option key={n} value={n} disabled={takenUnits.includes(n)}
+                        className="text-gray-700">
+                        Unit {n}{takenUnits.includes(n) ? " (taken)" : ""}
                       </option>
                     ))}
                   </optgroup>
@@ -310,8 +355,9 @@ const CreateAcc = () => {
                     className="text-[#db6747] font-bold bg-gray-50"
                   >
                     {[401, 402, 403, 404, 405, 406, 407, 408].map((n) => (
-                      <option key={n} value={n} className="text-gray-700">
-                        Unit {n}
+                      <option key={n} value={n} disabled={takenUnits.includes(n)}
+                        className="text-gray-700">
+                        Unit {n}{takenUnits.includes(n) ? " (taken)" : ""}
                       </option>
                     ))}
                   </optgroup>
@@ -343,12 +389,18 @@ const CreateAcc = () => {
                   placeholder="Select a unit number first"
                   value={form.username}
                   onChange={handleChange}
+                  onBlur={handleUsernameBlur}
                   readOnly // Prevents manual editing
                   className="bg-gray-100/50 cursor-not-allowed text-gray-400 font-bold"
                 />
                 <p className="text-[8px] text-[#db6747] mt-1 uppercase tracking-wider font-bold">
                   * Locked to your unit number for security
                 </p>
+                {usernameError && (
+                  <p className="text-[9px] text-red-500 font-bold mt-1 uppercase tracking-wider">
+                    {usernameError}
+                  </p>
+                )}
               </div>
 
               <Password
@@ -359,6 +411,9 @@ const CreateAcc = () => {
                 show={showPassword}
                 toggle={() => setShowPassword(!showPassword)}
               />
+              <p className="text-[8px] text-gray-400 -mt-4 leading-relaxed">
+                Min. 8 chars · uppercase · lowercase · number · special character (!@#$%...)
+              </p>
 
               <Password
                 label="Confirm Password"

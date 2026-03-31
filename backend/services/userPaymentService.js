@@ -4,6 +4,8 @@ import User from "../models/user.js";
 import Unit from "../models/unit.js";
 import { createNotification } from "../services/notificationService.js";
 import { createActivityLog } from "../services/activityLogService.js";
+import { sendSMSBulk } from "../utils/sms.js";
+import { sms } from "../utils/smsTemplates.js";
 
 
 /* GET TENANT PAYMENTS */
@@ -169,6 +171,17 @@ export const uploadPaymentReceipt = async (
         referenceId: payment.ID,
         referenceType: "payment"
     });
+
+    /* SMS → admin & caretaker */
+    const tenant = await User.findByPk(userId, { attributes: ["fullName", "unitNumber"] });
+    const staffUsers = await User.findAll({
+        where: { role: ["admin", "caretaker"] },
+        attributes: ["contactNumber"],
+    });
+    sendSMSBulk(
+        staffUsers.map((u) => u.contactNumber),
+        sms.paymentPendingVerification(tenant?.fullName ?? "A tenant", tenant?.unitNumber ?? "?", payment.category)
+    );
 
     /* LOG ACTIVITY */
     await createActivityLog({

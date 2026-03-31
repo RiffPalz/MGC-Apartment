@@ -12,7 +12,8 @@ export const getTodayUnreadController = async (req, res) => {
         const applications = await getTodayUnreadApplicationRequests();
         return res.status(200).json({ success: true, count: applications.length, applications });
     } catch (error) {
-        return res.status(500).json({ success: false, message: "Failed to fetch today's requests" });
+        console.error("getTodayUnreadApplicationRequests error:", error);
+        return res.status(500).json({ success: false, message: error.message || "Failed to fetch today's requests" });
     }
 };
 
@@ -40,10 +41,10 @@ export const getAllApplicationRequestsController = async (req, res) => {
         });
 
     } catch (error) {
-
+        console.error("getAllApplicationRequests error:", error);
         return res.status(500).json({
             success: false,
-            message: "Failed to fetch application requests"
+            message: error.message || "Failed to fetch application requests"
         });
 
     }

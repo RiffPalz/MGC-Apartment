@@ -1,21 +1,33 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import dotenv from "dotenv";
+
 dotenv.config();
 
-export const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.MGC_EMAIL,
-    pass: process.env.MGC_PASSWORD,
-  },
-});
+const resend = new Resend(process.env.RESEND_API);
+const FROM_ADDRESS = "MGC Building <onboarding@resend.dev>";
 
+/** Send email via Resend */
 export const sendMail = async ({ to, subject, html, attachments }) => {
-  return transporter.sendMail({
-    from: `"MGC Building" <${process.env.MGC_EMAIL}>`,
-    to,
+  const payload = {
+    from: FROM_ADDRESS,
+    to: Array.isArray(to) ? to : [to],
     subject,
     html,
-    attachments,
-  });
+  };
+
+  // Format attachments if provided
+  if (attachments?.length) {
+    payload.attachments = attachments.map((a) => ({
+      filename: a.filename,
+      content: a.content ?? a.path,
+    }));
+  }
+
+  const { data, error } = await resend.emails.send(payload);
+
+  if (error) {
+    throw new Error(`Resend error: ${error.message}`);
+  }
+
+  return data;
 };

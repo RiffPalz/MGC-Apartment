@@ -1,6 +1,8 @@
 import { Maintenance, User } from "../../models/index.js";
 import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
+import { sendSMS } from "../../utils/sms.js";
+import { sms } from "../../utils/smsTemplates.js";
 
 /* CREATE MAINTENANCE REQUEST */
 export const createMaintenance = async (data, adminId) => {
@@ -54,7 +56,9 @@ export const createMaintenance = async (data, adminId) => {
 
 /* APPROVE MAINTENANCE REQUEST */
 export const approveMaintenance = async (maintenanceId, adminId) => {
-  const request = await Maintenance.findByPk(maintenanceId);
+  const request = await Maintenance.findByPk(maintenanceId, {
+    include: [{ model: User, as: "user", attributes: ["contactNumber", "fullName", "unitNumber"] }],
+  });
   if (!request) throw new Error("Maintenance request not found");
   if (request.status !== "Pending") throw new Error("Only pending requests can be approved");
 
@@ -81,6 +85,9 @@ export const approveMaintenance = async (maintenanceId, adminId) => {
     referenceType: "maintenance",
   });
 
+  // SMS → tenant
+  sendSMS(request.user?.contactNumber, sms.maintenanceStatusUpdated(request.title, "Approved"));
+
   // Log approval
   await createActivityLog({
     userId: adminId,
@@ -97,7 +104,9 @@ export const approveMaintenance = async (maintenanceId, adminId) => {
 /* UPDATE MAINTENANCE REQUEST */
 export const updateMaintenance = async (maintenanceId, data, adminId) => {
   const { status, startDate, endDate } = data;
-  const request = await Maintenance.findByPk(maintenanceId);
+  const request = await Maintenance.findByPk(maintenanceId, {
+    include: [{ model: User, as: "user", attributes: ["contactNumber"] }],
+  });
   if (!request) throw new Error("Maintenance request not found");
 
   const allowedStatuses = ["Pending", "Approved", "In Progress", "Done"];
@@ -108,24 +117,23 @@ export const updateMaintenance = async (maintenanceId, data, adminId) => {
   if (status) {
     request.status = status;
 
-    // Auto-set start date when moving to In Progress
+    // Auto-set startDate only when moving to In Progress
     if (status === "In Progress" && !request.startDate) {
       request.startDate = startDate || now;
     }
 
-    // Auto-set end date when marking Done
+    // Auto-set endDate when marking Done
     if (status === "Done") {
-      // If no start date yet (jumped straight from Pending → Done), set both
-      if (!request.startDate) {
-        request.startDate = startDate || now;
-      }
+      if (!request.startDate) request.startDate = startDate || now;
       request.endDate = endDate || now;
     }
-  }
 
-  // Allow manual overrides if explicitly passed
-  if (startDate && status !== "In Progress" && status !== "Done") request.startDate = startDate;
-  if (endDate && status !== "Done") request.endDate = endDate;
+    // Clear dates if rolling back to Pending or Approved
+    if (status === "Pending" || status === "Approved") {
+      request.startDate = null;
+      request.endDate = null;
+    }
+  }
 
   if (startDate && endDate && new Date(endDate) < new Date(startDate))
     throw new Error("End date must be later than start date");
@@ -151,6 +159,11 @@ export const updateMaintenance = async (maintenanceId, data, adminId) => {
     referenceId: request.ID,
     referenceType: "maintenance",
   });
+
+  // SMS → tenant (only for meaningful status changes)
+  if (["Approved", "In Progress", "Done"].includes(request.status)) {
+    sendSMS(request.user?.contactNumber, sms.maintenanceStatusUpdated(request.title, request.status));
+  }
 
   // Log update
   await createActivityLog({

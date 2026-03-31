@@ -5,6 +5,7 @@ import {
   updateUserProfileService,
   forgotPasswordService,
   resetPasswordService,
+  checkAvailabilityService,
 } from "../services/userService.js";
 
 import { emitEvent } from "../utils/emitEvent.js";
@@ -132,6 +133,17 @@ export const updateUserProfile = async (req, res) => {
       success: false,
       message: error.message
     });
+  }
+};
+
+/* CHECK AVAILABILITY (units taken + username check) */
+export const checkAvailability = async (req, res) => {
+  try {
+    const { userName } = req.query;
+    const result = await checkAvailabilityService(userName);
+    return res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 

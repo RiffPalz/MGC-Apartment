@@ -4,6 +4,8 @@ import Unit from "../../models/unit.js";
 import User from "../../models/user.js";
 import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
+import { sendSMS } from "../../utils/sms.js";
+import { sms } from "../../utils/smsTemplates.js";
 
 
 /* GET ALL PAYMENTS */
@@ -81,7 +83,7 @@ export const verifyPayment = async (paymentId, caretakerId) => {
                     {
                         model: User,
                         as: "tenants",
-                        attributes: ["ID"],
+                        attributes: ["ID", "contactNumber"],
                         through: { attributes: [] }
                     }
                 ]
@@ -120,6 +122,10 @@ export const verifyPayment = async (paymentId, caretakerId) => {
         referenceId: payment.ID,
         referenceType: "payment"
     });
+
+    // SMS → tenant
+    const tenantContact = payment.contract.tenants?.[0]?.contactNumber;
+    sendSMS(tenantContact, sms.paymentVerified(payment.category));
 
     await createActivityLog({
         userId: caretakerId,

@@ -4,84 +4,130 @@
 
 ## 📌 Overview
 
-The **MGC Apartment Monitoring System** is a web-based application designed to **optimize apartment management processes**, enable real-time monitoring of tenant activities, and facilitate efficient communication between administrators, caretakers, and tenants.
+The **MGC Apartment Monitoring System** is a full-stack web application designed to **optimize apartment management processes**, enable real-time monitoring of tenant activities, and facilitate efficient communication between administrators, caretakers, and tenants.
 
-The system addresses limitations of traditional property management approaches, including delayed maintenance processing, inefficient record management, and lack of real-time system visibility. By integrating centralized data handling and automated workflows, the platform improves operational efficiency and decision-making.
+The system addresses limitations of traditional property management approaches — including delayed maintenance processing, inefficient record management, and lack of real-time visibility — by integrating centralized data handling, automated workflows, and multi-channel notifications (in-app, email, and SMS).
 
-Developed using modern **full-stack development technologies**, the system implements **role-based access control (RBAC)**, secure authentication mechanisms, and real-time data synchronization to ensure reliability, scalability, and data integrity across all user interactions.
+Built with modern full-stack technologies, the platform implements **role-based access control (RBAC)**, secure JWT authentication, real-time data synchronization via Socket.IO, and automated SMS notifications via Semaphore.
 
 ---
 
 ## 🚀 Key Features
 
-### 🏢 Apartment & Unit Management
-- Real-time unit occupancy monitoring  
-- Unit status tracking (Occupied / Vacant)  
-- Contract management with PDF upload and download  
-- Structured tenant-unit assignment  
+### 🏢 Unit & Contract Management
+- Real-time unit occupancy monitoring (Occupied / Vacant / Ready)
+- Contract creation, editing, renewal, termination, and completion
+- PDF contract upload and download via Cloudinary
+- Automated contract expiry detection with 30-day and 5-day SMS reminders
+- Tenant-unit assignment with capacity enforcement
+
+### 💳 Payment Management
+- Monthly rent bill generation (manual and automated via cron)
+- Utility bill creation and tracking
+- Receipt upload by tenants (Cash / GCash)
+- Payment verification by admin and caretaker
+- Overdue payment auto-marking via scheduled cron job
+- Payment status lifecycle: Unpaid → Pending Verification → Paid / Overdue
 
 ### 🛠 Maintenance Management
-- Submission of maintenance requests  
-- Categorized concern handling (Electrical, Plumbing, etc.)  
-- Status lifecycle tracking (Pending, Ongoing, Completed)  
-- Maintenance history logging for tenants  
-- Real-time updates via Socket.IO  
+- Tenant maintenance request submission with category selection
+- Status lifecycle: Pending → Approved → In Progress → Done
+- Follow-up notification system for tenants
+- Admin and caretaker maintenance creation and management
+- Real-time status updates via Socket.IO
 
-### 👥 User Management
-- Role-based access control (Admin / Caretaker / Tenant)  
-- Secure authentication and authorization (JWT)  
-- Profile management and account updates  
-- Account approval and verification system  
+### 👥 User & Account Management
+- Role-based access control: Admin / Caretaker / Tenant
+- Secure JWT authentication with login token management
+- Admin two-factor login via email OTP
+- Tenant registration with unit availability validation
+- Account approval / decline workflow with SMS notification
+- Profile management with photo upload (admin)
+- Password reset via email code
+
+### 📣 Announcements
+- Admin-created announcements with category tagging
+- In-app notification delivery to all tenants and caretakers
+- SMS broadcast to all approved tenants on new announcement
 
 ### 📄 Application Requests
-- Tenant application submission workflow  
-- Administrative approval and rejection handling  
-- Daily unread request tracking  
-- Read-status management  
+- Public tenant application submission with ID upload
+- Admin review, approval, and rejection workflow
+- Application status check by email
 
-### 📊 Dashboard & Monitoring
-- Unit occupancy analytics and visualization  
-- Recent request aggregation  
-- Activity log tracking  
-- Optimized dashboard widgets for system overview  
+### 📊 Dashboard & Activity Logs
+- Unit occupancy analytics and contract summaries
+- Payment dashboard with revenue tracking
+- Activity log per user role
+- Maintenance and payment stat cards
 
-### 🔔 Notifications System
-- Email notifications via Nodemailer  
-- Real-time alerts using WebSockets  
-- Automated status update notifications  
+### 🔔 Notification System
+- **In-app notifications** via Socket.IO (real-time)
+- **Email notifications** via Resend (OTP, password reset, application confirmation)
+- **SMS notifications** via Semaphore for all critical events (see SMS section below)
+
+---
+
+## 📱 SMS Notification Coverage
+
+| Event | Recipients |
+|---|---|
+| Tenant registers | Tenant (confirmation) + All admins (alert) |
+| Account approved | Tenant |
+| Account declined | Tenant |
+| New bill created | Tenant |
+| Payment receipt uploaded | All admins + caretakers |
+| Payment verified / marked Paid | Tenant |
+| Maintenance status → Approved / In Progress / Done | Tenant |
+| New maintenance request submitted by tenant | All admins + caretakers |
+| Contract created | Tenant(s) |
+| Contract PDF uploaded | Tenant(s) |
+| Contract renewed | Tenant(s) |
+| Contract terminated | Tenant(s) |
+| Contract expiring in 30 days | Tenant(s) + All admins + caretakers |
+| Contract expiring in 5 days | Tenant(s) + All admins + caretakers |
+| New announcement posted | All approved tenants |
 
 ---
 
 ## 🧱 System Architecture
 
 ### Frontend
-- React.js (Vite)  
-- Tailwind CSS + Custom UI components  
-- Axios for API communication  
-- Socket.IO Client for real-time data updates  
+- React.js (Vite)
+- Tailwind CSS v4 with custom design tokens
+- Axios for API communication
+- Socket.IO Client for real-time updates
+- React Router v6 with role-based protected routes
 
 ### Backend
-- Node.js + Express.js  
-- Sequelize ORM  
-- RESTful API design pattern  
+- Node.js + Express.js
+- Sequelize ORM with MySQL
+- RESTful API with role-based middleware
+- Socket.IO for real-time event broadcasting
+- node-cron for scheduled tasks (overdue payments, contract expiry, rent billing)
 
-### Database
-- MySQL  
-- Relational schema for users, units, contracts, and requests  
+### Infrastructure & Services
+- **Database:** MySQL
+- **File Storage:** Cloudinary (profile pictures, contract PDFs, payment receipts)
+- **Email:** Resend API
+- **SMS:** Semaphore API
+- **Deployment:** Render (backend), Vercel / Render (frontend)
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer          | Technology                                      |
-| -------------- | ----------------------------------------------- |
-| Frontend       | ReactJS (Vite), Tailwind CSS, Custom CSS        |
-| Backend        | Node.js, Express.js                             |
-| Database       | MySQL                                           |
-| ORM            | Sequelize                                       |
-| Authentication | JWT                                             |
-| File Storage   | Cloudinary                                      |
-| Realtime       | Socket.IO                                       |
-| Email Service  | Nodemailer                                      |
+| Layer | Technology |
+|---|---|
+| Frontend | React.js (Vite), Tailwind CSS |
+| Backend | Node.js, Express.js |
+| Database | MySQL |
+| ORM | Sequelize |
+| Authentication | JWT |
+| Real-time | Socket.IO |
+| File Storage | Cloudinary |
+| Email Service | Resend |
+| SMS Service | Semaphore |
+| Scheduler | node-cron |
 
 ---

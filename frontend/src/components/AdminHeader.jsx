@@ -6,6 +6,7 @@ import {
 } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import { fetchAdminNotifications, markNotificationRead, markAllNotificationsRead } from "../api/adminAPI/NotificationAPI";
+import GeneralConfirmationModal from "./GeneralConfirmationModal";
 
 const PAGE_TITLES = {
   "/admin":                    "Dashboard",
@@ -43,6 +44,7 @@ export default function AdminHeader({ open, setOpen }) {
   const [showNotifs, setShowNotifs]       = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notifsLoading, setNotifsLoading] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const title       = PAGE_TITLES[location.pathname] ?? "Admin Panel";
   const displayName = user?.fullName || user?.userName || "Administrator";
@@ -82,6 +84,7 @@ export default function AdminHeader({ open, setOpen }) {
   };
 
   return (
+    <>
     <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 shrink-0">
 
       {/* LEFT */}
@@ -203,7 +206,7 @@ export default function AdminHeader({ open, setOpen }) {
                   <FaCog size={13} /> Settings
                 </button>
                 <div className="h-px bg-gray-100 my-1" />
-                <button onClick={handleLogout}
+                <button onClick={() => { setShowMenu(false); setShowLogoutConfirm(true); }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">
                   <FaSignOutAlt size={13} /> Log Out
                 </button>
@@ -213,5 +216,16 @@ export default function AdminHeader({ open, setOpen }) {
         </div>
       </div>
     </header>
+
+    <GeneralConfirmationModal
+      isOpen={showLogoutConfirm}
+      onClose={() => setShowLogoutConfirm(false)}
+      onConfirm={handleLogout}
+      variant="logout"
+      title="Log Out"
+      message="Are you sure you want to log out of your session?"
+      confirmText="Log Out"
+    />
+    </>
   );
 }

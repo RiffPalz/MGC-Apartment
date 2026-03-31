@@ -8,6 +8,7 @@ import {
 import { toast } from "react-toastify";
 import { fetchTenantsOverview, deleteTenant, createTenant } from "../../api/adminAPI/TenantOverviewAPI";
 import logo from "../../assets/images/logo.png";
+import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 const PAGE_SIZE = 10;
 
@@ -257,7 +258,8 @@ export default function AdminTenants() {
 
             {/* Filters & Actions */}
             <div className="flex flex-wrap gap-2 items-center">
-              <div className="flex bg-slate-100 p-1 rounded-lg">
+              <div className="overflow-x-auto">
+              <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
                 {["All", "Active", "Completed", "Terminated", "No Contract"].map((f) => (
                   <button
                     key={f}
@@ -268,6 +270,7 @@ export default function AdminTenants() {
                     {f}
                   </button>
                 ))}
+              </div>
               </div>
               <div className="h-6 w-px bg-slate-200 hidden sm:block mx-1" />
               <button
@@ -526,30 +529,16 @@ export default function AdminTenants() {
       )}
 
       {/* ── DELETE MODAL ── */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 transform transition-all animate-in zoom-in-95 duration-200 border border-slate-100">
-            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-5">
-              <FaTrashAlt className="text-red-500" size={18} />
-            </div>
-            <h3 className="text-lg font-black text-slate-900 mb-2">Remove Tenant</h3>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-              Are you sure you want to remove <span className="font-bold text-slate-900">{deleteTarget.fullName}</span>?
-              This action cannot be undone and will clear their associated records.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} disabled={deleting}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
-                Cancel
-              </button>
-              <button onClick={handleDelete} disabled={deleting}
-                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors disabled:opacity-60 flex justify-center items-center">
-                {deleting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm Removal"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GeneralConfirmationModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        variant="delete"
+        title="Remove Tenant"
+        message={deleteTarget ? <>Are you sure you want to remove <span className="font-bold text-slate-900">{deleteTarget.fullName}</span>? This action cannot be undone and will clear their associated records.</> : null}
+        confirmText="Confirm Removal"
+        loading={deleting}
+      />
     </>
   );
 }

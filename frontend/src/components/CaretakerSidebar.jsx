@@ -5,7 +5,7 @@ import {
   FaTools, FaMoneyCheckAlt, FaBullhorn, FaHistory, FaUsers,
 } from "react-icons/fa";
 import { MdDashboard } from "react-icons/md";
-import { clearAuth } from "../api/authStorage";
+
 
 const MENU = [
   { name: "Dashboard",    icon: <MdDashboard />,      path: "/caretaker/dashboard" },
@@ -19,15 +19,11 @@ const MENU = [
 
 export default function CaretakerSidebar({ open, setOpen }) {
   const location = useLocation();
-  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    clearAuth();
-    navigate("/login", { replace: true });
-  };
+
 
   return (
-    <aside className={`relative h-screen bg-[#5c1f10] text-white shadow-2xl transition-all duration-500 ease-in-out flex flex-col font-NunitoSans z-50 overflow-hidden ${open ? "w-72" : "w-20"}`}>
+    <aside className={`relative h-full bg-[#5c1f10] text-white shadow-2xl transition-all duration-500 ease-in-out flex flex-col font-NunitoSans z-50 overflow-hidden ${open ? "w-72" : "w-20"}`}>
 
       {/* Brand */}
       <div className={`flex items-center h-24 px-6 border-b border-white/10 shrink-0 ${open ? "justify-between" : "justify-center"}`}>
@@ -69,19 +65,6 @@ export default function CaretakerSidebar({ open, setOpen }) {
           );
         })}
       </nav>
-
-      {/* Logout */}
-      <div className="p-4 border-t border-white/10 bg-[#4a1809] shrink-0">
-        <button onClick={handleLogout}
-          className={`w-full flex items-center rounded-xl px-4 py-4 transition-all duration-300 group
-            ${open ? "justify-start gap-4 bg-red-500/10 hover:bg-red-600 hover:text-white text-red-300" : "justify-center hover:bg-red-600/20 text-red-400"}`}>
-          <FaSignOutAlt className="text-xl shrink-0" />
-          <span className={`font-OswaldRegular text-sm uppercase tracking-widest whitespace-nowrap transition-all duration-300 origin-left
-            ${open ? "opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"}`}>
-            Log Out
-          </span>
-        </button>
-      </div>
     </aside>
   );
 }

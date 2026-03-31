@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import {
   FaSearch, FaPrint, FaUsers, FaCheckCircle,
   FaFileContract, FaChevronLeft, FaChevronRight,
+  FaPlus, FaEye, FaEyeSlash,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { fetchTenantsOverview } from "../../api/caretakerAPI/TenantsOverviewAPI";
+import { fetchTenantsOverview, createTenant } from "../../api/caretakerAPI/TenantsOverviewAPI";
 import logo from "../../assets/images/logo.png";
 
 const PAGE_SIZE = 10;
@@ -45,21 +46,33 @@ export default function CaretakerTenantOverview() {
   const [search, setSearch]         = useState("");
   const [leaseFilter, setLeaseFilter] = useState("All");
   const [page, setPage]             = useState(1);
+  const [createModal, setCreateModal] = useState(false);
+  const [submitting, setSubmitting]   = useState(false);
+  const [showPass, setShowPass]       = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [createForm, setCreateForm]   = useState({
+    fullName: "", emailAddress: "", contactNumber: "",
+    unitNumber: "", numberOfTenants: "1", userName: "", password: "",
+  });
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const res = await fetchTenantsOverview();
-        setTenants(res.tenants || []);
-      } catch {
-        toast.error("Failed to load tenants.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+  const EMPTY_FORM = {
+    fullName: "", emailAddress: "", contactNumber: "",
+    unitNumber: "", numberOfTenants: "1", userName: "", password: "",
+  };
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      const res = await fetchTenantsOverview();
+      setTenants(res.tenants || []);
+    } catch {
+      toast.error("Failed to load tenants.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
 
   const rows = tenants.map((t) => {
     const contract = t.contracts?.[0] ?? null;
@@ -96,6 +109,31 @@ export default function CaretakerTenantOverview() {
   const paginated     = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const activeCount   = rows.filter((r) => r.leaseStatus === "Active").length;
   const noContractCount = rows.filter((r) => !r.leaseStatus).length;
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setCreateError("");
+    try {
+      setSubmitting(true);
+      await createTenant({
+        fullName:        createForm.fullName.trim(),
+        emailAddress:    createForm.emailAddress,
+        contactNumber:   createForm.contactNumber.replace(/-/g, ""),
+        unitNumber:      createForm.unitNumber ? Number(createForm.unitNumber) : null,
+        numberOfTenants: Number(createForm.numberOfTenants),
+        userName:        createForm.userName,
+        password:        createForm.password,
+      });
+      toast.success("Tenant created successfully.");
+      setCreateModal(false);
+      setCreateForm(EMPTY_FORM);
+      load();
+    } catch (err) {
+      setCreateError(err?.response?.data?.message || "Failed to create tenant.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <>
@@ -185,7 +223,8 @@ export default function CaretakerTenantOverview() {
                 className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] transition-all bg-slate-50 hover:bg-white"/>
             </div>
             <div className="flex flex-wrap gap-2 items-center">
-              <div className="flex bg-slate-100 p-1 rounded-lg">
+              <div className="overflow-x-auto">
+              <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
                 {["All","Active","Completed","Terminated","No Contract"].map((f) => (
                   <button key={f} onClick={() => { setLeaseFilter(f); setPage(1); }}
                     className={`px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all
@@ -194,10 +233,15 @@ export default function CaretakerTenantOverview() {
                   </button>
                 ))}
               </div>
+              </div>
               <div className="h-6 w-px bg-slate-200 hidden sm:block mx-1"/>
               <button onClick={() => window.print()}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm">
                 <FaPrint size={12}/> <span className="uppercase tracking-widest">Print</span>
+              </button>
+              <button onClick={() => { setCreateModal(true); setCreateForm(EMPTY_FORM); setCreateError(""); }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold bg-[#db6747] text-white hover:bg-[#c45a3a] transition-all shadow-sm">
+                <FaPlus size={11}/> <span className="uppercase tracking-widest">New Tenant</span>
               </button>
             </div>
           </div>
@@ -295,6 +339,107 @@ export default function CaretakerTenantOverview() {
           )}
         </div>
       </div>
+
+      {/* CREATE TENANT MODAL */}
+      {createModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/50">
+              <div>
+                <h2 className="text-slate-800 font-bold text-xs uppercase tracking-widest">New Tenant</h2>
+                <p className="text-slate-400 text-[10px] uppercase tracking-widest mt-0.5">Account will be created as Approved</p>
+              </div>
+              <button onClick={() => { setCreateModal(false); setCreateForm(EMPTY_FORM); setCreateError(""); }} className="text-slate-400 hover:text-slate-800 text-lg px-2">✕</button>
+            </div>
+            <form onSubmit={handleCreate} className="p-6 max-h-[70vh] overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+                {/* Property Details */}
+                <div className="space-y-5">
+                  <p className="text-[10px] font-bold text-[#db6747] uppercase tracking-widest border-l-4 border-[#db6747] pl-3">Property Details</p>
+                  <FormField label="Full Name">
+                    <input required type="text" value={createForm.fullName}
+                      onChange={e => { const cap = e.target.value.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()); setCreateForm(f => ({ ...f, fullName: cap })); }}
+                      placeholder="Juan Dela Cruz"
+                      className="w-full bg-transparent border-b border-slate-200 focus:border-[#db6747] py-2 text-sm text-slate-700 outline-none transition-colors placeholder:text-slate-300"/>
+                  </FormField>
+                  <FormField label="Email Address">
+                    <input required type="email" value={createForm.emailAddress}
+                      onChange={e => setCreateForm(f => ({ ...f, emailAddress: e.target.value }))}
+                      placeholder="email@example.com"
+                      className="w-full bg-transparent border-b border-slate-200 focus:border-[#db6747] py-2 text-sm text-slate-700 outline-none transition-colors placeholder:text-slate-300"/>
+                  </FormField>
+                  <FormField label="Contact Number">
+                    <input type="text" value={createForm.contactNumber}
+                      onChange={e => { let raw = e.target.value.replace(/\D/g,"").slice(0,11); let fmt = raw; if(raw.length>4&&raw.length<=7)fmt=`${raw.slice(0,4)}-${raw.slice(4)}`; else if(raw.length>7)fmt=`${raw.slice(0,4)}-${raw.slice(4,7)}-${raw.slice(7)}`; setCreateForm(f=>({...f,contactNumber:fmt})); }}
+                      placeholder="09XX-XXX-XXXX"
+                      className="w-full bg-transparent border-b border-slate-200 focus:border-[#db6747] py-2 text-sm text-slate-700 outline-none transition-colors placeholder:text-slate-300"/>
+                  </FormField>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField label="Unit">
+                      <select required value={createForm.unitNumber}
+                        onChange={e => setCreateForm(f => ({ ...f, unitNumber: e.target.value, userName: e.target.value ? `unit${e.target.value}_mgc` : "" }))}
+                        className="w-full bg-transparent border-b border-slate-200 focus:border-[#db6747] py-2 text-sm text-slate-700 outline-none appearance-none cursor-pointer">
+                        <option value="">Select...</option>
+                        <optgroup label="1st Floor">{[101,102,103,104,105,106,107].map(n=><option key={n} value={n}>Unit {n}</option>)}</optgroup>
+                        <optgroup label="2nd Floor">{[201,202,203,204,205,206].map(n=><option key={n} value={n}>Unit {n}</option>)}</optgroup>
+                        <optgroup label="3rd Floor">{[301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316].map(n=><option key={n} value={n}>Unit {n}</option>)}</optgroup>
+                        <optgroup label="4th Floor">{[401,402,403,404,405,406,407,408].map(n=><option key={n} value={n}>Unit {n}</option>)}</optgroup>
+                      </select>
+                    </FormField>
+                    <FormField label="No. of Tenants">
+                      <select value={createForm.numberOfTenants} onChange={e => setCreateForm(f => ({ ...f, numberOfTenants: e.target.value }))}
+                        className="w-full bg-transparent border-b border-slate-200 focus:border-[#db6747] py-2 text-sm text-slate-700 outline-none appearance-none cursor-pointer">
+                        <option value="1">1 Person</option>
+                        <option value="2">2 Persons</option>
+                      </select>
+                    </FormField>
+                  </div>
+                </div>
+                {/* Security Access */}
+                <div className="space-y-5">
+                  <p className="text-[10px] font-bold text-[#db6747] uppercase tracking-widest border-l-4 border-[#db6747] pl-3">Security Access</p>
+                  <FormField label="Username (auto-generated)">
+                    <input readOnly value={createForm.userName}
+                      className="w-full bg-transparent border-b border-slate-200 py-2 text-sm text-slate-400 outline-none cursor-not-allowed font-bold"/>
+                    <p className="text-[9px] text-[#db6747] mt-1 uppercase tracking-wider font-bold">* Locked to unit number</p>
+                  </FormField>
+                  <FormField label="Password">
+                    <div className="flex items-center border-b border-slate-200 focus-within:border-[#db6747] transition-colors py-2">
+                      <input type={showPass ? "text" : "password"} required value={createForm.password}
+                        onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))}
+                        placeholder="••••••••"
+                        className="w-full bg-transparent outline-none text-sm text-slate-700 placeholder:text-slate-300"/>
+                      <button type="button" onClick={() => setShowPass(p => !p)} className="text-slate-400 hover:text-[#db6747] transition-colors ml-2">
+                        {showPass ? <FaEye size={14}/> : <FaEyeSlash size={14}/>}
+                      </button>
+                    </div>
+                  </FormField>
+                </div>
+              </div>
+              {createError && (
+                <div className="mt-5 bg-red-50 border-l-4 border-red-500 px-4 py-3 text-[11px] text-red-600 font-bold uppercase tracking-widest rounded-r-lg">{createError}</div>
+              )}
+              <div className="flex gap-3 justify-end pt-6 border-t border-slate-100 mt-6">
+                <button type="button" onClick={() => { setCreateModal(false); setCreateForm(EMPTY_FORM); setCreateError(""); }}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+                <button type="submit" disabled={submitting}
+                  className="px-5 py-2.5 rounded-xl bg-[#db6747] text-white text-sm font-bold hover:bg-[#c45a3a] transition-colors shadow-sm disabled:opacity-60">
+                  {submitting ? "Creating..." : "Create Tenant"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
+  );
+}
+
+function FormField({ label, children }) {
+  return (
+    <div className="w-full">
+      <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 mb-2 uppercase">{label}</label>
+      {children}
+    </div>
   );
 }

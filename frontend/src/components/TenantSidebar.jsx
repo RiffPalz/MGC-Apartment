@@ -11,10 +11,18 @@ import {
 import { GrVmMaintenance } from "react-icons/gr";
 import { TbContract } from "react-icons/tb";
 import { logout } from "../api/authService";
+import { useState } from "react";
+import GeneralConfirmationModal from "./GeneralConfirmationModal";
 
 export default function TenantSidebar({ open = true, setOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const doLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   const menuItems = [
     { name: "Dashboard",    icon: <FaHome />,         path: "/tenant/dashboard" },
@@ -24,12 +32,8 @@ export default function TenantSidebar({ open = true, setOpen }) {
     { name: "Activity Logs",icon: <FaHistory />,       path: "/tenant/activityLogs" },
   ];
 
-  const handleLogout = () => {
-    logout(); 
-    navigate("/login", { replace: true }); 
-  };
-
   return (
+    <>
     <aside
       className={`relative h-full bg-[#5c1f10] text-white shadow-2xl transition-all duration-500 ease-in-out flex flex-col font-NunitoSans z-50 overflow-hidden
       ${open ? "w-72 max-w-[85vw]" : "w-20"} `}
@@ -121,7 +125,7 @@ export default function TenantSidebar({ open = true, setOpen }) {
       {/* 3. FOOTER / LOGOUT */}
       <div className="p-4 border-t border-white/10 bg-[#4a1809] shrink-0">
         <button
-          onClick={handleLogout}
+          onClick={() => setShowLogoutConfirm(true)}
           className={`
             w-full flex items-center rounded-xl px-4 py-4 transition-all duration-300 group
             ${
@@ -153,5 +157,16 @@ export default function TenantSidebar({ open = true, setOpen }) {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #db6747; border-radius: 10px; }
       `}</style>
     </aside>
+
+    <GeneralConfirmationModal
+      isOpen={showLogoutConfirm}
+      onClose={() => setShowLogoutConfirm(false)}
+      onConfirm={doLogout}
+      variant="logout"
+      title="Log Out"
+      message="Are you sure you want to log out of your session?"
+      confirmText="Log Out"
+    />
+    </>
   );
 }

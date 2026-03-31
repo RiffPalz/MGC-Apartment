@@ -13,6 +13,7 @@ import {
   fetchMyMaintenanceHistory,
   followUpMaintenanceRequest,
 } from "../../api/tenantAPI/maintenanceAPI";
+import ModalPortal from "../../components/ModalPortal";
 
 const CATEGORIES = [
   "Electrical Maintenance",
@@ -61,6 +62,8 @@ function MaintenanceCards() {
         return { bg: "#DCFCE7", text: "#16A34A", label: "Done", icon: <FaCheckCircle /> };
       case "In Progress":
         return { bg: "#EEF2FF", text: "#4F46E5", label: "In Progress", icon: <FaClock /> };
+      case "Approved":
+        return { bg: "#D1FAE5", text: "#059669", label: "Approved", icon: <FaCheckCircle /> };
       default:
         return { bg: "#FEF3C7", text: "#D97706", label: "Pending", icon: <FaClock /> };
     }
@@ -233,9 +236,9 @@ function MaintenanceCards() {
                               </p>
                             </div>
                             <button
-                              disabled={isCompleted || isFollowedUp || item.followedUp || followingUpId === item.id}
+                              disabled={isCompleted || item.status === "In Progress" || isFollowedUp || item.followedUp || followingUpId === item.id}
                               className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                isCompleted || isFollowedUp || item.followedUp
+                                isCompleted || item.status === "In Progress" || isFollowedUp || item.followedUp
                                   ? "bg-white/5 text-white/20 cursor-not-allowed"
                                   : "bg-[#f7b094] text-[#330101] hover:scale-105 active:scale-95 shadow-md"
                               }`}
@@ -276,7 +279,8 @@ function MaintenanceCards() {
 
       {/* SUCCESS MODAL */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-[#330101]/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+        <ModalPortal>
+        <div className="fixed inset-0 bg-[#330101]/70 flex items-center justify-center z-50 p-6">
           <div className="bg-white rounded-4xl p-10 shadow-2xl max-w-sm w-full text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-[#D96648]" />
             <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-5 text-2xl shadow-sm">
@@ -296,6 +300,7 @@ function MaintenanceCards() {
             </button>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

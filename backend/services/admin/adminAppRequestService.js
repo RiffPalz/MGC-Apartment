@@ -12,19 +12,35 @@ export const getAllApplicationRequests = async () => {
 
 /* GET TODAY'S UNREAD APPLICATION REQUESTS (for dashboard) */
 export const getTodayUnreadApplicationRequests = async () => {
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
+  try {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
 
-  const applications = await ApplicationRequest.findAll({
-    where: {
-      is_read: false,
-      created_at: { [Op.between]: [startOfDay, endOfDay] },
-    },
-    order: [["created_at", "DESC"]],
-  });
-  return applications;
+    const applications = await ApplicationRequest.findAll({
+      where: {
+        is_read: false,
+        created_at: { [Op.between]: [startOfDay, endOfDay] },
+      },
+      order: [["created_at", "DESC"]],
+    });
+    return applications;
+  } catch {
+    // Fallback: if is_read column doesn't exist yet, return today's records without filter
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const applications = await ApplicationRequest.findAll({
+      where: {
+        created_at: { [Op.between]: [startOfDay, endOfDay] },
+      },
+      order: [["created_at", "DESC"]],
+    });
+    return applications;
+  }
 };
 
 /* MARK APPLICATION REQUEST AS READ */

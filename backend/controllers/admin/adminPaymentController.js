@@ -32,7 +32,7 @@ export const createPaymentAdmin = async (req, res) => {
       payment,
     });
   } catch (error) {
-    
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -50,7 +50,7 @@ export const getAllPaymentsAdmin = async (req, res) => {
       payments,
     });
   } catch (error) {
-    
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch payments",
@@ -63,15 +63,15 @@ export const getPaymentsByContractAdmin = async (req, res) => {
   try {
     const { id } = req.params;
     const payments = await getPaymentsByContract(id);
-    
+
     return res.status(200).json({
       success: true,
       count: payments.length,
       payments,
     });
-  
+
   } catch (error) {
-    
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch contract payments",
@@ -92,9 +92,9 @@ export const verifyPaymentAdmin = async (req, res) => {
       message: "Payment verified successfully",
       payment,
     });
-  
+
   } catch (error) {
-  
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -114,14 +114,14 @@ export const getMonthlySummaryAdmin = async (req, res) => {
     }
 
     const summary = await getMonthlySummary(month);
-  
+
     return res.status(200).json({
       success: true,
       summary,
     });
-  
+
   } catch (error) {
-  
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch monthly summary",
@@ -137,12 +137,12 @@ export const getPaymentDashboardAdmin = async (req, res) => {
       success: true,
       dashboard,
     });
-  
+
   } catch (error) {
-  
+    console.error("getPaymentDashboard error:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch dashboard data",
+      message: error.message || "Failed to fetch dashboard data",
     });
   }
 };

@@ -2,11 +2,11 @@ import express from "express";
 import adminAuth from "../../middleware/adminAuth.js";
 
 import {
-    fetchAllMaintenance,
-    approveMaintenanceController,
-    updateMaintenanceController,
-    createMaintenanceController,
-    deleteMaintenanceController
+  fetchAllMaintenance,
+  approveMaintenanceController,
+  updateMaintenanceController,
+  createMaintenanceController,
+  deleteMaintenanceController
 } from "../../controllers/admin/adminMaintenanceController.js";
 
 const router = express.Router();
@@ -21,9 +21,9 @@ router.post(
 
 // Approve maintenance request
 router.patch(
-    "/:id/approve",
-    adminAuth,
-    approveMaintenanceController
+  "/:id/approve",
+  adminAuth,
+  approveMaintenanceController
 );
 
 // Update maintenance status (In Progress / Done)
@@ -41,9 +41,9 @@ router.delete(
 
 // Get all maintenance requests
 router.get(
-    "/",
-    adminAuth,
-    fetchAllMaintenance
+  "/",
+  adminAuth,
+  fetchAllMaintenance
 );
 
 

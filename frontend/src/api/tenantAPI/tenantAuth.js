@@ -6,6 +6,14 @@ export const registerTenant = async (payload) => {
   return response.data;
 };
 
+/** Check which units are taken and whether a username exists */
+export const checkAvailability = async (userName = "") => {
+  const response = await api.get("/users/check-availability", {
+    params: userName ? { userName } : {},
+  });
+  return response.data;
+};
+
 /** Tenant login with username & password */
 export const loginTenant = async ({ userName, password }) => {
   const response = await api.post("/users/login", { userName, password });

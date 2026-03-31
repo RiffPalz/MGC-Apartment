@@ -9,6 +9,7 @@ import { IoSettingsSharp } from "react-icons/io5";
 import { FaSearch } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { fetchAllUnits, createUnit, updateUnit, deleteUnit } from "../../api/adminAPI/unitsAPI";
+import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 const FLOORS = ["Ground Floor", "Second Floor", "Third Floor", "Fourth Floor"];
 const FLOOR_NUM = { "Ground Floor": 1, "Second Floor": 2, "Third Floor": 3, "Fourth Floor": 4 };
@@ -254,23 +255,15 @@ export default function AdminUnitsCards() {
       )}
 
       {/* ── DELETE CONFIRM ── */}
-      {confirmDelete && (
-        <Modal maxW="max-w-sm">
-          <div className="flex flex-col items-center text-center">
-            <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mb-4">
-              <MdDeleteForever className="text-red-500" size={28} />
-            </div>
-            <h2 className="text-lg font-black text-slate-900 mb-2">Delete Unit {confirmDelete.unitNumber}?</h2>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-              All data associated with this unit will be permanently removed. This cannot be undone.
-            </p>
-            <div className="flex gap-3 w-full">
-              <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-              <button onClick={handleDelete} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors shadow-md shadow-red-200">Delete</button>
-            </div>
-          </div>
-        </Modal>
-      )}
+      <GeneralConfirmationModal
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleDelete}
+        variant="delete"
+        title={confirmDelete ? `Delete Unit ${confirmDelete.unitNumber}?` : "Delete Unit?"}
+        message="All data associated with this unit will be permanently removed. This cannot be undone."
+        confirmText="Delete"
+      />
     </div>
   );
 }

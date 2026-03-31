@@ -44,9 +44,9 @@ export default function AdminLayout() {
 
       {/* SIDEBAR */}
       <div 
-        className={`fixed inset-y-0 left-0 z-50 lg:static lg:block transition-transform duration-300 ease-in-out
+        className={`fixed inset-y-0 left-0 z-50 lg:static lg:shrink-0 transition-transform duration-300 ease-in-out
         ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} 
-        ${open ? "w-72" : "w-20"}`}
+        ${open ? "w-72" : "lg:w-20 w-72"}`}
       >
         <AdminSidebar open={open} setOpen={setOpen} />
       </div>

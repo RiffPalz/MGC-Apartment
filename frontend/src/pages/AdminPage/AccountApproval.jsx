@@ -6,6 +6,7 @@ import {
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { fetchPendingUsers, updateUserApproval } from "../../api/adminAPI/AccountApprovalAPI";
+import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 const PAGE_SIZE = 10;
 
@@ -301,41 +302,20 @@ export default function AdminAccountApproval() {
       )}
 
       {/* CONFIRM MODAL */}
-      {confirmModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 border border-slate-100">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-5 ${confirmModal.action === "Approved" ? "bg-emerald-50" : "bg-red-50"}`}>
-              {confirmModal.action === "Approved"
-                ? <FaCheckCircle className="text-emerald-500" size={20} />
-                : <FaTimesCircle className="text-red-500" size={20} />
-              }
-            </div>
-            <h3 className="text-lg font-black text-slate-900 mb-2">
-              {confirmModal.action === "Approved" ? "Approve Account" : "Decline Account"}
-            </h3>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-              {confirmModal.action === "Approved"
-                ? <>Grant portal access to <span className="font-bold text-slate-900">{confirmModal.user.fullName}</span>? They will be able to log in immediately.</>
-                : <>Decline the account request from <span className="font-bold text-slate-900">{confirmModal.user.fullName}</span>? They will not be able to access the portal.</>
-              }
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirmModal(null)} disabled={processing}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
-                Cancel
-              </button>
-              <button onClick={handleApproval} disabled={processing}
-                className={`flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-colors disabled:opacity-60 flex justify-center items-center
-                  ${confirmModal.action === "Approved" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"}`}>
-                {processing
-                  ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  : confirmModal.action === "Approved" ? "Confirm Approval" : "Confirm Decline"
-                }
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GeneralConfirmationModal
+        isOpen={!!confirmModal}
+        onClose={() => setConfirmModal(null)}
+        onConfirm={handleApproval}
+        variant={confirmModal?.action === "Approved" ? "approve" : "reject"}
+        title={confirmModal?.action === "Approved" ? "Approve Account" : "Decline Account"}
+        message={confirmModal
+          ? confirmModal.action === "Approved"
+            ? <>Grant portal access to <span className="font-bold text-slate-900">{confirmModal.user.fullName}</span>? They will be able to log in immediately.</>
+            : <>Decline the account request from <span className="font-bold text-slate-900">{confirmModal.user.fullName}</span>? They will not be able to access the portal.</>
+          : null}
+        confirmText={confirmModal?.action === "Approved" ? "Confirm Approval" : "Confirm Decline"}
+        loading={processing}
+      />
     </>
   );
 }

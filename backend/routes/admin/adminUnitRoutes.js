@@ -9,9 +9,9 @@ import {
 
 const router = express.Router();
 
-router.get("/",       adminAuth, fetchAllUnits);
-router.post("/",      adminAuth, createUnitController);
-router.patch("/:id",  adminAuth, updateUnitController);
+router.get("/", adminAuth, fetchAllUnits);
+router.post("/", adminAuth, createUnitController);
+router.patch("/:id", adminAuth, updateUnitController);
 router.delete("/:id", adminAuth, deleteUnitController);
 
 export default router;

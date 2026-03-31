@@ -7,6 +7,7 @@ import {
 import { fetchTenantProfile } from "../../api/tenantAPI/tenantAuth";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/config";
+import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 export default function AccountSetting() {
   const { updateUser } = useAuth();
@@ -211,34 +212,15 @@ export default function AccountSetting() {
       </div>
 
       {/* CONFIRM MODAL */}
-      {confirmModal && (
-        <div className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden">
-            <div className="bg-[#5c1f10] h-1.5 w-full" />
-            <div className="p-8 text-center">
-              <div className="w-14 h-14 bg-[#FDF2ED] rounded-2xl flex items-center justify-center mx-auto mb-5">
-                <FaSave className="text-[#D96648]" size={22} />
-              </div>
-              <h3 className="font-black text-[#330101] text-base mb-2">{confirmModal.title}</h3>
-              <p className="text-sm text-[#330101]/50 mb-8 leading-relaxed">{confirmModal.message}</p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setConfirmModal(null)}
-                  className="flex-1 py-3.5 rounded-2xl border border-[#F2DED4] bg-white text-[#330101] font-bold text-xs uppercase tracking-widest hover:bg-[#FFF9F6] transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => { setConfirmModal(null); confirmModal.action(); }}
-                  className="flex-1 py-3.5 rounded-2xl bg-[#5c1f10] hover:bg-[#7a2e1a] text-[#FFEDE1] font-bold text-xs uppercase tracking-widest transition-all shadow-lg"
-                >
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <GeneralConfirmationModal
+        isOpen={!!confirmModal}
+        onClose={() => setConfirmModal(null)}
+        onConfirm={() => { const action = confirmModal?.action; setConfirmModal(null); action?.(); }}
+        variant="save"
+        title={confirmModal?.title}
+        message={confirmModal?.message}
+        confirmText="Confirm"
+      />
     </div>
   );
 }

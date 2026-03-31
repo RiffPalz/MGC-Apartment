@@ -5,6 +5,7 @@ import {
   FaCalendarAlt,
 } from "react-icons/fa";
 import { fetchMyPayments, uploadReceipt } from "../../api/tenantAPI/PaymentAPI";
+import ModalPortal from "../../components/ModalPortal";
 
 const STATUS_STYLES = {
   "Paid":                 { bg: "#DCFCE7", text: "#16A34A", dot: "bg-emerald-400" },
@@ -271,7 +272,8 @@ export default function PaymenthisCards() {
 
       {/* DETAIL MODAL */}
       {detailModal && (
-        <div className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <ModalPortal>
+        <div className="fixed inset-0 bg-[#330101]/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md overflow-hidden">
             <div className="bg-[#5c1f10] h-1.5 w-full" />
             <div className="p-7">
@@ -309,11 +311,13 @@ export default function PaymenthisCards() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* UPLOAD MODAL */}
       {uploadModal && (
-        <div className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <ModalPortal>
+        <div className="fixed inset-0 bg-[#330101]/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md overflow-hidden">
             <div className="bg-[#f7b094] h-1.5 w-full" />
             <div className="p-7">
@@ -387,6 +391,7 @@ export default function PaymenthisCards() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );
