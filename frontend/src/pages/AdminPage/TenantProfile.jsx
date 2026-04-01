@@ -7,7 +7,7 @@ import {
 } from "react-icons/md";
 import { fetchTenantProfile } from "../../api/adminAPI/unitsAPI";
 import api from "../../api/config";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 
 const FLOOR_MAP = { 1: "Ground Floor", 2: "Second Floor", 3: "Third Floor", 4: "Fourth Floor" };
 

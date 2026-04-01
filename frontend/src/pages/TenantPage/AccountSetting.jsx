@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import {
   FaUser, FaEnvelope, FaPhone, FaHome,
   FaIdBadge, FaSave, FaLock, FaUsers, FaEye, FaEyeSlash,

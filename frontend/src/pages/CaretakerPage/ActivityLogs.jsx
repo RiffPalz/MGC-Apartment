@@ -4,7 +4,7 @@ import {
   FaWrench, FaMoneyCheckAlt, FaUserCog,
 } from "react-icons/fa";
 import { MdAdminPanelSettings } from "react-icons/md";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import { fetchCaretakerActivityLogs } from "../../api/caretakerAPI/ActivityLogAPI";
 
 const PAGE_SIZE = 15;

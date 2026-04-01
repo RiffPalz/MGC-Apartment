@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { FaSearch, FaPrint, FaBullhorn, FaPlus, FaEdit, FaTrashAlt } from "react-icons/fa";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import logo from "../../assets/images/logo.png";
 import {
   fetchAllAnnouncements,

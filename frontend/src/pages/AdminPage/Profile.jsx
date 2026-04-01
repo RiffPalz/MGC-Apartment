@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { FaCamera, FaEdit, FaSave, FaTimes, FaUserShield, FaEnvelope, FaPhone, FaUser, FaIdBadge } from "react-icons/fa";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/config";
 

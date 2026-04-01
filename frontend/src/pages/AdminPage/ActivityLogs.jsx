@@ -4,7 +4,7 @@ import {
     FaUserShield, FaUsers, FaTools, FaSyncAlt,
 } from "react-icons/fa";
 import { MdAdminPanelSettings } from "react-icons/md";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import { fetchAllActivityLogs } from "../../api/adminAPI/ActivityLogsAPI";
 
 const PAGE_SIZE = 15;

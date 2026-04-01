@@ -7,7 +7,7 @@ import {
 import { HiPlus } from "react-icons/hi";
 import { IoSettingsSharp } from "react-icons/io5";
 import { FaSearch } from "react-icons/fa";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import { fetchAllUnits, createUnit, updateUnit, deleteUnit } from "../../api/adminAPI/unitsAPI";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 

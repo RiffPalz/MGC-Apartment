@@ -4,7 +4,7 @@ import {
   FaFileContract, FaChevronLeft, FaChevronRight,
   FaPlus, FaEye, FaEyeSlash,
 } from "react-icons/fa";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import { fetchTenantsOverview, createTenant } from "../../api/caretakerAPI/TenantsOverviewAPI";
 import logo from "../../assets/images/logo.png";
 

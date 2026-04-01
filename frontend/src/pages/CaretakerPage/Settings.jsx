@@ -3,7 +3,7 @@ import {
   FaBuilding, FaEnvelope, FaMapMarkerAlt, FaTag,
   FaEdit, FaSave, FaTimes,
 } from "react-icons/fa";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 
 const SYSINFO_KEY = "mgc_system_info";
 const SYSINFO_DEFAULTS = {

@@ -1,25 +1,14 @@
 import MGCRouter from "./router/MGCRouter.jsx";
-import { ToastContainer } from "react-toastify";
-import { Bounce } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "react-hot-toast";
 import "./App.css";
 
 function App() {
   return (
     <>
       <MGCRouter />
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        transition={Bounce}
+      <Toaster
+        position="top-center"
+        toastOptions={{ duration: 3050 }}
       />
     </>
   );

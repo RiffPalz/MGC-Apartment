@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { FaSearch, FaPrint, FaFileContract, FaCheckCircle, FaTimesCircle, FaClock, FaPlus, FaEye, FaEdit, FaSync, FaDownload } from "react-icons/fa";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import logo from "../../assets/images/logo.png";
 import {
   fetchContractDashboard,
