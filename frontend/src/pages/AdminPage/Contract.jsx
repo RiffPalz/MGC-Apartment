@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { FaSearch, FaPrint, FaFileContract, FaCheckCircle, FaTimesCircle, FaClock, FaPlus, FaEye, FaEdit, FaSync, FaDownload } from "react-icons/fa";
+import { FaSearch, FaPrint, FaFileContract, FaCheckCircle, FaTimesCircle, FaClock, FaPlus, FaEye, FaEdit, FaSync, FaDownload, FaFilePdf } from "react-icons/fa";
 import toast from "../../utils/toast";
 import logo from "../../assets/images/logo.png";
 import {
@@ -9,6 +9,8 @@ import {
   terminateContract,
   completeContract,
   renewContract,
+  generateContractPdf,
+  getContractPdfProxyUrl,
 } from "../../api/adminAPI/ContractAPI";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
@@ -56,7 +58,7 @@ const EMPTY_CREATE = {
   contractFile: null,
 };
 
-const EMPTY_RENEW = { newStartDate: "", newEndDate: "", contractFile: null };
+const EMPTY_RENEW = { newStartDate: "", newEndDate: "" };
 
 export default function AdminContract() {
   const [contracts, setContracts] = useState([]);
@@ -78,6 +80,9 @@ export default function AdminContract() {
   const [editForm, setEditForm] = useState({});
   const [renewForm, setRenewForm] = useState(EMPTY_RENEW);
   const [submitting, setSubmitting] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(null);
+  const [createConfirmOpen, setCreateConfirmOpen] = useState(false);
+  const [generateConfirmTarget, setGenerateConfirmTarget] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -97,8 +102,13 @@ export default function AdminContract() {
   useEffect(() => { load(); }, [load]);
 
   // ── CREATE ──
-  const handleCreate = async (e) => {
+  const handleCreate = (e) => {
     e.preventDefault();
+    setCreateConfirmOpen(true);
+  };
+
+  const doCreate = async () => {
+    setCreateConfirmOpen(false);
     try {
       setSubmitting(true);
       const fd = new FormData();
@@ -108,9 +118,22 @@ export default function AdminContract() {
       fd.append("status", "Active");
       fd.append("tenancy_rules", createForm.tenancy_rules);
       fd.append("termination_renewal_conditions", createForm.termination_renewal_conditions);
-      if (createForm.contractFile) fd.append("contractFile", createForm.contractFile);
-      await createContract(createForm.unit_id, fd);
-      toast.success("Contract created successfully");
+      const res = await createContract(createForm.unit_id, fd);
+      toast.success("Contract created");
+
+      // Auto-generate PDF immediately after creation
+      if (res.contract?.ID) {
+        setGeneratingPdf(res.contract.ID);
+        try {
+          await generateContractPdf(res.contract.ID);
+          toast.success("Contract PDF generated");
+        } catch {
+          toast.error("Contract created but PDF generation failed. Use the generate button.");
+        } finally {
+          setGeneratingPdf(null);
+        }
+      }
+
       setCreateModal(false);
       setCreateForm(EMPTY_CREATE);
       await load();
@@ -159,12 +182,11 @@ export default function AdminContract() {
     e.preventDefault();
     try {
       setSubmitting(true);
-      const fd = new FormData();
-      fd.append("newStartDate", renewForm.newStartDate);
-      fd.append("newEndDate", renewForm.newEndDate);
-      if (renewForm.contractFile) fd.append("contractFile", renewForm.contractFile);
-      await renewContract(renewModal.ID, fd);
-      toast.success("Contract renewed");
+      await renewContract(renewModal.ID, {
+        newStartDate: renewForm.newStartDate,
+        newEndDate: renewForm.newEndDate,
+      });
+      toast.success("Contract renewed and PDF regenerated");
       setRenewModal(null);
       setRenewForm(EMPTY_RENEW);
       await load();
@@ -194,6 +216,41 @@ export default function AdminContract() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // ── GENERATE PDF ──
+  const handleGeneratePdf = (contract) => {
+    setGenerateConfirmTarget(contract);
+  };
+
+  const doGeneratePdf = async () => {
+    const contract = generateConfirmTarget;
+    setGenerateConfirmTarget(null);
+    try {
+      setGeneratingPdf(contract.ID);
+      const res = await generateContractPdf(contract.ID);
+      toast.success("Contract PDF generated successfully");
+      setContracts((prev) =>
+        prev.map((c) =>
+          c.ID === contract.ID ? { ...c, contract_file: res.contract_file, contract_file_download: res.contract_file } : c
+        )
+      );
+      if (viewModal?.ID === contract.ID) {
+        setViewModal((v) => ({ ...v, contract_file: res.contract_file, contract_file_download: res.contract_file }));
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to generate PDF");
+    } finally {
+      setGeneratingPdf(null);
+    }
+  };
+
+  const openViewModal = (c) => {
+    setViewModal(c);
+  };
+
+  const closeViewModal = () => {
+    setViewModal(null);
   };
 
   const filtered = contracts.filter((c) => {
@@ -374,7 +431,7 @@ export default function AdminContract() {
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setViewModal(c)} title="View"
+                          <button onClick={() => openViewModal(c)} title="View"
                             className="p-2 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
                             <FaEye size={13} />
                           </button>
@@ -382,14 +439,12 @@ export default function AdminContract() {
                             className="p-2 rounded-md text-slate-400 hover:text-[#db6747] hover:bg-orange-50 transition-all">
                             <FaEdit size={13} />
                           </button>
-                          {(c.status === "Completed" || c.status === "Terminated") && (
-                            <button onClick={() => { setRenewModal(c); setRenewForm(EMPTY_RENEW); }} title="Renew"
-                              className="p-2 rounded-md text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all">
-                              <FaSync size={12} />
-                            </button>
-                          )}
                           {c.status === "Active" && (
                             <>
+                              <button onClick={() => { setRenewModal(c); setRenewForm(EMPTY_RENEW); }} title="Renew"
+                                className="p-2 rounded-md text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all">
+                                <FaSync size={12} />
+                              </button>
                               <button onClick={() => setConfirmModal({ action: "complete", contract: c })} title="Complete"
                                 className="p-2 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
                                 <FaCheckCircle size={13} />
@@ -420,7 +475,7 @@ export default function AdminContract() {
                 <h2 className="text-slate-800 font-bold text-xs uppercase tracking-widest">Contract Details</h2>
                 <p className="text-slate-400 text-[10px] uppercase tracking-widest mt-0.5">ID: {viewModal.ID}</p>
               </div>
-              <button onClick={() => setViewModal(null)} className="text-slate-400 hover:text-slate-800 transition-colors text-lg px-2">✕</button>
+              <button onClick={closeViewModal} className="text-slate-400 hover:text-slate-800 transition-colors text-lg px-2">✕</button>
             </div>
             <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
@@ -470,32 +525,44 @@ export default function AdminContract() {
               {viewModal.contract_file && (
                 <div>
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2">Contract File</p>
-                  <div className="rounded-lg border border-slate-200 overflow-hidden mb-2">
-                    <iframe
-                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(viewModal.contract_file)}&embedded=true`}
-                      className="w-full h-64 bg-slate-50"
-                      title="Contract PDF Preview"
-                    />
-                  </div>
                   <button
                     onClick={async () => {
                       try {
-                        const url = viewModal.contract_file_download || viewModal.contract_file;
-                        const res = await fetch(url);
+                        const proxyUrl = getContractPdfProxyUrl(viewModal.ID);
+                        const res = await fetch(proxyUrl, {
+                          headers: { Authorization: `Bearer ${localStorage.getItem("tenantToken")}` },
+                        });
+                        if (!res.ok) throw new Error("Fetch failed");
                         const blob = await res.blob();
                         const blobUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
                         const a = document.createElement("a");
                         a.href = blobUrl;
                         a.download = `contract_unit_${viewModal.unit_number}.pdf`;
+                        document.body.appendChild(a);
                         a.click();
+                        document.body.removeChild(a);
                         URL.revokeObjectURL(blobUrl);
                       } catch {
-                        window.open(viewModal.contract_file_download || viewModal.contract_file, "_blank");
+                        window.open(viewModal.contract_file, "_blank");
                       }
                     }}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold border border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all"
                   >
                     <FaDownload size={12} /> Download PDF
+                  </button>
+                </div>
+              )}
+              {!viewModal.contract_file && (
+                <div className="rounded-lg border border-dashed border-slate-200 p-4 text-center">
+                  <p className="text-xs text-slate-400 mb-3">No contract PDF yet.</p>
+                  <button
+                    onClick={() => handleGeneratePdf(viewModal)}
+                    disabled={generatingPdf === viewModal.ID}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold border border-purple-100 bg-purple-50 text-purple-600 hover:bg-purple-100 transition-all disabled:opacity-50"
+                  >
+                    {generatingPdf === viewModal.ID
+                      ? <><div className="w-3 h-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" /> Generating...</>
+                      : <><FaFilePdf size={12} /> Generate PDF</>}
                   </button>
                 </div>
               )}
@@ -573,17 +640,14 @@ export default function AdminContract() {
                   onChange={(e) => setCreateForm((f) => ({ ...f, termination_renewal_conditions: e.target.value }))}
                   className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 resize-none" />
               </div>
-              <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Contract File (PDF, optional)</label>
-                <input type="file" accept=".pdf" onChange={(e) => setCreateForm((f) => ({ ...f, contractFile: e.target.files[0] }))}
-                  className="w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
-              </div>
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={() => { setCreateModal(false); setCreateForm(EMPTY_CREATE); }}
                   className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
                 <button type="submit" disabled={submitting}
-                  className="px-5 py-2.5 rounded-xl bg-[#db6747] text-white text-sm font-bold hover:bg-[#c45a3a] transition-colors shadow-sm disabled:opacity-60">
-                  {submitting ? "Creating..." : "Create Contract"}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#db6747] text-white text-sm font-bold hover:bg-[#c45a3a] transition-colors shadow-sm disabled:opacity-60">
+                  {submitting
+                    ? <><div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />{generatingPdf ? "Generating PDF..." : "Creating..."}</>
+                    : <><FaFilePdf size={13} /> Create & Generate PDF</>}
                 </button>
               </div>
             </form>
@@ -612,16 +676,14 @@ export default function AdminContract() {
                 </div>
                 <div />
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Start Date</label>
-                  <input type="date" value={editForm.start_date}
-                    onChange={(e) => setEditForm((f) => ({ ...f, start_date: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50" />
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Start Date <span className="text-slate-300 normal-case tracking-normal font-normal">(read-only — use Renew to change)</span></label>
+                  <input type="date" value={editForm.start_date} disabled
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed" />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">End Date</label>
-                  <input type="date" value={editForm.end_date}
-                    onChange={(e) => setEditForm((f) => ({ ...f, end_date: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50" />
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">End Date <span className="text-slate-300 normal-case tracking-normal font-normal">(read-only — use Renew to change)</span></label>
+                  <input type="date" value={editForm.end_date} disabled
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed" />
                 </div>
               </div>
               <div>
@@ -635,11 +697,6 @@ export default function AdminContract() {
                 <textarea rows={3} value={editForm.termination_renewal_conditions}
                   onChange={(e) => setEditForm((f) => ({ ...f, termination_renewal_conditions: e.target.value }))}
                   className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 resize-none" />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Replace Contract File (PDF, optional)</label>
-                <input type="file" accept=".pdf" onChange={(e) => setEditForm((f) => ({ ...f, contractFile: e.target.files[0] }))}
-                  className="w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
               </div>
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={() => setEditModal(null)}
@@ -666,6 +723,11 @@ export default function AdminContract() {
               <button onClick={() => setRenewModal(null)} className="text-slate-400 hover:text-slate-800 text-lg px-2">✕</button>
             </div>
             <form onSubmit={handleRenew} className="p-6 space-y-4">
+              {/* Current dates for reference */}
+              <div className="bg-slate-50 rounded-lg border border-slate-100 px-4 py-3 text-xs text-slate-500 space-y-1">
+                <p><span className="font-bold text-slate-600">Current Start:</span> {fmt(renewModal.start_date)}</p>
+                <p><span className="font-bold text-slate-600">Current End:</span> {fmt(renewModal.end_date)}</p>
+              </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">New Start Date</label>
                 <input required type="date" value={renewForm.newStartDate}
@@ -678,17 +740,17 @@ export default function AdminContract() {
                   onChange={(e) => setRenewForm((f) => ({ ...f, newEndDate: e.target.value }))}
                   className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50" />
               </div>
-              <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">New Contract File (PDF, optional)</label>
-                <input type="file" accept=".pdf" onChange={(e) => setRenewForm((f) => ({ ...f, contractFile: e.target.files[0] }))}
-                  className="w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
-              </div>
+              <p className="text-[10px] text-slate-400 leading-relaxed">
+                The contract PDF will be automatically regenerated with the new dates.
+              </p>
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={() => setRenewModal(null)}
                   className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
                 <button type="submit" disabled={submitting}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-600 transition-colors shadow-sm disabled:opacity-60">
-                  {submitting ? "Renewing..." : "Renew Contract"}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-600 transition-colors shadow-sm disabled:opacity-60">
+                  {submitting
+                    ? <><div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Renewing...</>
+                    : <><FaSync size={12} /> Renew & Regenerate PDF</>}
                 </button>
               </div>
             </form>
@@ -710,6 +772,32 @@ export default function AdminContract() {
           : null}
         confirmText={confirmModal?.action === "terminate" ? "Terminate" : "Complete"}
         loading={submitting}
+      />
+
+      {/* ── CREATE CONTRACT CONFIRM ── */}
+      <GeneralConfirmationModal
+        isOpen={createConfirmOpen}
+        onClose={() => setCreateConfirmOpen(false)}
+        onConfirm={doCreate}
+        variant="save"
+        title="Create Contract & Generate PDF"
+        message="This will create the contract and automatically generate the official PDF. Are you sure all details are correct?"
+        confirmText="Create & Generate"
+        loading={submitting}
+      />
+
+      {/* ── GENERATE PDF CONFIRM ── */}
+      <GeneralConfirmationModal
+        isOpen={!!generateConfirmTarget}
+        onClose={() => setGenerateConfirmTarget(null)}
+        onConfirm={doGeneratePdf}
+        variant="other"
+        title="Generate Contract PDF"
+        message={generateConfirmTarget
+          ? <>Generate a new PDF for the contract of Unit <span className="font-bold text-slate-900">{generateConfirmTarget.unit_number}</span>? This will overwrite any existing contract file.</>
+          : null}
+        confirmText="Generate PDF"
+        loading={!!generatingPdf}
       />
     </>
   );
