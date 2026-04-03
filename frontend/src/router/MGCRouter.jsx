@@ -1,72 +1,70 @@
+﻿import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "../context/AuthContext.jsx";
-import { SocketProvider } from '../context/SocketContext.jsx';
+import { SocketProvider } from "../context/SocketContext.jsx";
 import { getToken, getRole } from "../api/authStorage.js";
 
 import PrivateRoute from "../components/PrivateRoute.jsx";
 import Unauthorized from "../components/Unauthorized.jsx";
+import PageLoader from "../components/PageLoader.jsx";
+
+// Layouts — not lazy, needed immediately after auth check
+import TenantLayout from "../layout/TenantLayout.jsx";
+import AdminLayout from "../layout/AdminLayout.jsx";
+import CaretakerLayout from "../layout/CaretakerLayout.jsx";
 
 // Landing Pages
-import Home from "../pages/LandingPage/Home.jsx";
-import Login from "../pages/LandingPage/Login.jsx";
-import ApplyNow from "../pages/LandingPage/ApplyNow.jsx";
-import CreateAcc from "../pages/LandingPage/CreateAcc.jsx";
-import AdminVerification from "../pages/LandingPage/Verification.jsx";
+const Home              = lazy(() => import("../pages/LandingPage/Home.jsx"));
+const Login             = lazy(() => import("../pages/LandingPage/Login.jsx"));
+const ApplyNow          = lazy(() => import("../pages/LandingPage/ApplyNow.jsx"));
+const CreateAcc         = lazy(() => import("../pages/LandingPage/CreateAcc.jsx"));
+const AdminVerification = lazy(() => import("../pages/LandingPage/Verification.jsx"));
 
 // Tenant Pages
-import TenantLayout from "../layout/TenantLayout.jsx";
-import TenantDashboard from "../pages/TenantPage/Dashboard.jsx";
-import TenantMaintenance from "../pages/TenantPage/Maintenance.jsx";
-import TenantContract from "../pages/TenantPage/Contract.jsx";
-import TenantPaymentHistory from "../pages/TenantPage/PaymentHistory.jsx";
-import TenantAccountSettings from "../pages/TenantPage/AccountSetting.jsx";
-import TenantActivityLogs from "../pages/TenantPage/ActivityLogs.jsx";
+const TenantDashboard       = lazy(() => import("../pages/TenantPage/Dashboard.jsx"));
+const TenantMaintenance     = lazy(() => import("../pages/TenantPage/Maintenance.jsx"));
+const TenantContract        = lazy(() => import("../pages/TenantPage/Contract.jsx"));
+const TenantPaymentHistory  = lazy(() => import("../pages/TenantPage/PaymentHistory.jsx"));
+const TenantAccountSettings = lazy(() => import("../pages/TenantPage/AccountSetting.jsx"));
+const TenantActivityLogs    = lazy(() => import("../pages/TenantPage/ActivityLogs.jsx"));
 
 // Admin Pages
-import AdminLayout from "../layout/AdminLayout.jsx";
-import AdminDashboard from "../pages/AdminPage/Dashboard.jsx";
-import AdminTenants from "../pages/AdminPage/Tenants.jsx";
-import AdminUnits from "../pages/AdminPage/Units.jsx";
-import AdminMaintenance from "../pages/AdminPage/Maintenance.jsx";
-import AdminAnnouncement from "../pages/AdminPage/Announcement.jsx";
-import AdminContract from "../pages/AdminPage/Contract.jsx";
-import AdminPayment from "../pages/AdminPage/Payment.jsx";
-import AdminApplicationRequest from "../pages/AdminPage/ApplicationRequest.jsx";
-import AdminTenantProfile from "../pages/AdminPage/TenantProfile.jsx";
-import AdminAccountApproval from "../pages/AdminPage/AccountApproval.jsx";
-import AdminSettings from "../pages/AdminPage/Settings.jsx";
-import AdminActivityLogs from "../pages/AdminPage/ActivityLogs.jsx";
-import AdminProfile from "../pages/AdminPage/Profile.jsx";
-
+const AdminDashboard          = lazy(() => import("../pages/AdminPage/Dashboard.jsx"));
+const AdminTenants            = lazy(() => import("../pages/AdminPage/Tenants.jsx"));
+const AdminUnits              = lazy(() => import("../pages/AdminPage/Units.jsx"));
+const AdminMaintenance        = lazy(() => import("../pages/AdminPage/Maintenance.jsx"));
+const AdminAnnouncement       = lazy(() => import("../pages/AdminPage/Announcement.jsx"));
+const AdminContract           = lazy(() => import("../pages/AdminPage/Contract.jsx"));
+const AdminPayment            = lazy(() => import("../pages/AdminPage/Payment.jsx"));
+const AdminApplicationRequest = lazy(() => import("../pages/AdminPage/ApplicationRequest.jsx"));
+const AdminTenantProfile      = lazy(() => import("../pages/AdminPage/TenantProfile.jsx"));
+const AdminAccountApproval    = lazy(() => import("../pages/AdminPage/AccountApproval.jsx"));
+const AdminSettings           = lazy(() => import("../pages/AdminPage/Settings.jsx"));
+const AdminActivityLogs       = lazy(() => import("../pages/AdminPage/ActivityLogs.jsx"));
+const AdminProfile            = lazy(() => import("../pages/AdminPage/Profile.jsx"));
 
 // Caretaker Pages
-import CaretakerLayout from "../layout/CaretakerLayout.jsx";
-import CaretakerDashboard from "../pages/CaretakerPage/Dashboard.jsx";
-import CaretakerMaintenance from "../pages/CaretakerPage/Maintenance.jsx";
-import CaretakerTenantOverview from "../pages/CaretakerPage/TenantOverview.jsx";
-import CaretakerPaymentOverview from "../pages/CaretakerPage/PaymentOverview.jsx";
-import CaretakerAnnouncement from "../pages/CaretakerPage/Announcement.jsx";
-import CaretakerActivityLogs from "../pages/CaretakerPage/ActivityLogs.jsx";
-import CaretakerProfile from "../pages/CaretakerPage/Profile.jsx";
-import CaretakerSettings from "../pages/CaretakerPage/Settings.jsx";
+const CaretakerDashboard       = lazy(() => import("../pages/CaretakerPage/Dashboard.jsx"));
+const CaretakerMaintenance     = lazy(() => import("../pages/CaretakerPage/Maintenance.jsx"));
+const CaretakerTenantOverview  = lazy(() => import("../pages/CaretakerPage/TenantOverview.jsx"));
+const CaretakerPaymentOverview = lazy(() => import("../pages/CaretakerPage/PaymentOverview.jsx"));
+const CaretakerAnnouncement    = lazy(() => import("../pages/CaretakerPage/Announcement.jsx"));
+const CaretakerActivityLogs    = lazy(() => import("../pages/CaretakerPage/ActivityLogs.jsx"));
+const CaretakerProfile         = lazy(() => import("../pages/CaretakerPage/Profile.jsx"));
+const CaretakerSettings        = lazy(() => import("../pages/CaretakerPage/Settings.jsx"));
 
-// Redirect login based on role
+// Redirect based on role if already logged in
 const LoginRedirect = () => {
   const token = getToken();
-  const role = getRole();
-  const isAuthenticated = !!token && !!role;
+  const role  = getRole();
 
-  if (isAuthenticated) {
+  if (token && role) {
     switch (role) {
-      case "admin":
-        return <Navigate to="/admin/dashboard" replace />;
-      case "caretaker":
-        return <Navigate to="/caretaker/dashboard" replace />;
-      case "tenant":
-        return <Navigate to="/tenant/dashboard" replace />;
+      case "admin":     return <Navigate to="/admin/dashboard"     replace />;
+      case "caretaker": return <Navigate to="/caretaker/dashboard" replace />;
+      case "tenant":    return <Navigate to="/tenant/dashboard"    replace />;
       default:
-        localStorage.clear(); // clear corrupted data
-        return <Login />;
+        localStorage.clear();
     }
   }
 
@@ -77,64 +75,65 @@ export default function MGCRouter() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        {/* SocketProvider wraps all pages for real-time updates */}
         <SocketProvider>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<LoginRedirect />} />
-            <Route path="/applynow" element={<ApplyNow />} />
-            <Route path="/createAccount" element={<CreateAcc />} />
-            <Route path="/verification" element={<AdminVerification />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/"              element={<Home />} />
+              <Route path="/login"         element={<LoginRedirect />} />
+              <Route path="/applynow"      element={<ApplyNow />} />
+              <Route path="/createAccount" element={<CreateAcc />} />
+              <Route path="/verification"  element={<AdminVerification />} />
+              <Route path="/unauthorized"  element={<Unauthorized />} />
 
-            {/* Tenant Protected Routes */}
-            <Route element={<PrivateRoute allowedRoles={["tenant"]} />}>
-              <Route path="/tenant" element={<TenantLayout />}>
-                <Route path="dashboard" element={<TenantDashboard />} />
-                <Route path="maintenance" element={<TenantMaintenance />} />
-                <Route path="contract" element={<TenantContract />} />
-                <Route path="payment" element={<TenantPaymentHistory />} />
-                <Route path="myAccount" element={<TenantAccountSettings />} />
-                <Route path="activityLogs" element={<TenantActivityLogs />} />
+              {/* Tenant Protected Routes */}
+              <Route element={<PrivateRoute allowedRoles={["tenant"]} />}>
+                <Route path="/tenant" element={<TenantLayout />}>
+                  <Route path="dashboard"    element={<TenantDashboard />} />
+                  <Route path="maintenance"  element={<TenantMaintenance />} />
+                  <Route path="contract"     element={<TenantContract />} />
+                  <Route path="payment"      element={<TenantPaymentHistory />} />
+                  <Route path="myAccount"    element={<TenantAccountSettings />} />
+                  <Route path="activityLogs" element={<TenantActivityLogs />} />
+                </Route>
               </Route>
-            </Route>
 
-            {/* Admin Protected Routes */}
-            <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard"          element={<AdminDashboard />} />
-                <Route path="tenants"            element={<AdminTenants />} />
-                <Route path="units"              element={<AdminUnits />} />
-                <Route path="maintenance"        element={<AdminMaintenance />} />
-                <Route path="announcement"       element={<AdminAnnouncement />} />
-                <Route path="contract"           element={<AdminContract />} />
-                <Route path="payments"           element={<AdminPayment />} />
-                <Route path="applicationrequest" element={<AdminApplicationRequest />} />
-                <Route path="approvalpage"       element={<AdminAccountApproval />} />
-                <Route path="tenants/:id" element={<AdminTenantProfile />} />
-                <Route path="settings"           element={<AdminSettings />} />
-                <Route path="activity-logs"      element={<AdminActivityLogs />} />
-                <Route path="profile"            element={<AdminProfile />} />
+              {/* Admin Protected Routes */}
+              <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                  <Route path="dashboard"          element={<AdminDashboard />} />
+                  <Route path="tenants"            element={<AdminTenants />} />
+                  <Route path="units"              element={<AdminUnits />} />
+                  <Route path="maintenance"        element={<AdminMaintenance />} />
+                  <Route path="announcement"       element={<AdminAnnouncement />} />
+                  <Route path="contract"           element={<AdminContract />} />
+                  <Route path="payments"           element={<AdminPayment />} />
+                  <Route path="applicationrequest" element={<AdminApplicationRequest />} />
+                  <Route path="approvalpage"       element={<AdminAccountApproval />} />
+                  <Route path="tenants/:id"        element={<AdminTenantProfile />} />
+                  <Route path="settings"           element={<AdminSettings />} />
+                  <Route path="activity-logs"      element={<AdminActivityLogs />} />
+                  <Route path="profile"            element={<AdminProfile />} />
+                </Route>
               </Route>
-            </Route>
 
-            {/* Caretaker Protected Routes */}
-            <Route element={<PrivateRoute allowedRoles={["caretaker"]} />}>
-              <Route path="/caretaker" element={<CaretakerLayout />}>
-                <Route index element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard"   element={<CaretakerDashboard />} />
-                <Route path="maintenance" element={<CaretakerMaintenance />} />
-                <Route path="tenants"     element={<CaretakerTenantOverview />} />
-                <Route path="payments"       element={<CaretakerPaymentOverview />} />
-                <Route path="announcements"  element={<CaretakerAnnouncement />} />
-                <Route path="activity-logs"  element={<CaretakerActivityLogs />} />
-                <Route path="settings"       element={<CaretakerSettings />} />
-                <Route path="profile"        element={<CaretakerProfile />} />
+              {/* Caretaker Protected Routes */}
+              <Route element={<PrivateRoute allowedRoles={["caretaker"]} />}>
+                <Route path="/caretaker" element={<CaretakerLayout />}>
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                  <Route path="dashboard"     element={<CaretakerDashboard />} />
+                  <Route path="maintenance"   element={<CaretakerMaintenance />} />
+                  <Route path="tenants"       element={<CaretakerTenantOverview />} />
+                  <Route path="payments"      element={<CaretakerPaymentOverview />} />
+                  <Route path="announcements" element={<CaretakerAnnouncement />} />
+                  <Route path="activity-logs" element={<CaretakerActivityLogs />} />
+                  <Route path="settings"      element={<CaretakerSettings />} />
+                  <Route path="profile"       element={<CaretakerProfile />} />
+                </Route>
               </Route>
-            </Route>
-          </Routes>
+            </Routes>
+          </Suspense>
         </SocketProvider>
       </AuthProvider>
     </BrowserRouter>
