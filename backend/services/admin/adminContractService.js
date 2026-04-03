@@ -10,20 +10,7 @@ import { createActivityLog } from "../../services/activityLogService.js";
 import { sendSMSBulk } from "../../utils/sms.js";
 import { sms } from "../../utils/smsTemplates.js";
 
-const getWorkingPdfUrl = (storedUrl, forDownload = false) => {
-    if (!storedUrl) return null;
-    try {
-        const match = storedUrl.match(/\/(?:image|raw|video)\/upload\/(?:v\d+\/)?(.+)$/);
-        if (!match) return storedUrl;
-        return cloudinary.url(match[1], {
-            resource_type: "raw",
-            secure: true,
-            ...(forDownload ? { flags: "attachment" } : {}),
-        });
-    } catch {
-        return storedUrl;
-    }
-};
+const getWorkingPdfUrl = (storedUrl) => storedUrl || null;
 
 /* CREATE CONTRACT */
 export const createContractByAdmin = async (
@@ -176,71 +163,50 @@ export const terminateContract = async (contractId, adminId) => {
     }
 };
 
-/* RENEW CONTRACT */
-export const renewContract = async ({ oldContractId, newStartDate, newEndDate, contract_file }, adminId) => {
-    const transaction = await sequelize.transaction();
-    try {
-        const oldContract = await Contract.findByPk(oldContractId, {
-            include: [{ model: User, as: "tenants" }, { model: Unit, as: "unit" }],
-            transaction,
-        });
-        if (!oldContract || oldContract.status === "Active") throw new Error("Cannot renew an active contract.");
+/* RENEW CONTRACT — updates dates on the existing active contract and regenerates PDF */
+export const renewContract = async ({ contractId, newStartDate, newEndDate }, adminId) => {
+    const contract = await Contract.findByPk(contractId, {
+        include: [
+            { model: User, as: "tenants" },
+            { model: Unit, as: "unit" },
+        ],
+    });
+    if (!contract) throw new Error("Contract not found.");
+    if (contract.status !== "Active") throw new Error("Only active contracts can be renewed.");
+    if (new Date(newEndDate) <= new Date(newStartDate)) throw new Error("End date must be after start date.");
 
-        const newContract = await Contract.create(
-            {
-                unit_id: oldContract.unit_id,
-                start_date: newStartDate,
-                end_date: newEndDate,
-                status: "Active",
-                tenancy_rules: oldContract.tenancy_rules,
-                termination_renewal_conditions: oldContract.termination_renewal_conditions,
-                contract_file,
-            },
-            { transaction }
-        );
+    await contract.update({ start_date: newStartDate, end_date: newEndDate });
 
-        for (const tenant of oldContract.tenants) {
-            await ContractTenant.create({ contract_id: newContract.ID, user_id: tenant.ID }, { transaction });
-            await tenant.update({ unitNumber: oldContract.unit.unit_number }, { transaction });
-        }
-
-        await transaction.commit();
-
-        for (const tenant of oldContract.tenants) {
-            await createNotification({
-                userId: tenant.ID,
-                role: "tenant",
-                type: "contract renewed",
-                title: "Contract Renewed",
-                message: "Your contract has been renewed.",
-                referenceId: newContract.ID,
-                referenceType: "contract",
-            });
-        }
-
-        // SMS → tenants
-        sendSMSBulk(
-            oldContract.tenants.map((t) => t.contactNumber),
-            sms.contractRenewed(oldContract.unit.unit_number, newEndDate)
-        );
-
-        await createActivityLog({
-            userId: adminId,
-            role: "admin",
-            action: "RENEW CONTRACT",
-            description: `Renewed contract. New ID: ${newContract.ID}`,
-            referenceId: newContract.ID,
+    for (const tenant of contract.tenants) {
+        await createNotification({
+            userId: tenant.ID,
+            role: "tenant",
+            type: "contract renewed",
+            title: "Contract Renewed",
+            message: `Your contract has been renewed until ${new Date(newEndDate).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}.`,
+            referenceId: contract.ID,
             referenceType: "contract",
         });
-
-        return newContract;
-    } catch (error) {
-        await transaction.rollback();
-        throw error;
     }
+
+    sendSMSBulk(
+        contract.tenants.map((t) => t.contactNumber),
+        sms.contractRenewed(contract.unit.unit_number, newEndDate)
+    );
+
+    await createActivityLog({
+        userId: adminId,
+        role: "admin",
+        action: "RENEW CONTRACT",
+        description: `Renewed contract ID ${contract.ID} — new dates: ${newStartDate} to ${newEndDate}`,
+        referenceId: contract.ID,
+        referenceType: "contract",
+    });
+
+    return contract;
 };
 
-/* EDIT CONTRACT */
+/* EDIT CONTRACT — dates are read-only, only other fields can be updated */
 export const editContract = async (contractId, updates, adminId) => {
     const contract = await Contract.findByPk(contractId, {
         include: [
@@ -250,16 +216,10 @@ export const editContract = async (contractId, updates, adminId) => {
     });
     if (!contract) throw new Error("Contract not found.");
 
-    const hadFile = !!contract.contract_file;
-    await contract.update(updates);
+    // Strip date fields — dates are managed via renew only
+    const { start_date, end_date, ...safeUpdates } = updates;
 
-    // If a new PDF was just attached, notify tenants via SMS
-    if (updates.contract_file && !hadFile) {
-        sendSMSBulk(
-            contract.tenants.map((t) => t.contactNumber),
-            sms.contractFileUploaded(contract.unit?.unit_number ?? "")
-        );
-    }
+    await contract.update(safeUpdates);
 
     await createActivityLog({
         userId: adminId,
@@ -341,7 +301,7 @@ export const getAdminDashboardData = async () => {
             tenancy_rules: c.tenancy_rules,
             termination_renewal_conditions: c.termination_renewal_conditions,
             contract_file: getWorkingPdfUrl(c.contract_file),
-            contract_file_download: getWorkingPdfUrl(c.contract_file, true),
+            contract_file_download: getWorkingPdfUrl(c.contract_file),
             tenants: c.tenants,
         })),
     };

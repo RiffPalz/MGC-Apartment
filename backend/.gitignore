@@ -39,3 +39,6 @@ build/
 /database.sqlite
 storage/
 uploads/
+
+# Font files (system fonts, not committed)
+fonts/
