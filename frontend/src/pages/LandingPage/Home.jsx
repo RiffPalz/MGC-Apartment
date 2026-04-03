@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import emailjs from "@emailjs/browser";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 
 import AOS from "aos";
 import "aos/dist/aos.css";

@@ -1,17 +1,17 @@
-ï»¿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   FaSearch, FaEye, FaCheckCircle, FaTimesCircle,
   FaUserClock, FaUsers, FaChevronLeft, FaChevronRight,
   FaEnvelope, FaPhone, FaUser,
 } from "react-icons/fa";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import { fetchPendingUsers, updateUserApproval } from "../../api/adminAPI/AccountApprovalAPI";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 const PAGE_SIZE = 10;
 
 const fmt = (d) =>
-  d ? new Date(d).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" }) : "â€”";
+  d ? new Date(d).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" }) : "—";
 
 const fmtTime = (d) =>
   d ? new Date(d).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" }) : "";
@@ -75,7 +75,7 @@ export default function AdminAccountApproval() {
         {/* STAT CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard icon={<FaUserClock size={18} />} label="Pending Approvals" value={users.length} color="text-amber-500" bg="bg-amber-50" />
-          <StatCard icon={<FaCheckCircle size={18} />} label="Reviewed Today" value="â€”" color="text-emerald-500" bg="bg-emerald-50" />
+          <StatCard icon={<FaCheckCircle size={18} />} label="Reviewed Today" value="—" color="text-emerald-500" bg="bg-emerald-50" />
           <StatCard icon={<FaUsers size={18} />} label="Showing" value={filtered.length} color="text-blue-500" bg="bg-blue-50" />
         </div>
 
@@ -154,10 +154,10 @@ export default function AdminAccountApproval() {
                         <span className="text-sm text-slate-600">@{u.userName}</span>
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">
-                        <span className="text-sm text-slate-600">{u.contactNumber || "â€”"}</span>
+                        <span className="text-sm text-slate-600">{u.contactNumber || "—"}</span>
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">
-                        <span className="text-sm font-bold text-[#db6747]">{u.unitNumber || "â€”"}</span>
+                        <span className="text-sm font-bold text-[#db6747]">{u.unitNumber || "—"}</span>
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">
                         <p className="text-xs text-slate-700 font-semibold">{fmt(u.created_at)}</p>
@@ -222,7 +222,7 @@ export default function AdminAccountApproval() {
                   }, [])
                   .map((p, idx) =>
                     p === "..." ? (
-                      <span key={`e-${idx}`} className="px-2 text-slate-400 text-xs">â€¦</span>
+                      <span key={`e-${idx}`} className="px-2 text-slate-400 text-xs">…</span>
                     ) : (
                       <button key={p} onClick={() => setPage(p)}
                         className={`w-7 h-7 rounded-md text-xs font-bold transition-all ${page === p ? "bg-[#db6747] text-white shadow-sm shadow-orange-200" : "text-slate-500 hover:bg-white hover:border hover:border-slate-200 border border-transparent"}`}>
@@ -249,7 +249,7 @@ export default function AdminAccountApproval() {
                 <h2 className="text-slate-800 font-bold text-xs uppercase tracking-widest">Account Details</h2>
                 <p className="text-slate-400 text-[10px] uppercase tracking-widest mt-0.5">{viewModal.publicUserID}</p>
               </div>
-              <button onClick={() => setViewModal(null)} className="text-slate-400 hover:text-slate-800 transition-colors text-lg px-2">âœ•</button>
+              <button onClick={() => setViewModal(null)} className="text-slate-400 hover:text-slate-800 transition-colors text-lg px-2">?</button>
             </div>
 
             <div className="p-6 space-y-5">
@@ -272,7 +272,7 @@ export default function AdminAccountApproval() {
               {/* Details Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <DetailRow icon={<FaEnvelope size={12} />} label="Email Address" value={viewModal.emailAddress} />
-                <DetailRow icon={<FaPhone size={12} />} label="Contact Number" value={viewModal.contactNumber || "â€”"} />
+                <DetailRow icon={<FaPhone size={12} />} label="Contact Number" value={viewModal.contactNumber || "—"} />
                 <DetailRow icon={<FaUser size={12} />} label="Username" value={`@${viewModal.userName}`} />
                 <DetailRow icon={<FaUser size={12} />} label="Unit Number" value={viewModal.unitNumber || "Not specified"} />
               </div>
@@ -338,7 +338,7 @@ function DetailRow({ icon, label, value }) {
       <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
         {icon} {label}
       </p>
-      <p className="text-sm font-semibold text-slate-800">{value || "â€”"}</p>
+      <p className="text-sm font-semibold text-slate-800">{value || "—"}</p>
     </div>
   );
 }

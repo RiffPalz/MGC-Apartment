@@ -39,4 +39,6 @@ build/
 /database.sqlite
 storage/
 uploads/
-seeders/
+
+# Font files (system fonts, not committed)
+fonts/

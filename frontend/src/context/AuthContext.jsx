@@ -11,36 +11,48 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  // Initialize synchronously from localStorage — no refresh needed
+  // Sync state with localStorage
   const [user, setUser] = useState(() => {
     const token = getToken();
     const storedUser = getUser();
     return token && storedUser ? storedUser : null;
   });
-  const [isAuth, setIsAuth] = useState(() => {
-    return !!(getToken() && getUser());
-  });
+
+  const [isAuth, setIsAuth] = useState(() => !!(getToken() && getUser()));
   const [loading] = useState(false);
 
   const login = async (credentials) => {
     const response = await apiLogin(credentials);
-    const storedUser = getUser();
-    if (storedUser) {
-      setUser(storedUser);
+
+    // Extract user from API response to prevent localStorage race condition
+    const freshUser = response?.user || response?.data?.user || getUser();
+
+    if (freshUser) {
+      setUser(freshUser);
       setIsAuth(true);
+
+      const freshToken = response?.token || response?.data?.token || getToken();
+      if (freshToken) {
+        setAuth(freshToken, freshUser, freshUser.role);
+      }
     }
+
     return response;
   };
 
   const logout = async () => {
-    try { await apiLogout(); } catch (e) { console.error(e); } finally {
+    try {
+      await apiLogout();
+    } catch (e) {
+      console.error(e);
+    } finally {
       clearAuth();
       setUser(null);
       setIsAuth(false);
     }
   };
 
-  // Called after profile update so header refreshes immediately
+  // Update profile and sync header
   const updateUser = (updatedFields) => {
     setUser((prev) => {
       const next = { ...prev, ...updatedFields };

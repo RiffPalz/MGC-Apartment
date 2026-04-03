@@ -5,7 +5,7 @@ import {
   FaUsers, FaCheckCircle, FaTimesCircle, FaChevronLeft, FaChevronRight,
   FaFileContract, FaPlus, FaEyeSlash,
 } from "react-icons/fa";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import { fetchTenantsOverview, deleteTenant, createTenant } from "../../api/adminAPI/TenantOverviewAPI";
 import logo from "../../assets/images/logo.png";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";

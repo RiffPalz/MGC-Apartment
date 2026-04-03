@@ -4,7 +4,7 @@ import {
   FaPlus, FaMoneyBillWave, FaExclamationCircle, FaCheckCircle, FaClock,
   FaChevronLeft, FaChevronRight,
 } from "react-icons/fa";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import logo from "../../assets/images/logo.png";
 import {
   fetchPaymentDashboard,

@@ -45,7 +45,7 @@ import CaretakerDashboard from "../pages/CaretakerPage/Dashboard.jsx";
 import CaretakerMaintenance from "../pages/CaretakerPage/Maintenance.jsx";
 import CaretakerTenantOverview from "../pages/CaretakerPage/TenantOverview.jsx";
 import CaretakerPaymentOverview from "../pages/CaretakerPage/PaymentOverview.jsx";
-import CaretakerAnnouncement from "../pages/CaretakerPage/announcement.jsx";
+import CaretakerAnnouncement from "../pages/CaretakerPage/Announcement.jsx";
 import CaretakerActivityLogs from "../pages/CaretakerPage/ActivityLogs.jsx";
 import CaretakerProfile from "../pages/CaretakerPage/Profile.jsx";
 import CaretakerSettings from "../pages/CaretakerPage/Settings.jsx";

@@ -1,11 +1,11 @@
-ï»¿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   FaUsers, FaPlus, FaTrashAlt, FaEye, FaEyeSlash,
   FaUserTie, FaSearch, FaChevronLeft, FaChevronRight,
   FaEdit, FaSave, FaTimes, FaBuilding, FaEnvelope, FaMapMarkerAlt, FaTag,
 } from "react-icons/fa";
 import { MdAdminPanelSettings } from "react-icons/md";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import api from "../../api/config";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
@@ -149,7 +149,7 @@ export default function AdminSettings() {
     <>
       <div className="w-full h-full bg-[#f8fafc] p-4 md:p-6 text-slate-800 font-sans flex flex-col gap-4 min-h-screen">
 
-        {/* STAT CARDS â€” always visible */}
+        {/* STAT CARDS — always visible */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard icon={<FaUsers size={18} />} label="Total Staff" value={staff.length} color="text-blue-500" bg="bg-blue-50" />
           <StatCard icon={<FaUserTie size={18} />} label="Admins" value={admins.length} color="text-red-500" bg="bg-red-50" />
@@ -275,7 +275,7 @@ export default function AdminSettings() {
             {!loading && filtered.length > PAGE_SIZE && (
               <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-slate-200 bg-slate-50/50 gap-4">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Showing <span className="text-slate-700">{(page - 1) * PAGE_SIZE + 1}</span> â€“ <span className="text-slate-700">{Math.min(page * PAGE_SIZE, filtered.length)}</span> of <span className="text-slate-700">{filtered.length}</span>
+                  Showing <span className="text-slate-700">{(page - 1) * PAGE_SIZE + 1}</span> – <span className="text-slate-700">{Math.min(page * PAGE_SIZE, filtered.length)}</span> of <span className="text-slate-700">{filtered.length}</span>
                 </p>
                 <div className="flex items-center gap-1">
                   <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
@@ -291,7 +291,7 @@ export default function AdminSettings() {
                     }, [])
                     .map((p, idx) =>
                       p === "..." ? (
-                        <span key={`e-${idx}`} className="px-2 text-slate-400 text-xs">â€¦</span>
+                        <span key={`e-${idx}`} className="px-2 text-slate-400 text-xs">…</span>
                       ) : (
                         <button key={p} onClick={() => setPage(p)}
                           className={`w-7 h-7 rounded-md text-xs font-bold transition-all
@@ -374,7 +374,7 @@ export default function AdminSettings() {
                 </h2>
                 <p className="text-slate-400 text-[10px] uppercase tracking-widest mt-0.5">Account will be created as Approved</p>
               </div>
-              <button onClick={() => setAddModal(null)} className="text-slate-400 hover:text-slate-800 text-lg px-2">âœ•</button>
+              <button onClick={() => setAddModal(null)} className="text-slate-400 hover:text-slate-800 text-lg px-2">?</button>
             </div>
             <form onSubmit={handleAdd} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -411,7 +411,7 @@ export default function AdminSettings() {
                   <div className="relative">
                     <input required type={showPass ? "text" : "password"} value={form.password}
                       onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                      placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                      placeholder="••••••••"
                       className="w-full px-3 py-2 pr-9 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50" />
                     <button type="button" onClick={() => setShowPass((p) => !p)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#db6747]">
