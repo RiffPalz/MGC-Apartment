@@ -9,8 +9,7 @@ import { sendSMS, sendSMSBulk } from "../../utils/sms.js";
 import { sms } from "../../utils/smsTemplates.js";
 
 /* CREATE PAYMENT */
-export const createPayment = async ({ contract_id, category, billing_month, amount, due_date }, adminId) => {
-  // Validate contract and tenant
+export const createPayment = async ({ contract_id, category, billing_month, amount, due_date, utility_bill_file }, adminId) => {
   const contract = await Contract.findOne({
     where: { ID: contract_id },
     include: [{ model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } }]
@@ -20,18 +19,18 @@ export const createPayment = async ({ contract_id, category, billing_month, amou
 
   const tenant = contract.tenants[0];
 
-  // Validate due date
   const today = new Date().setHours(0, 0, 0, 0);
   const dueDate = new Date(due_date).setHours(0, 0, 0, 0);
   if (dueDate < today) throw new Error("Due date cannot be in the past.");
 
-  // Prevent duplicate billing
   const existing = await Payment.findOne({ where: { contract_id, category, billing_month } });
   if (existing) throw new Error("Payment for this month already exists.");
 
-  const payment = await Payment.create({ contract_id, category, billing_month, amount, due_date });
+  const payment = await Payment.create({
+    contract_id, category, billing_month, amount, due_date,
+    ...(utility_bill_file ? { utility_bill_file } : {}),
+  });
 
-  // Notify tenant
   await createNotification({
     userId: tenant.ID,
     role: "tenant",
@@ -42,10 +41,8 @@ export const createPayment = async ({ contract_id, category, billing_month, amou
     referenceType: "payment"
   });
 
-  // SMS → tenant
   sendSMS(tenant.contactNumber, sms.billCreated(category, billing_month));
 
-  // Log admin action
   await createActivityLog({
     userId: adminId,
     role: "admin",
@@ -179,7 +176,7 @@ export const updatePayment = async (paymentId, data, adminId) => {
   const payment = await Payment.findByPk(paymentId);
   if (!payment) throw new Error("Payment not found");
 
-  const allowed = ["category", "billing_month", "amount", "due_date", "payment_date", "paymentType", "referenceNumber", "status"];
+  const allowed = ["category", "billing_month", "amount", "due_date", "payment_date", "paymentType", "referenceNumber", "status", "utility_bill_file"];
   allowed.forEach((key) => { if (data[key] !== undefined) payment[key] = data[key]; });
   await payment.save();
 
