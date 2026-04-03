@@ -60,6 +60,7 @@ export default function AdminMaintenance() {
   const [viewModal, setViewModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
+  const [statusConfirm, setStatusConfirm] = useState(null); // { req, newStatus }
   const [createModal, setCreateModal] = useState(false);
   const [tenants, setTenants] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -90,6 +91,13 @@ export default function AdminMaintenance() {
   useEffect(() => { load(); }, [load]);
 
   const handleStatusChange = async (req, newStatus) => {
+    // Open confirmation modal instead of firing immediately
+    setStatusConfirm({ req, newStatus });
+  };
+
+  const doStatusChange = async () => {
+    const { req, newStatus } = statusConfirm;
+    setStatusConfirm(null);
     try {
       setUpdatingId(req.id);
       if (newStatus === "Approved" && req.status === "Pending") {
@@ -142,7 +150,10 @@ export default function AdminMaintenance() {
         (r.tenant?.fullName ?? "").toLowerCase().includes(q) ||
         (r.title ?? "").toLowerCase().includes(q) ||
         (r.category ?? "").toLowerCase().includes(q);
-      const matchStatus = statusFilter === "All" || r.status === statusFilter;
+      const matchStatus =
+        statusFilter === "All" ? true :
+        statusFilter === "Follow-Up" ? (r.followedUp && r.status !== "In Progress" && r.status !== "Done") :
+        r.status === statusFilter;
       return matchSearch && matchStatus;
     })
     .sort((a, b) => {
@@ -157,6 +168,7 @@ export default function AdminMaintenance() {
     Approved: requests.filter((r) => r.status === "Approved").length,
     "In Progress": requests.filter((r) => r.status === "In Progress").length,
     Done: requests.filter((r) => r.status === "Done").length,
+    "Follow-Up": requests.filter((r) => r.followedUp && r.status !== "In Progress" && r.status !== "Done").length,
   };
 
 
@@ -253,14 +265,19 @@ export default function AdminMaintenance() {
             <div className="flex flex-wrap gap-2 items-center">
               <div className="overflow-x-auto">
               <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
-                {["All", "Pending", "Approved", "In Progress", "Done"].map((f) => (
+                {["All", "Pending", "Approved", "In Progress", "Done", "Follow-Up"].map((f) => (
                   <button
                     key={f}
                     onClick={() => setStatusFilter(f)}
-                    className={`px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all
+                    className={`relative px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all
                       ${statusFilter === f ? "bg-white text-[#db6747] shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
                   >
                     {f}
+                    {f === "Follow-Up" && counts["Follow-Up"] > 0 && (
+                      <span className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black">
+                        {counts["Follow-Up"]}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -376,8 +393,8 @@ export default function AdminMaintenance() {
                               onChange={(e) => handleStatusChange(req, e.target.value)}
                               className={`appearance-none cursor-pointer pl-3 pr-6 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest border transition-all outline-none disabled:opacity-60 hover:opacity-80 ${sc.color}`}
                             >
-                              <option value="Pending">Pending</option>
-                              <option value="Approved">Approved</option>
+                              <option value="Pending" disabled={["In Progress", "Done"].includes(req.status)}>Pending</option>
+                              <option value="Approved" disabled={["In Progress", "Done"].includes(req.status)}>Approved</option>
                               <option value="In Progress">In Progress</option>
                               <option value="Done">Done</option>
                             </select>
@@ -535,6 +552,20 @@ export default function AdminMaintenance() {
           </div>
         </div>
       )}
+
+      {/* ── STATUS CONFIRM MODAL ── */}
+      <GeneralConfirmationModal
+        isOpen={!!statusConfirm}
+        onClose={() => setStatusConfirm(null)}
+        onConfirm={doStatusChange}
+        variant="warning"
+        title="Update Status"
+        message={statusConfirm
+          ? <>Change status of <span className="font-bold text-slate-900">"{statusConfirm.req.title}"</span> to <span className="font-bold text-slate-900">{statusConfirm.newStatus}</span>?</>
+          : null}
+        confirmText="Yes, Update"
+        cancelText="Cancel"
+      />
 
       {/* ── DELETE CONFIRM MODAL ── */}
       <GeneralConfirmationModal

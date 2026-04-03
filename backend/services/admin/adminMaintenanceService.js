@@ -112,6 +112,12 @@ export const updateMaintenance = async (maintenanceId, data, adminId) => {
   const allowedStatuses = ["Pending", "Approved", "In Progress", "Done"];
   if (status && !allowedStatuses.includes(status)) throw new Error("Invalid status value");
 
+  // Prevent rolling back once In Progress
+  const forwardOnly = ["In Progress", "Done"];
+  if (forwardOnly.includes(request.status) && (status === "Pending" || status === "Approved")) {
+    throw new Error(`Cannot roll back status from "${request.status}" to "${status}".`);
+  }
+
   const now = new Date();
 
   if (status) {

@@ -84,6 +84,9 @@ export default function AdminPayment() {
   const [createConfirmOpen, setCreateConfirmOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [duplicateError, setDuplicateError] = useState("");
+  const [statusConfirm, setStatusConfirm] = useState(null); // { id, row }
+  const [editCancelConfirm, setEditCancelConfirm] = useState(false);
+  const [editSaveConfirm, setEditSaveConfirm] = useState(false);
 
   // Utilities amount display state (formatted string)
   const [utilityAmountDisplay, setUtilityAmountDisplay] = useState("");
@@ -183,8 +186,13 @@ export default function AdminPayment() {
     }
   };
 
-  const handleEdit = async (e) => {
+  const handleEdit = (e) => {
     e.preventDefault();
+    setEditSaveConfirm(true);
+  };
+
+  const doEdit = async () => {
+    setEditSaveConfirm(false);
     try {
       setSubmitting(true);
       await updatePayment(editModal.id, editForm, editForm.newUtilityBillFile || null);
@@ -212,10 +220,16 @@ export default function AdminPayment() {
     }
   };
 
-  const handleVerify = async (id) => {
+  const handleVerify = (row) => {
+    setStatusConfirm(row);
+  };
+
+  const doVerify = async () => {
+    const row = statusConfirm;
+    setStatusConfirm(null);
     try {
-      await verifyPayment(id);
-      toast.success("Payment verified.");
+      await verifyPayment(row.id);
+      toast.success("Payment verified as Paid.");
       load();
     } catch (err) {
       toast.error(err?.response?.data?.message || "Verification failed.");
@@ -402,7 +416,25 @@ export default function AdminPayment() {
                         : <span className="text-xs text-slate-400">—</span>}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <StatusBadge status={r.status} />
+                      {(() => {
+                        const sc = STATUS_CFG[r.status] ?? { color: "bg-slate-100 text-slate-500 border-slate-200" };
+                        const canChange = r.status === "Pending Verification";
+                        return (
+                          <div className="relative inline-flex items-center">
+                            <select
+                              value={r.status}
+                              disabled={!canChange}
+                              onChange={() => handleVerify(r)}
+                              className={`appearance-none pl-3 pr-6 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest border transition-all outline-none ${sc.color}
+                                ${canChange ? "cursor-pointer hover:opacity-80" : "cursor-default opacity-80"}`}
+                            >
+                              <option value={r.status}>{r.status}</option>
+                              {canChange && <option value="Paid">Paid</option>}
+                            </select>
+                            {canChange && <span className={`absolute right-2 pointer-events-none text-[8px] ${sc.color.split(" ")[1]}`}>▾</span>}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -411,15 +443,9 @@ export default function AdminPayment() {
                           <FaEye size={13} />
                         </button>
                         <button title="Edit" onClick={() => openEdit(r)}
-                          className="p-2 rounded-md text-slate-400 hover:text-[#db6747] hover:bg-orange-50 transition-all">
+                          className={`p-2 rounded-md text-slate-400 hover:text-[#db6747] hover:bg-orange-50 transition-all ${r.status === "Paid" ? "hidden" : ""}`}>
                           <FaEdit size={13} />
                         </button>
-                        {r.status === "Pending Verification" && (
-                          <button title="Verify Payment" onClick={() => handleVerify(r.id)}
-                            className="p-2 rounded-md text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all">
-                            <FaCheckCircle size={13} />
-                          </button>
-                        )}
                         <button title="Delete" onClick={() => setDeleteTarget(r)}
                           className="p-2 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
                           <FaTrashAlt size={13} />
@@ -669,8 +695,7 @@ export default function AdminPayment() {
                 <h2 className="text-slate-800 font-bold text-xs uppercase tracking-widest">Edit Payment</h2>
                 <p className="text-slate-400 text-[10px] uppercase tracking-widest mt-0.5">Unit {editModal.unitNumber}</p>
               </div>
-              <button onClick={() => setEditModal(null)} className="text-slate-400 hover:text-slate-800 text-lg px-2">✕</button>
-            </div>
+              <button onClick={() => setEditModal(null)} className="text-slate-400 hover:text-slate-800 text-lg px-2">✕</button>            </div>
             <form onSubmit={handleEdit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -762,7 +787,7 @@ export default function AdminPayment() {
                 </div>
               )}
               <div className="flex gap-3 justify-end pt-2">
-                <button type="button" onClick={() => setEditModal(null)}
+                <button type="button" onClick={() => setEditCancelConfirm(true)}
                   className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
                 <button type="submit" disabled={submitting}
                   className="px-5 py-2.5 rounded-xl bg-[#db6747] text-white text-sm font-bold hover:bg-[#c45a3a] transition-colors shadow-sm disabled:opacity-60">
@@ -773,6 +798,45 @@ export default function AdminPayment() {
           </div>
         </div>
       )}
+
+      {/* STATUS VERIFY CONFIRM MODAL */}
+      <GeneralConfirmationModal
+        isOpen={!!statusConfirm}
+        onClose={() => setStatusConfirm(null)}
+        onConfirm={doVerify}
+        variant="approve"
+        title="Verify Payment"
+        message={statusConfirm
+          ? <>Mark the <span className="font-bold text-slate-900">{statusConfirm.category}</span> payment of <span className="font-bold text-slate-900">₱{Number(statusConfirm.amount ?? 0).toLocaleString()}</span> for Unit <span className="font-bold text-slate-900">{statusConfirm.unitNumber}</span> as <span className="font-bold text-emerald-700">Paid</span>?</>
+          : null}
+        confirmText="Yes, Mark as Paid"
+        cancelText="Cancel"
+      />
+
+      {/* EDIT CANCEL CONFIRM MODAL */}
+      <GeneralConfirmationModal
+        isOpen={editCancelConfirm}
+        onClose={() => setEditCancelConfirm(false)}
+        onConfirm={() => { setEditCancelConfirm(false); setEditModal(null); }}
+        variant="warning"
+        title="Discard Changes?"
+        message="Are you sure you want to cancel? Any unsaved changes will be lost."
+        confirmText="Yes, Discard"
+        cancelText="Go Back"
+      />
+
+      {/* EDIT SAVE CONFIRM MODAL */}
+      <GeneralConfirmationModal
+        isOpen={editSaveConfirm}
+        onClose={() => setEditSaveConfirm(false)}
+        onConfirm={doEdit}
+        variant="save"
+        title="Save Changes"
+        message="Are you sure you want to save the changes to this payment?"
+        confirmText="Save Changes"
+        cancelText="Cancel"
+        loading={submitting}
+      />
 
       {/* CANCEL CONFIRM MODAL */}
       <GeneralConfirmationModal

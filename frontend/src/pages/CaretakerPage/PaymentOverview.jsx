@@ -11,6 +11,7 @@ import {
   fetchPendingPayments,
   verifyPayment,
 } from "../../api/caretakerAPI/PaymentAPI";
+import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 const PAGE_SIZE = 10;
 
@@ -56,6 +57,7 @@ export default function CaretakerPaymentOverview() {
   const [page, setPage]               = useState(1);
   const [viewModal, setViewModal]     = useState(null);
   const [verifying, setVerifying]     = useState(null);
+  const [statusConfirm, setStatusConfirm] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -110,10 +112,16 @@ export default function CaretakerPaymentOverview() {
   const overdueCount     = rows.filter((r) => r.status === "Overdue").length;
   const unpaidCount      = rows.filter((r) => r.status === "Unpaid").length;
 
-  const handleVerify = async (id) => {
+  const handleVerify = (row) => {
+    setStatusConfirm(row);
+  };
+
+  const doVerify = async () => {
+    const row = statusConfirm;
+    setStatusConfirm(null);
     try {
-      setVerifying(id);
-      await verifyPayment(id);
+      setVerifying(row.id);
+      await verifyPayment(row.id);
       toast.success("Payment verified as Paid.");
       load();
     } catch (err) {
@@ -282,15 +290,26 @@ export default function CaretakerPaymentOverview() {
                         : <span className="text-xs text-slate-400">—</span>}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      {/* Only Pending Verification can be changed → Paid */}
-                      {r.status === "Pending Verification" ? (
-                        <button onClick={() => handleVerify(r.id)} disabled={verifying === r.id}
-                          className="text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border cursor-pointer hover:opacity-80 transition-opacity bg-blue-50 text-blue-700 border-blue-200 disabled:opacity-50">
-                          {verifying === r.id ? "Verifying..." : "Pending · Mark Paid"}
-                        </button>
-                      ) : (
-                        <StatusBadge status={r.status}/>
-                      )}
+                      {(() => {
+                        const sc = STATUS_CFG[r.status] ?? { color: "bg-slate-100 text-slate-500 border-slate-200" };
+                        const canChange = r.status === "Pending Verification";
+                        return (
+                          <div className="relative inline-flex items-center">
+                            <select
+                              value={r.status}
+                              disabled={!canChange || verifying === r.id}
+                              onChange={() => handleVerify(r)}
+                              className={`appearance-none pl-3 pr-6 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest border transition-all outline-none ${sc.color}
+                                ${canChange ? "cursor-pointer hover:opacity-80" : "cursor-default opacity-80"}
+                                disabled:opacity-50`}
+                            >
+                              <option value={r.status}>{r.status}</option>
+                              {canChange && <option value="Paid">Paid</option>}
+                            </select>
+                            {canChange && <span className={`absolute right-2 pointer-events-none text-[8px] ${sc.color.split(" ")[1]}`}>▾</span>}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -337,8 +356,7 @@ export default function CaretakerPaymentOverview() {
         </div>
       </div>
 
-      {/* VIEW MODAL */}
-      {viewModal && (
+      {/* VIEW MODAL */}      {viewModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex justify-center items-center p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl border border-slate-100 overflow-hidden">
             <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/50">
@@ -384,6 +402,20 @@ export default function CaretakerPaymentOverview() {
           </div>
         </div>
       )}
+
+      {/* STATUS VERIFY CONFIRM MODAL */}
+      <GeneralConfirmationModal
+        isOpen={!!statusConfirm}
+        onClose={() => setStatusConfirm(null)}
+        onConfirm={doVerify}
+        variant="approve"
+        title="Verify Payment"
+        message={statusConfirm
+          ? <>Mark the <span className="font-bold text-slate-900">{statusConfirm.category}</span> payment of <span className="font-bold text-slate-900">₱{Number(statusConfirm.amount ?? 0).toLocaleString()}</span> for Unit <span className="font-bold text-slate-900">{statusConfirm.unitNumber}</span> as <span className="font-bold text-emerald-700">Paid</span>?</>
+          : null}
+        confirmText="Yes, Mark as Paid"
+        cancelText="Cancel"
+      />
     </>
   );
 }
