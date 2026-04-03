@@ -63,6 +63,11 @@ const Payment = sequelize.define(
       allowNull: true,
     },
 
+    utility_bill_file: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+
     status: {
       type: DataTypes.ENUM(
         "Unpaid",

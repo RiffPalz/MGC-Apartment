@@ -11,6 +11,8 @@ import {
   FaWallet,
   FaMobileAlt,
   FaCalendarAlt,
+  FaFileInvoice,
+  FaExternalLinkAlt,
 } from "react-icons/fa";
 
 import { fetchTenantProfile } from "../../api/tenantAPI/tenantAuth";
@@ -43,6 +45,9 @@ export default function DashboardCards() {
     announcement: null,
     loading: false,
   });
+
+  // Utility bill viewer modal
+  const [utilityBillUrl, setUtilityBillUrl] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -211,7 +216,9 @@ export default function DashboardCards() {
               <PaymentCard title="Monthly Rent" bill={bills.rent}
                 onPay={() => setUploadModal({ isOpen: true, paymentId: bills.rent?.id || bills.rent?.ID, billName: "Rent" })} />
               <PaymentCard title="Utilities (Power & Water)" bill={bills.utilities}
-                onPay={() => setUploadModal({ isOpen: true, paymentId: bills.utilities?.id || bills.utilities?.ID, billName: "Utilities" })} />
+                onPay={() => setUploadModal({ isOpen: true, paymentId: bills.utilities?.id || bills.utilities?.ID, billName: "Utilities" })}
+                utilityBillFile={bills.utilities?.utility_bill_file}
+                onViewBill={() => setUtilityBillUrl(bills.utilities?.utility_bill_file)} />
             </div>
 
             {/* CONTRACT COUNTDOWN */}
@@ -273,6 +280,58 @@ export default function DashboardCards() {
           </div>
         </div>
       </div>
+
+      {/* MODAL: UTILITY BILL VIEWER */}
+      {utilityBillUrl && (
+        <ModalPortal>
+          <div className="fixed inset-0 bg-[#330101]/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6"
+            onClick={() => setUtilityBillUrl(null)}>
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300 max-h-[90vh] flex flex-col"
+              onClick={e => e.stopPropagation()}>
+              <div className="bg-[#f7b094] h-1.5 sm:h-2 w-full shrink-0" />
+              <div className="flex justify-between items-center px-5 sm:px-7 py-4 border-b border-[#F2DED4] shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <FaFileInvoice className="text-[#D96648]" size={16} />
+                  <h3 className="text-sm sm:text-base font-bold text-[#330101]">Utility Bill</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a href={utilityBillUrl} target="_blank" rel="noreferrer"
+                    className="flex items-center gap-1.5 text-[10px] font-bold text-[#D96648] uppercase tracking-widest px-3 py-1.5 rounded-lg hover:bg-[#FDF2ED] transition-colors">
+                    <FaExternalLinkAlt size={10} /> Open
+                  </a>
+                  <button onClick={() => setUtilityBillUrl(null)}
+                    className="text-[#330101]/40 hover:text-[#330101] p-1 rounded-full hover:bg-slate-100 transition-colors">
+                    <FaTimes size={16} />
+                  </button>
+                </div>
+              </div>
+              <div className="overflow-y-auto flex-1 p-4 sm:p-6 flex items-center justify-center bg-slate-50">
+                {/\/image\/upload\//i.test(utilityBillUrl) || /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(utilityBillUrl) ? (
+                  <img src={utilityBillUrl} alt="Utility Bill"
+                    className="max-w-full max-h-[65vh] object-contain rounded-xl shadow-md" />
+                ) : /\.pdf(\?|$)/i.test(utilityBillUrl) ? (
+                  <iframe src={utilityBillUrl} title="Utility Bill"
+                    className="w-full h-[65vh] rounded-xl border border-slate-200" />
+                ) : (
+                  <div className="flex flex-col items-center gap-4 py-10 text-center">
+                    <div className="p-5 bg-[#FDF2ED] rounded-2xl">
+                      <FaFileInvoice className="text-[#D96648] w-10 h-10" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-[#330101] mb-1">Utility Bill File</p>
+                      <p className="text-xs text-[#330101]/50 mb-4">This file cannot be previewed directly.<br/>Click below to open it.</p>
+                    </div>
+                    <a href={utilityBillUrl} target="_blank" rel="noreferrer"
+                      className="flex items-center gap-2 px-6 py-3 bg-[#330101] hover:bg-[#D96648] text-[#FFEDE1] text-xs font-bold rounded-xl transition-all uppercase tracking-widest shadow-md">
+                      <FaExternalLinkAlt size={11} /> Open File
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
 
       {/* MODAL: CASH OR GCASH OPTION */}
       {uploadModal.isOpen && (
@@ -437,7 +496,7 @@ function StatCard({ icon, label, value, color, bg }) {
   );
 }
 
-function PaymentCard({ title, bill, onPay }) {
+function PaymentCard({ title, bill, onPay, utilityBillFile, onViewBill }) {
   const getStatusStyles = (status) => {
     switch (status) {
       case "Paid":                  return { bg: "#DCFCE7", text: "#22C55E", label: "PAID" };
@@ -478,12 +537,26 @@ function PaymentCard({ title, bill, onPay }) {
             disabled={!bill}
             className="w-full flex items-center justify-center gap-2 sm:gap-3 bg-[#330101] hover:bg-[#D96648] text-[#FFEDE1] text-[10px] sm:text-xs font-bold py-3.5 sm:py-4 rounded-xl sm:rounded-2xl cursor-pointer transition-all shadow-md disabled:opacity-40 disabled:cursor-not-allowed uppercase tracking-widest active:scale-[0.98]"
           >
-            <FaWallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Pay Now
+            <FaWallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Upload Receipt
           </button>
         ) : (
           <div className="flex items-center justify-center gap-2 bg-[#F5E6E0] text-[#330101]/50 text-[10px] sm:text-xs font-bold py-3.5 sm:py-4 rounded-xl sm:rounded-2xl border border-dashed border-[#330101]/10 uppercase tracking-widest">
             {bill?.status === "Paid" ? "Settled" : "Verifying..."}
           </div>
+        )}
+
+        {/* View Utility Bill button — only on utilities card */}
+        {onViewBill && (
+          <button
+            onClick={onViewBill}
+            disabled={!utilityBillFile}
+            className="mt-2.5 w-full flex items-center justify-center gap-2 text-[10px] sm:text-xs font-bold py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border transition-all uppercase tracking-widest active:scale-[0.98]
+              disabled:opacity-35 disabled:cursor-not-allowed
+              enabled:border-[#F2DED4] enabled:text-[#D96648] enabled:hover:bg-[#FDF2ED]"
+          >
+            <FaFileInvoice className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            {utilityBillFile ? "View Utility Bill" : "No Bill Uploaded"}
+          </button>
         )}
       </div>
     </div>

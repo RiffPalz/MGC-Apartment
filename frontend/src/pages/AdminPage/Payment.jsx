@@ -42,6 +42,7 @@ const STATUS_CFG = {
 
 const EMPTY_FORM = {
   contract_id: "", category: "Rent", billing_month: "", due_date: "", amount: "",
+  utilityBillFile: null,
 };
 
 function StatCard({ icon, label, value, color, bg }) {
@@ -80,6 +81,12 @@ export default function AdminPayment() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [createConfirmOpen, setCreateConfirmOpen] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [duplicateError, setDuplicateError] = useState("");
+
+  // Utilities amount display state (formatted string)
+  const [utilityAmountDisplay, setUtilityAmountDisplay] = useState("");
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [editForm, setEditForm] = useState({});
@@ -123,6 +130,7 @@ export default function AdminPayment() {
       paymentType: p.paymentType,
       referenceNumber: p.referenceNumber,
       receiptImage: p.receipt_image,
+      utilityBillFile: p.utility_bill_file,
       status: p.status,
     };
   });
@@ -140,17 +148,36 @@ export default function AdminPayment() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const handleCreate = async (e) => {
+  const handleCreate = (e) => {
     e.preventDefault();
+    setCreateConfirmOpen(true);
+  };
+
+  const doCreate = async () => {
+    setCreateConfirmOpen(false);
     try {
       setSubmitting(true);
-      await createPayment(form);
+      const payload = { ...form };
+      if (form.category === "Utilities") {
+        payload.amount = parseFloat(utilityAmountDisplay.replace(/,/g, "")) || 0;
+      }
+      await createPayment(payload, form.utilityBillFile);
       toast.success("Payment bill created.");
+      setDuplicateError("");
       setCreateModal(false);
       setForm(EMPTY_FORM);
+      setUtilityAmountDisplay("");
       load();
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to create payment.");
+      const msg = err?.response?.data?.message || "Failed to create payment.";
+      // Surface duplicate bill error inline inside the modal
+      if (msg.toLowerCase().includes("already exists")) {
+        setDuplicateError(
+          `This tenant already has a ${form.category} bill for this month. Please choose a different month or category.`
+        );
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -160,7 +187,7 @@ export default function AdminPayment() {
     e.preventDefault();
     try {
       setSubmitting(true);
-      await updatePayment(editModal.id, editForm);
+      await updatePayment(editModal.id, editForm, editForm.newUtilityBillFile || null);
       toast.success("Payment updated.");
       setEditModal(null);
       load();
@@ -205,6 +232,8 @@ export default function AdminPayment() {
       paymentType: row.paymentType ?? "",
       referenceNumber: row.referenceNumber ?? "",
       receiptImage: row.receiptImage ?? null,
+      existingUtilityBillFile: row.utilityBillFile ?? null,
+      newUtilityBillFile: null,
     });
     setEditModal(row);
   };
@@ -443,7 +472,7 @@ export default function AdminPayment() {
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl border border-slate-100 overflow-hidden">
             <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/50">
               <h2 className="text-slate-800 font-bold text-xs uppercase tracking-widest">New Payment Bill</h2>
-              <button onClick={() => { setCreateModal(false); setForm(EMPTY_FORM); }} className="text-slate-400 hover:text-slate-800 text-lg px-2">✕</button>
+              <button onClick={() => setCancelConfirmOpen(true)} className="text-slate-400 hover:text-slate-800 text-lg px-2">✕</button>
             </div>
             <form onSubmit={handleCreate} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
               <div>
@@ -473,6 +502,8 @@ export default function AdminPayment() {
                     onChange={e => {
                       const cat = e.target.value;
                       const selected = contracts.find(c => String(c.ID) === String(form.contract_id));
+                      setUtilityAmountDisplay("");
+                      setDuplicateError("");
                       setForm(f => ({
                         ...f,
                         category: cat,
@@ -488,21 +519,43 @@ export default function AdminPayment() {
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">
                     Amount (₱) {form.category === "Rent" && <span className="text-[9px] text-slate-400 normal-case tracking-normal ml-1">auto-filled</span>}
                   </label>
-                  <input required type="number" min="1"
-                    value={form.amount}
-                    readOnly={form.category === "Rent"}
-                    onChange={e => {
-                      if (form.category === "Utilities" && e.target.value.length <= 5)
-                        setForm(f => ({ ...f, amount: e.target.value }));
-                    }}
-                    className={`w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50
-                      ${form.category === "Rent" ? "opacity-70 cursor-not-allowed bg-slate-100" : ""}`}
-                    placeholder={form.category === "Rent" ? "From contract" : "Max 5 digits"} />
+                  {form.category === "Utilities" ? (
+                    <input required type="text" inputMode="decimal"
+                      value={utilityAmountDisplay}
+                      onChange={e => {
+                        // Allow only digits and one decimal point
+                        const raw = e.target.value.replace(/[^0-9.]/g, "");
+                        const parts = raw.split(".");
+                        // Limit integer part to 6 digits max (999,999)
+                        if (parts[0].length > 6) return;
+                        const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                        const display = parts.length > 1 ? `${intPart}.${parts[1].slice(0, 2)}` : intPart;
+                        setUtilityAmountDisplay(display);
+                        setForm(f => ({ ...f, amount: parseFloat(raw) || "" }));
+                      }}
+                      onBlur={() => {
+                        // Format to 2 decimal places on blur
+                        const num = parseFloat(utilityAmountDisplay.replace(/,/g, ""));
+                        if (!isNaN(num)) {
+                          const formatted = num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                          setUtilityAmountDisplay(formatted);
+                          setForm(f => ({ ...f, amount: num }));
+                        }
+                      }}
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50"
+                      placeholder="e.g. 1,500.00" />
+                  ) : (
+                    <input required type="number" min="1"
+                      value={form.amount}
+                      readOnly
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed"
+                      placeholder="From contract" />
+                  )}
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Billing Month</label>
                   <input required type="date" value={form.billing_month}
-                    onChange={e => setForm(f => ({ ...f, billing_month: e.target.value }))}
+                    onChange={e => { setDuplicateError(""); setForm(f => ({ ...f, billing_month: e.target.value })); }}
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50" />
                 </div>
                 <div>
@@ -512,8 +565,27 @@ export default function AdminPayment() {
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50" />
                 </div>
               </div>
+              {form.category === "Utilities" && (
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">
+                    Utility Bill File <span className="text-slate-300 normal-case tracking-normal font-normal">(PDF, JPG, PNG — optional)</span>
+                  </label>
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={e => setForm(f => ({ ...f, utilityBillFile: e.target.files[0] || null }))}
+                    className="w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
+                  {form.utilityBillFile && (
+                    <p className="text-[10px] text-emerald-600 font-bold mt-1">{form.utilityBillFile.name}</p>
+                  )}
+                </div>
+              )}
+              {duplicateError && (
+                <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-xs font-semibold leading-snug">
+                  <span className="mt-0.5 shrink-0">⚠</span>
+                  <span>{duplicateError}</span>
+                </div>
+              )}
               <div className="flex gap-3 justify-end pt-2">
-                <button type="button" onClick={() => { setCreateModal(false); setForm(EMPTY_FORM); }}
+                <button type="button" onClick={() => setCancelConfirmOpen(true)}
                   className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
                 <button type="submit" disabled={submitting}
                   className="px-5 py-2.5 rounded-xl bg-[#db6747] text-white text-sm font-bold hover:bg-[#c45a3a] transition-colors shadow-sm disabled:opacity-60">
@@ -565,6 +637,15 @@ export default function AdminPayment() {
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2">Receipt</p>
                   <a href={viewModal.receiptImage} target="_blank" rel="noreferrer">
                     <img src={viewModal.receiptImage} alt="Receipt" className="max-h-48 rounded-lg border border-slate-200 object-contain" />
+                  </a>
+                </div>
+              )}
+              {viewModal.utilityBillFile && (
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2">Utility Bill File</p>
+                  <a href={viewModal.utilityBillFile} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold border border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all">
+                    View Utility Bill
                   </a>
                 </div>
               )}
@@ -655,6 +736,31 @@ export default function AdminPayment() {
                     placeholder="GCash reference number" />
                 </div>
               )}
+
+              {/* UTILITY BILL FILE UPDATE */}
+              {editForm.category === "Utilities" && (
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">
+                    Utility Bill File
+                    <span className="text-slate-300 normal-case tracking-normal font-normal ml-1">(PDF, JPG, PNG — optional)</span>
+                  </label>
+                  {editForm.existingUtilityBillFile && !editForm.newUtilityBillFile && (
+                    <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-2">
+                      <span className="text-xs text-slate-500 truncate">Current file uploaded</span>
+                      <a href={editForm.existingUtilityBillFile} target="_blank" rel="noreferrer"
+                        className="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-widest ml-2 shrink-0">
+                        View
+                      </a>
+                    </div>
+                  )}
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={e => setEditForm(f => ({ ...f, newUtilityBillFile: e.target.files[0] || null }))}
+                    className="w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
+                  {editForm.newUtilityBillFile && (
+                    <p className="text-[10px] text-emerald-600 font-bold mt-1">{editForm.newUtilityBillFile.name}</p>
+                  )}
+                </div>
+              )}
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={() => setEditModal(null)}
                   className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
@@ -667,6 +773,38 @@ export default function AdminPayment() {
           </div>
         </div>
       )}
+
+      {/* CANCEL CONFIRM MODAL */}
+      <GeneralConfirmationModal
+        isOpen={cancelConfirmOpen}
+        onClose={() => setCancelConfirmOpen(false)}
+        onConfirm={() => {
+          setCancelConfirmOpen(false);
+          setCreateModal(false);
+          setForm(EMPTY_FORM);
+          setUtilityAmountDisplay("");
+          setDuplicateError("");
+        }}
+        variant="warning"
+        title="Discard Changes?"
+        message="Are you sure you want to cancel? All entered information will be lost."
+        confirmText="Yes, Discard"
+        cancelText="Go Back"
+      />
+
+      {/* CREATE CONFIRM MODAL */}
+      <GeneralConfirmationModal
+        isOpen={createConfirmOpen}
+        onClose={() => setCreateConfirmOpen(false)}
+        onConfirm={doCreate}
+        variant="save"
+        title="Create Payment Bill"
+        message={form.contract_id
+          ? <>Create a <span className="font-bold text-slate-900">{form.category}</span> bill of <span className="font-bold text-slate-900">₱{form.category === "Utilities" ? utilityAmountDisplay || "0" : Number(form.amount || 0).toLocaleString()}</span> for the selected contract?</>
+          : "Confirm bill creation?"}
+        confirmText="Create Bill"
+        loading={submitting}
+      />
 
       {/* DELETE MODAL */}
       <GeneralConfirmationModal

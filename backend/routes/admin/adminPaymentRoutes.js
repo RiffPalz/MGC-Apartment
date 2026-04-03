@@ -1,5 +1,7 @@
 import express from "express";
 import adminAuth from "../../middleware/adminAuth.js";
+import uploadUtilityBill from "../../middleware/uploadUtilityBill.js";
+import Payment from "../../models/payment.js";
 
 import {
   createPaymentAdmin,
@@ -14,12 +16,27 @@ import {
 
 const router = express.Router();
 
+/* Pre-upload duplicate check — runs BEFORE Multer so no file is uploaded on duplicates */
+const checkDuplicatePayment = async (req, res, next) => {
+  try {
+    const { contract_id, category, billing_month } = req.body;
+    if (!contract_id || !category || !billing_month) return next();
+
+    const existing = await Payment.findOne({ where: { contract_id, category, billing_month } });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: `Payment for this month already exists.`,
+      });
+    }
+    next();
+  } catch {
+    next();
+  }
+};
+
 /* CREATE PAYMENT */
-router.post(
-  "/",
-  adminAuth,
-  createPaymentAdmin
-);
+router.post("/", adminAuth, checkDuplicatePayment, uploadUtilityBill.single("utilityBillFile"), createPaymentAdmin);
 
 /* GET ALL PAYMENTS */
 router.get(
@@ -39,7 +56,8 @@ router.get(
 router.patch("/:id/verify", adminAuth, verifyPaymentAdmin);
 
 /* UPDATE PAYMENT */
-router.patch("/:id", adminAuth, updatePaymentAdmin);
+// FIX: Added the Multer middleware here so admins can update the utility bill file
+router.patch("/:id", adminAuth, uploadUtilityBill.single("utilityBillFile"), updatePaymentAdmin);
 
 /* DELETE PAYMENT */
 router.delete("/:id", adminAuth, deletePaymentAdmin);
