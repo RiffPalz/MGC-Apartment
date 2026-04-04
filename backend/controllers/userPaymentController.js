@@ -1,9 +1,8 @@
 import cloudinary from "../config/cloudinary.js";
 import {
-  getMyPayments,
-  getPaymentDetails,
-  uploadPaymentReceipt
+  getMyPayments, getPaymentDetails, uploadPaymentReceipt
 } from "../services/userPaymentService.js";
+import { emitEvent } from "../utils/emitEvent.js";
 
 
 /* GET TENANT PAYMENTS */
@@ -73,19 +72,9 @@ export const uploadReceiptController = async (req, res) => {
 
     const imageUrl = req.file.path;
 
-    const payment = await uploadPaymentReceipt(
-      id,
-      imageUrl,
-      userId,
-      paymentType,
-      referenceNumber
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Receipt uploaded successfully",
-      payment
-    });
+    const payment = await uploadPaymentReceipt(id, imageUrl, userId, paymentType, referenceNumber);
+    emitEvent(req, "payment_updated");
+    return res.status(200).json({ success: true, message: "Receipt uploaded successfully", payment });
 
   } catch (error) {
 

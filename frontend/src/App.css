@@ -6,3 +6,13 @@
 .animate-shrink {
   animation: shrink 3.5s linear forwards;
 }
+
+@keyframes topBar {
+  0%   { width: 0%; margin-left: 0; }
+  50%  { width: 75%; margin-left: 0; }
+  100% { width: 10%; margin-left: 100%; }
+}
+
+.animate-top-bar {
+  animation: topBar 1.2s ease-in-out infinite;
+}

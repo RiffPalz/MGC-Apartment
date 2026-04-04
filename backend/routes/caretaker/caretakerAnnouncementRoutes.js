@@ -1,16 +1,18 @@
 import express from "express";
 import caretakerAuth from "../../middleware/caretakerAuth.js";
-
 import {
-  getAnnouncementsController
+  getAnnouncementsController,
+  createAnnouncementController,
+  updateAnnouncementController,
+  deleteAnnouncementController,
 } from "../../controllers/caretaker/caretakerAnnouncementController.js";
 
 const router = express.Router();
-
-// Protect all routes
 router.use(caretakerAuth);
 
-// Get announcements
 router.get("/", getAnnouncementsController);
+router.post("/", createAnnouncementController);
+router.put("/:id", updateAnnouncementController);
+router.delete("/:id", deleteAnnouncementController);
 
 export default router;

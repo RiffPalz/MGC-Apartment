@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+import React, { useState, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar.jsx";
 import AdminHeader from "../components/AdminHeader.jsx";
@@ -6,8 +7,9 @@ import AdminHeader from "../components/AdminHeader.jsx";
 export default function AdminLayout() {
   const [open, setOpen] = useState(true);
   const location = useLocation();
+  const isMounted = useRef(false);
 
-  // 1. Mobile Responsiveness: Automatically close sidebar on mobile or route change
+  // Handle resize
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
@@ -17,48 +19,52 @@ export default function AdminLayout() {
       }
     };
 
-    // Set initial state
     handleResize();
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Close sidebar when navigating to a new page on mobile
+  // Close sidebar on route change (mobile only), skip on first mount
   useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
     if (window.innerWidth < 1024) {
       setOpen(false);
     }
-  }, [location]);
+  }, [location.pathname]);
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden font-NunitoSans">
+    <div className="flex h-screen bg-[#f8f9fa] overflow-hidden font-NunitoSans relative">
       {/* MOBILE OVERLAY */}
-      {/* This darkens the background when the sidebar is open on mobile */}
+      {/* Darkens the background when the sidebar is open on mobile */}
       {open && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
           onClick={() => setOpen(false)}
         />
       )}
 
       {/* SIDEBAR */}
+      {/* FIX: Removed the 2xl scaling here so it perfectly matches your internal AdminSidebar component */}
       <div 
-        className={`fixed inset-y-0 left-0 z-50 lg:static lg:shrink-0 transition-transform duration-300 ease-in-out
+        className={`fixed inset-y-0 left-0 z-50 lg:static lg:shrink-0 transition-all duration-300 ease-in-out shadow-2xl lg:shadow-xl
         ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} 
-        ${open ? "w-72" : "lg:w-20 w-72"}`}
+        ${open ? "w-72 max-w-[80vw]" : "lg:w-20 w-72 max-w-[80vw]"}`}
       >
         <AdminSidebar open={open} setOpen={setOpen} />
       </div>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300">
         {/* HEADER */}
         <AdminHeader open={open} setOpen={setOpen} />
 
         {/* PAGE CONTENT */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8f9fa] p-4 md:p-8">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto scroll-smooth bg-[#f8f9fa]">
+          {/* Universal 4K Guardrails applied here */}
+          <div className="w-full max-w-[1600px] mx-auto min-h-full">
             {/* This is where your individual admin pages will render */}
             <Outlet />
           </div>

@@ -28,11 +28,15 @@ import caretakerMaintenanceRoutes from "./routes/caretaker/caretakerMaintenanceR
 import caretakerPaymentRoutes from "./routes/caretaker/caretakerPaymentRoutes.js";
 import caretakerAnnouncementRoutes from "./routes/caretaker/caretakerAnnouncementRoutes.js";
 
+import { configRouter } from "./routes/configRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import userMaintenanceRoutes from "./routes/userMaintenanceRoutes.js";
 import userContractRoutes from "./routes/userContractRoutes.js";
 import userPaymentRoutes from "./routes/userPaymentRoutes.js";
 import userAnnouncementRoutes from "./routes/userAnnouncementRoutes.js";
+
+// Models (must be imported to register associations)
+import "./models/index.js";
 
 // Utils
 import runSeeders from "./utils/runSeeders.js";
@@ -137,6 +141,8 @@ app.use("/api/caretaker/maintenance", caretakerMaintenanceRoutes);
 app.use("/api/caretaker/payments", caretakerPaymentRoutes);
 app.use("/api/caretaker/announcements", caretakerAnnouncementRoutes);
 
+app.use("/api/config", configRouter);
+
 app.use("/api/users", userRoutes);
 app.use("/api/users/maintenance", userMaintenanceRoutes);
 app.use("/api/users/contracts", userContractRoutes);
@@ -167,8 +173,15 @@ httpServer.listen(PORT, async () => {
     await connectDB();
 
     // Sync DB and run seeders
-    await sequelize.sync({ alter: false });
+    await sequelize.sync({ alter: true });
     console.log("Database synchronized successfully");
+
+    // Add new columns that may not exist yet (safe migrations)
+    await sequelize.query(`
+      ALTER TABLE payments
+        ADD COLUMN IF NOT EXISTS utility_bill_file VARCHAR(500) NULL;
+    `).catch(() => { }); // Ignore if already exists or DB doesn't support IF NOT EXISTS
+
     await runSeeders();
 
     startSystemCron();

@@ -1,11 +1,7 @@
+/* eslint-disable react-hooks/refs */
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
-/**
- * Renders children into document.body via a portal so that
- * fixed overlays are never clipped by overflow:hidden ancestors.
- * Also applies a blur class to #root while the portal is mounted.
- */
 export default function ModalPortal({ children }) {
   const el = useRef(document.createElement("div"));
 

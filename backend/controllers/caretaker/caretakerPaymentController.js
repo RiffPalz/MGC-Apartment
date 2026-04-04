@@ -1,8 +1,7 @@
 import {
-    getAllPayments,
-    getPendingPayments,
-    verifyPayment
+    getAllPayments, getPendingPayments, verifyPayment
 } from "../../services/caretaker/caretakerPaymentService.js";
+import { emitEvent } from "../../utils/emitEvent.js";
 
 
 // Get all payments
@@ -63,12 +62,8 @@ export const verifyPaymentController = async (req, res) => {
         const caretakerId = req.caretaker.id;
 
         const payment = await verifyPayment(id, caretakerId);
-
-        return res.status(200).json({
-            success: true,
-            message: "Payment verified successfully",
-            payment
-        });
+        emitEvent(req, "payment_updated");
+        return res.status(200).json({ success: true, message: "Payment verified successfully", payment });
 
     } catch (error) {
 

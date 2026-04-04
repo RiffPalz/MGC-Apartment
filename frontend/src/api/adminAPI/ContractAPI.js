@@ -40,10 +40,24 @@ export const completeContract = async (id) => {
   return res.data;
 };
 
-/** Renew a contract */
-export const renewContract = async (id, formData) => {
-  const res = await api.post(`/admin/contracts/${id}/renew`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+/** Renew a contract — updates dates and regenerates PDF */
+export const renewContract = async (id, { newStartDate, newEndDate }) => {
+  const res = await api.post(`/admin/contracts/${id}/renew`, { newStartDate, newEndDate });
+  return res.data;
+};
+
+/** Generate a PDF contract dynamically */
+export const generateContractPdf = async (id) => {
+  const res = await api.post(`/admin/contracts/${id}/generate-pdf`);
+  return res.data;
+};
+
+/** Get proxied PDF URL for viewing/downloading (avoids CORS) */
+export const getContractPdfProxyUrl = (id) =>
+  `${import.meta.env.VITE_BACKEND_URL}/admin/contracts/${id}/pdf`;
+
+/** Delete a contract permanently */
+export const deleteContract = async (id) => {
+  const res = await api.delete(`/admin/contracts/${id}`);
   return res.data;
 };

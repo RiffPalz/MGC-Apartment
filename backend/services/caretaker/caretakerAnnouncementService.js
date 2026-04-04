@@ -1,16 +1,84 @@
 import Announcement from "../../models/announcement.js";
+import User from "../../models/user.js";
+import { createNotification } from "../../services/notificationService.js";
+import { createActivityLog } from "../../services/activityLogService.js";
+import { sendSMSBulk } from "../../utils/sms.js";
+import { sms } from "../../utils/smsTemplates.js";
 
 /* GET ANNOUNCEMENTS */
 export const getAnnouncements = async (category) => {
+  const where = category && category !== "All" ? { category } : {};
+  return await Announcement.findAll({ where, order: [["created_at", "DESC"]] });
+};
 
-  const where = category && category !== "All"
-    ? { category }
-    : {};
+/* CREATE ANNOUNCEMENT */
+export const createAnnouncement = async ({ announcementTitle, announcementMessage, category, caretakerId }) => {
+  if (!announcementTitle || !announcementMessage) throw new Error("Title and message are required");
 
-  const announcements = await Announcement.findAll({
-    where,
-    order: [["created_at", "DESC"]]
+  const announcement = await Announcement.create({
+    announcementTitle,
+    announcementMessage,
+    category,
+    createdBy: caretakerId,
   });
 
-  return announcements;
+  await createNotification({
+    role: "tenant",
+    type: "announcement created",
+    title: announcementTitle,
+    message: announcementMessage,
+    referenceId: announcement.ID,
+    referenceType: "announcement",
+  });
+
+  const tenants = await User.findAll({ where: { role: "tenant", status: "Approved" }, attributes: ["contactNumber"] });
+  sendSMSBulk(tenants.map((t) => t.contactNumber), sms.announcementPosted(announcementTitle, category || "General"));
+
+  await createActivityLog({
+    userId: caretakerId,
+    role: "caretaker",
+    action: "CREATE ANNOUNCEMENT",
+    description: `Created announcement: ${announcementTitle}`,
+    referenceId: announcement.ID,
+    referenceType: "announcement",
+  });
+
+  return announcement;
+};
+
+/* UPDATE ANNOUNCEMENT */
+export const updateAnnouncement = async (announcementId, updates, caretakerId) => {
+  const announcement = await Announcement.findByPk(announcementId);
+  if (!announcement) throw new Error("Announcement not found");
+
+  await announcement.update(updates);
+
+  await createActivityLog({
+    userId: caretakerId,
+    role: "caretaker",
+    action: "UPDATE ANNOUNCEMENT",
+    description: `Updated announcement ID ${announcement.ID}`,
+    referenceId: announcement.ID,
+    referenceType: "announcement",
+  });
+
+  return announcement;
+};
+
+/* DELETE ANNOUNCEMENT */
+export const deleteAnnouncement = async (announcementId, caretakerId) => {
+  const announcement = await Announcement.findByPk(announcementId);
+  if (!announcement) throw new Error("Announcement not found");
+
+  await createActivityLog({
+    userId: caretakerId,
+    role: "caretaker",
+    action: "DELETE ANNOUNCEMENT",
+    description: `Deleted announcement ID ${announcement.ID}`,
+    referenceId: announcement.ID,
+    referenceType: "announcement",
+  });
+
+  await announcement.destroy();
+  return { message: "Announcement deleted successfully" };
 };

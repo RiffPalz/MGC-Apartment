@@ -13,12 +13,11 @@ export default function TenantLayout() {
   const socket = useSocket();
   const { updateUser } = useAuth();
 
-  // Sync profile updates from socket → AuthContext (single socket, no duplicates)
+  // Sync profile updates from socket → AuthContext
   useEffect(() => {
     if (!socket) return;
     const handler = (updated) => {
       updateUser(updated);
-      // keep localStorage in sync too
       setAuth(getToken(), updated, updated.role);
     };
     socket.on("profile_updated", handler);
@@ -30,7 +29,6 @@ export default function TenantLayout() {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      // Force sidebar open on desktop, closed on mobile by default
       if (!mobile) setIsSidebarOpen(true);
       else setIsSidebarOpen(false);
     };
@@ -51,21 +49,20 @@ export default function TenantLayout() {
         <>
           {/* Dark Overlay/Backdrop */}
           <div
-            className={`fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 backdrop-blur-sm ${
-              isSidebarOpen
+            className={`fixed inset-0 bg-[#330101]/60 z-40 transition-opacity duration-300 backdrop-blur-sm ${isSidebarOpen
                 ? "opacity-100 pointer-events-auto"
                 : "opacity-0 pointer-events-none"
-            }`}
+              }`}
             onClick={() => setIsSidebarOpen(false)}
           />
 
-          {/* Floating Sidebar Container */}
+          {/* Floating Sidebar Container 
+              FIX: Changed 'w-72' to 'max-w-[80vw] w-72' to prevent overflow on tiny screens 
+          */}
           <div
-            className={`fixed inset-y-0 left-0 z-50 w-72 h-full shadow-2xl transition-transform duration-300 ease-out ${
-              isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
+            className={`fixed inset-y-0 left-0 z-50 max-w-[80vw] w-72 h-full shadow-2xl transition-transform duration-300 ease-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+              }`}
           >
-            {/* We force 'open={true}' so the internal sidebar content is always fully visible inside the drawer */}
             <TenantSidebar open={true} setOpen={setIsSidebarOpen} />
           </div>
         </>
@@ -73,23 +70,21 @@ export default function TenantLayout() {
 
       {/* === DESKTOP LAYOUT (Fixed Sidebar) === */}
       {!isMobile && (
-        <div className="h-full shadow-xl z-20 relative">
+        <div className="h-full shadow-xl z-20 relative shrink-0">
           <TenantSidebar open={isSidebarOpen} setOpen={setIsSidebarOpen} />
         </div>
       )}
 
-     {/* === MAIN CONTENT AREA === */}
-<div className="flex-1 flex flex-col h-full relative overflow-hidden transition-all duration-300">
-  
-  {/* Role-based Header */}
-  <UserHeader onMenuClick={() => setIsSidebarOpen(true)} />
+      {/* === MAIN CONTENT AREA === */}
+      <div className="flex-1 flex flex-col h-full relative overflow-hidden transition-all duration-300 min-w-0">
+        {/* Role-based Header */}
+        <UserHeader onMenuClick={() => setIsSidebarOpen(true)} />
 
-  {/* Dashboard Content */}
-  <main className="flex-1 overflow-y-auto scroll-smooth bg-[#f8f9fa]">
-    <Outlet />
-  </main>
-</div>
-
+        {/* Dashboard Content */}
+        <main className="flex-1 overflow-y-auto scroll-smooth bg-[#f8f9fa]">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

@@ -12,6 +12,7 @@
     "server": "nodemon server.js"
   },
   "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.8.0",
@@ -23,6 +24,8 @@
     "mysql2": "^3.16.0",
     "node-cron": "^4.2.1",
     "nodemon": "^3.1.11",
+    "pdfkit": "^0.18.0",
+    "puppeteer": "^24.40.0",
     "resend": "^6.10.0",
     "routes": "^2.1.0",
     "sequelize": "^6.37.7",
