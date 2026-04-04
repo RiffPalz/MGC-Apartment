@@ -21,7 +21,7 @@ import PrivacyPolicy from "./PrivacyPolicy.jsx";
 import { fetchConfig } from "../../api/adminAPI/ConfigAPI.js";
 
 const HARDCODED_DEFAULTS = {
-  mgc_name: "MGC Building",
+  mgc_name: "MGC",
   address: "762 F. Gomez St., Barangay Ibaba, Santa Rosa, Laguna",
   monthly_rate: 3000,
   monthly_rate_description: "Our units are priced competitively to ensure affordability for working professionals.",
@@ -90,6 +90,8 @@ function Home() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  console.log("MY GALLERY DATA:", config.gallery_images);
 
   return (
     <div className="overflow-x-hidden bg-white">
