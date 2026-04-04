@@ -180,7 +180,7 @@ httpServer.listen(PORT, async () => {
     await sequelize.query(`
       ALTER TABLE payments
         ADD COLUMN IF NOT EXISTS utility_bill_file VARCHAR(500) NULL;
-    `).catch(() => {}); // Ignore if already exists or DB doesn't support IF NOT EXISTS
+    `).catch(() => { }); // Ignore if already exists or DB doesn't support IF NOT EXISTS
 
     await runSeeders();
 
