@@ -173,7 +173,7 @@ httpServer.listen(PORT, async () => {
     await connectDB();
 
     // Sync DB and run seeders
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: !isProd });
     console.log("Database synchronized successfully");
 
     // Add new columns that may not exist yet (safe migrations)
