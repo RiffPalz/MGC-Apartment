@@ -18,6 +18,23 @@ import GalleryLayout from "../../components/GalleryLayout.jsx";
 import Navbar from "../../components/Navbar.jsx";
 import TermsAndConditions from "./TermsAndConditions.jsx";
 import PrivacyPolicy from "./PrivacyPolicy.jsx";
+import { fetchConfig } from "../../api/adminAPI/ConfigAPI.js";
+
+const HARDCODED_DEFAULTS = {
+  mgc_name: "MGC Building",
+  address: "762 F. Gomez St., Barangay Ibaba, Santa Rosa, Laguna",
+  monthly_rate: 3000,
+  monthly_rate_description: "Our units are priced competitively to ensure affordability for working professionals.",
+  deposit_terms: "One-month advance payment, One-month security deposit, Minimum 6-month contract, Subleasing is strictly prohibited",
+  deposit_terms_description: "",
+  gallery_images: [
+    { url: img1, caption: "Front View", slot: "left1" },
+    { url: img2, caption: "Main Gate", slot: "rightTop" },
+    { url: img3, caption: "Parking Space", slot: "left2" },
+    { url: img4, caption: "Inside the Building", slot: "rightLarge" },
+    { url: img5, caption: "Main Road", slot: "left3" },
+  ],
+};
 
 function Home() {
   const formRef = useRef();
@@ -25,6 +42,7 @@ function Home() {
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
+  const [config, setConfig] = useState(HARDCODED_DEFAULTS);
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
@@ -43,13 +61,6 @@ function Home() {
       .finally(() => setLoading(false));
   };
 
-  const items = [
-    { id: 1, src: img1, caption: "Front View", slot: "left1" },
-    { id: 2, src: img2, caption: "Main Gate", slot: "rightTop" },
-    { id: 3, src: img3, caption: "Parking Space", slot: "left2" },
-    { id: 4, src: img4, caption: "Inside the Building", slot: "rightLarge" },
-    { id: 5, src: img5, caption: "Main Road", slot: "left3" },
-  ];
 
   useEffect(() => {
     AOS.init({
@@ -59,6 +70,21 @@ function Home() {
       disable: false,
     });
     AOS.refresh();
+
+    fetchConfig().then((data) => {
+      if (data?.config) {
+        const cfg = data.config;
+        // Merge with hardcoded defaults: for gallery, fall back to local images if URL is empty
+        setConfig({
+          ...HARDCODED_DEFAULTS,
+          ...cfg,
+          gallery_images: HARDCODED_DEFAULTS.gallery_images.map((def, i) => {
+            const remote = (cfg.gallery_images || [])[i];
+            return remote && remote.url ? { ...def, ...remote, src: remote.url } : def;
+          }),
+        });
+      }
+    }).catch(() => {});
 
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener("resize", handleResize);
@@ -85,7 +111,7 @@ function Home() {
             <span className="text-[#e9cbb7]">Made Simple</span>
           </h1>
           <p className="mt-4 text-slate-200 font-NunitoSans tracking-[1px] sm:tracking-[2px] max-w-xl mx-auto uppercase text-xs sm:text-sm md:text-base px-2 font-bold drop-shadow-md">
-            762 F. Gomez St., Barangay Ibaba, Santa Rosa, Laguna
+            {config.address}
           </p>
           <Link
             to="/applynow"
@@ -109,7 +135,7 @@ function Home() {
             </p>
           </div>
           <div data-aos="fade-up">
-            <GalleryLayout items={items} />
+            <GalleryLayout items={config.gallery_images.map((img, i) => ({ id: i + 1, src: img.url, caption: img.caption, slot: img.slot }))} />
           </div>
         </div>
       </section>
@@ -147,11 +173,10 @@ function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 sm:gap-16 lg:gap-24">
             <div className="space-y-5 sm:space-y-6">
               <h4 className="text-[#db6747] font-bold uppercase text-xs tracking-[2px]">Monthly Rate</h4>
-              <h3 className="text-3xl sm:text-4xl lg:text-5xl font-OswaldRegular uppercase text-slate-900">₱3,000 Rent Rate</h3>
+              <h3 className="text-3xl sm:text-4xl lg:text-5xl font-OswaldRegular uppercase text-slate-900">₱{parseInt(config.monthly_rate)} Rent Rate</h3>
               <div className="w-16 h-1.5 bg-[#db6747] rounded-full" />
               <p className="text-slate-500 font-NunitoSans text-base sm:text-lg leading-relaxed font-medium">
-                Our units are priced competitively to ensure affordability for working professionals.
-                Simple pricing for a high-quality lifestyle in a prime Laguna location.
+                {config.monthly_rate_description}
               </p>
               <div className="inline-block bg-[#db6747] text-white font-bold text-[10px] uppercase tracking-[2px] px-5 py-2.5 rounded-lg shadow-sm">
                 No Pets Allowed
@@ -162,7 +187,7 @@ function Home() {
               <h3 className="text-3xl sm:text-4xl lg:text-5xl font-OswaldRegular uppercase text-slate-900">Security & Terms</h3>
               <div className="w-16 h-1.5 bg-[#db6747] rounded-full" />
               <ul className="space-y-3 sm:space-y-4 text-slate-600 font-NunitoSans text-base sm:text-lg font-medium">
-                {["One-month advance payment", "One-month security deposit", "Minimum 6-month contract", "Subleasing is strictly prohibited"].map(t => (
+                {config.deposit_terms.split(",").map(t => t.trim()).map(t => (
                   <li key={t} className="flex items-start gap-3 tracking-wide">
                     <span className="text-[#db6747] mt-1 shrink-0 font-black">•</span> {t}
                   </li>
@@ -171,6 +196,11 @@ function Home() {
               <div className="inline-block bg-slate-900 text-white font-bold text-[10px] uppercase tracking-[2px] px-5 py-2.5 rounded-lg shadow-sm">
                 Strict Policy
               </div>
+              {config.deposit_terms_description ? (
+                <p className="text-slate-500 font-NunitoSans text-base sm:text-lg leading-relaxed font-medium">
+                  {config.deposit_terms_description}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>

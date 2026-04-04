@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {
+import { useSocketEvent } from "../../hooks/useSocketEvent";import {
   FaSearch, FaPrint, FaEye,
   FaMoneyBillWave, FaExclamationCircle, FaCheckCircle, FaClock,
   FaChevronLeft, FaChevronRight,
@@ -50,6 +50,7 @@ export default function CaretakerPaymentOverview() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useSocketEvent("payment_updated", load);
 
   const rows = payments.map((p) => {
     const contract = p.contract ?? {};

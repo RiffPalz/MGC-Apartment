@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { FaSearch, FaPrint, FaBullhorn, FaPlus, FaEdit, FaTrashAlt, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
+import { useSocketEvent } from "../../hooks/useSocketEvent";
 import toast from "../../utils/toast";
 import logo from "../../assets/images/logo.png";
 import {
@@ -60,6 +61,7 @@ export default function CaretakerAnnouncement() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useSocketEvent("announcements_updated", load);
 
   const handlePreSubmit = (e) => {
     e.preventDefault();

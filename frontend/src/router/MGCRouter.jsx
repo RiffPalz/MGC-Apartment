@@ -41,6 +41,7 @@ const AdminTenantProfile      = lazy(() => import("../pages/AdminPage/TenantProf
 const AdminAccountApproval    = lazy(() => import("../pages/AdminPage/AccountApproval.jsx"));
 const AdminSettings           = lazy(() => import("../pages/AdminPage/Settings.jsx"));
 const AdminActivityLogs       = lazy(() => import("../pages/AdminPage/ActivityLogs.jsx"));
+const AdminSystemConfig       = lazy(() => import("../pages/AdminPage/SystemConfig.jsx"));
 const AdminProfile            = lazy(() => import("../pages/AdminPage/Profile.jsx"));
 
 // Caretaker Pages
@@ -114,6 +115,7 @@ export default function MGCRouter() {
                   <Route path="tenants/:id"        element={<AdminTenantProfile />} />
                   <Route path="settings"           element={<AdminSettings />} />
                   <Route path="activity-logs"      element={<AdminActivityLogs />} />
+                  <Route path="system-config"      element={<AdminSystemConfig />} />
                   <Route path="profile"            element={<AdminProfile />} />
                 </Route>
               </Route>

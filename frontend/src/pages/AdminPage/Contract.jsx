@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { FaSearch, FaPrint, FaFileContract, FaCheckCircle, FaTimesCircle, FaClock, FaPlus, FaEye, FaEdit, FaSync, FaDownload, FaFilePdf, FaTrashAlt } from "react-icons/fa";
+import { useSocketEvent } from "../../hooks/useSocketEvent";import { FaSearch, FaPrint, FaFileContract, FaCheckCircle, FaTimesCircle, FaClock, FaPlus, FaEye, FaEdit, FaSync, FaDownload, FaFilePdf, FaTrashAlt } from "react-icons/fa";
 import toast from "../../utils/toast";
 import logo from "../../assets/images/logo.png";
 import {
@@ -87,8 +87,7 @@ export default function AdminContract() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
-
-  // ── CREATE ──
+  useSocketEvent("contract_updated", load);
   const handleCreate = (e) => {
     e.preventDefault();
     setCreateConfirmOpen(true);

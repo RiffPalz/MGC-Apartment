@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { FaSearch, FaPrint, FaTools, FaClock, FaSpinner, FaCheckCircle, FaPlus, FaEye, FaTrashAlt } from "react-icons/fa";
+import { useSocketEvent } from "../../hooks/useSocketEvent";import { FaSearch, FaPrint, FaTools, FaClock, FaSpinner, FaCheckCircle, FaPlus, FaEye, FaTrashAlt } from "react-icons/fa";
 import toast from "../../utils/toast";
 import logo from "../../assets/images/logo.png";
 import {
@@ -71,6 +71,7 @@ export default function AdminMaintenance() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useSocketEvent("maintenance_updated", load);
 
   const handleStatusChange = async (req, newStatus) => {
     // Open confirmation modal instead of firing immediately

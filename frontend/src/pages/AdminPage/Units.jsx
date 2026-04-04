@@ -10,6 +10,7 @@ import { FaSearch } from "react-icons/fa";
 import toast from "../../utils/toast";
 import { fetchAllUnits, createUnit, updateUnit, deleteUnit } from "../../api/adminAPI/unitsAPI";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
+import { useSocketEvent } from "../../hooks/useSocketEvent";
 
 const FLOORS = ["Ground Floor", "Second Floor", "Third Floor", "Fourth Floor"];
 const FLOOR_NUM = { "Ground Floor": 1, "Second Floor": 2, "Third Floor": 3, "Fourth Floor": 4 };
@@ -48,6 +49,7 @@ export default function AdminUnitsCards() {
   }, []);
 
   useEffect(() => { loadUnits(); }, [loadUnits]);
+  useSocketEvent("units_updated", loadUnits);
 
   // --- ADD ---
   const handlePreAdd = () => {

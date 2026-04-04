@@ -21,6 +21,8 @@ import {
 
 import { fetchAllActivityLogsController } from "../../controllers/activityLogController.js";
 import uploadProfilePicture from "../../middleware/uploadProfilePicture.js";
+import { updateConfigController } from "../../controllers/admin/adminConfigController.js";
+import uploadGalleryImages from "../../middleware/uploadGalleryImages.js";
 
 const adminRouter = express.Router();
 
@@ -45,6 +47,9 @@ adminRouter.patch("/users/:userId/approval", adminAuth, updateUserApproval);
 adminRouter.delete("/users/:userId", adminAuth, deleteUser);
 adminRouter.get("/tenants/overview", adminAuth, getTenantsOverview);
 adminRouter.get("/tenants/:id", adminAuth, getTenantProfile);
+
+/* SYSTEM CONFIGURATION */
+adminRouter.put("/config", adminAuth, uploadGalleryImages, updateConfigController);
 
 /* ACTIVITY LOGS */
 adminRouter.get("/activity-logs", adminAuth, fetchAllActivityLogsController);

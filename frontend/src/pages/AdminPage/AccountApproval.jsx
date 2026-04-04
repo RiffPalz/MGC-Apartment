@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {
+import { useSocketEvent } from "../../hooks/useSocketEvent";import {
   FaSearch, FaEye, FaCheckCircle, FaTimesCircle,
   FaUserClock, FaUsers, FaChevronLeft, FaChevronRight,
   FaEnvelope, FaPhone, FaUser, FaIdBadge, FaHome, FaUserPlus
@@ -38,6 +38,7 @@ export default function AdminAccountApproval() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useSocketEvent("tenants_updated", load);
 
   const filtered = users.filter((u) => {
     const q = search.toLowerCase();

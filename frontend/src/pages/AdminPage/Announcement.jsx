@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSocketEvent } from "../../hooks/useSocketEvent";
 import { FaSearch, FaPrint, FaBullhorn, FaPlus, FaEdit, FaTrashAlt, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 import toast from "../../utils/toast";
@@ -62,6 +63,7 @@ export default function AdminAnnouncement() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useSocketEvent("announcements_updated", load);
 
   const handlePreSubmit = (e) => {
     e.preventDefault();

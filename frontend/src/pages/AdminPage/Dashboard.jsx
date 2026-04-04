@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaUsers, FaTools, FaMoneyBillWave, FaClipboardList,
@@ -15,6 +15,7 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import api from "../../api/config";
+import { useSocketEvent } from "../../hooks/useSocketEvent";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
@@ -36,35 +37,35 @@ export default function AdminDashboard() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [tenantsRes, pendingRes, paymentRes, maintenanceRes, appReqRes, todayAppRes, unitsRes] = await Promise.all([
-          api.get("/admin/tenants/overview"),
-          api.get("/admin/users/pending"),
-          api.get("/admin/payments/dashboard"),
-          api.get("/admin/maintenance"),
-          api.get("/admin/applications"),
-          api.get("/admin/applications/today"),
-          api.get("/admin/units"),
-        ]);
-        setData({
-          tenants: tenantsRes.data,
-          pending: pendingRes.data,
-          payments: paymentRes.data.dashboard ?? paymentRes.data,
-          maintenance: maintenanceRes.data,
-          appRequests: appReqRes.data,
-          todayApps: todayAppRes.data,
-          units: unitsRes.data,
-        });
-      } catch (e) {
-        console.error("Dashboard load error:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+  const loadDashboard = useCallback(async () => {
+    try {
+      const [tenantsRes, pendingRes, paymentRes, maintenanceRes, appReqRes, todayAppRes, unitsRes] = await Promise.all([
+        api.get("/admin/tenants/overview"),
+        api.get("/admin/users/pending"),
+        api.get("/admin/payments/dashboard"),
+        api.get("/admin/maintenance"),
+        api.get("/admin/applications"),
+        api.get("/admin/applications/today"),
+        api.get("/admin/units"),
+      ]);
+      setData({
+        tenants: tenantsRes.data,
+        pending: pendingRes.data,
+        payments: paymentRes.data.dashboard ?? paymentRes.data,
+        maintenance: maintenanceRes.data,
+        appRequests: appReqRes.data,
+        todayApps: todayAppRes.data,
+        units: unitsRes.data,
+      });
+    } catch (e) {
+      console.error("Dashboard load error:", e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
+  useSocketEvent(["maintenance_updated", "payment_updated", "contract_updated", "tenants_updated", "announcements_updated", "applications_updated", "units_updated"], loadDashboard);
 
   if (loading) {
     return (

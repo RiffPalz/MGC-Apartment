@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {
+import { useSocketEvent } from "../../hooks/useSocketEvent";import {
     FaSearch, FaChevronLeft, FaChevronRight, FaFilter,
     FaUserShield, FaUsers, FaTools, FaSyncAlt, FaHistory, FaClock
 } from "react-icons/fa";
@@ -68,6 +68,7 @@ export default function AdminActivityLogs() {
     }, [roleFilter, search]);
 
     useEffect(() => { load(); }, [load]);
+    useSocketEvent(["maintenance_updated", "payment_updated", "contract_updated", "tenants_updated", "announcements_updated", "applications_updated", "units_updated"], load);
 
     // client-side search on top of server results
     const filtered = logs.filter((l) => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSocketEvent } from "../../hooks/useSocketEvent";
 import {
   FaReceipt, FaSearch, FaCloudUploadAlt, FaEye,
   FaTimes, FaWallet, FaMobileAlt, FaCheckCircle,
@@ -38,8 +39,7 @@ export default function PaymenthisCards() {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => { load(); }, []);
-
-  const load = async (silent = false) => {
+  useSocketEvent("payment_updated", () => load(true));
     try {
       if (!silent) setLoading(true);
       const res = await fetchMyPayments();

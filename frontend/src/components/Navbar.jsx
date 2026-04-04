@@ -5,15 +5,24 @@ import { Link as ScrollLink, animateScroll as scroll } from "react-scroll";
 import { FaBars } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
 import logo from "../assets/images/logo.png";
+import { fetchConfig } from "../api/adminAPI/ConfigAPI";
 
 export default function Navbar() {
   const [isOpen, setIsOpen]       = useState(false);
   const [scrolled, setScrolled]   = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
+  const [mgcName, setMgcName]     = useState("MGC Building");
   const lastScrollY = useRef(0);
 
   const location    = useLocation();
   const isLandingPage = location.pathname === "/";
+
+  /* fetch mgc name from config */
+  useEffect(() => {
+    fetchConfig().then((data) => {
+      if (data?.config?.mgc_name) setMgcName(data.config.mgc_name);
+    }).catch(() => {});
+  }, []);
 
   /* scroll hide / hero color */
   useEffect(() => {
@@ -51,7 +60,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           <img src={logo} alt="MGC Logo" className="h-9" />
           <span className="font-OswaldRegular text-gray-900 text-base tracking-[3px] uppercase">
-            MGC Building
+            {mgcName}
           </span>
         </div>
         <button onClick={close} aria-label="Close menu" className="p-1 text-gray-700 hover:text-[#db6747] transition-colors">
@@ -117,11 +126,11 @@ export default function Navbar() {
               {/* mobile logo */}
               <img src={logo} alt="MGC Logo" className="h-8 md:hidden" />
               <span className={`md:hidden font-OswaldRegular text-sm tracking-[3px] uppercase ${textColor}`}>
-                MGC Building
+                {mgcName}
               </span>
               {/* desktop logo */}
               <span className={`hidden md:block font-OswaldRegular tracking-[4px] font-bold text-2xl ${textColor}`}>
-                MGC<span className="text-[#db6747]">.</span>
+                {mgcName}<span className="text-[#db6747]">.</span>
               </span>
             </Link>
 

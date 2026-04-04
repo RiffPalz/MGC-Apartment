@@ -1,15 +1,10 @@
 import cloudinary from "../../config/cloudinary.js";
-
 import {
-  createPayment,
-  getAllPayments,
-  getPaymentsByContract,
-  verifyPayment,
-  getMonthlySummary,
-  getPaymentDashboard,
-  updatePayment,
-  deletePayment,
+  createPayment, getAllPayments, getPaymentsByContract,
+  verifyPayment, getMonthlySummary, getPaymentDashboard,
+  updatePayment, deletePayment,
 } from "../../services/admin/adminPaymentService.js";
+import { emitEvent } from "../../utils/emitEvent.js";
 
 /* CREATE PAYMENT BILL */
 export const createPaymentAdmin = async (req, res) => {
@@ -22,12 +17,8 @@ export const createPaymentAdmin = async (req, res) => {
       { contract_id, category, billing_month, amount, due_date, utility_bill_file },
       adminId
     );
-
-    return res.status(201).json({
-      success: true,
-      message: "Payment bill created successfully",
-      payment,
-    });
+    emitEvent(req, "payment_updated");
+    return res.status(201).json({ success: true, message: "Payment bill created successfully", payment });
   } catch (error) {
     // FIX: Added { resource_type: "raw" } so Cloudinary knows what to delete
     if (req.file?.filename) {
@@ -81,12 +72,8 @@ export const verifyPaymentAdmin = async (req, res) => {
     const adminId = req.admin?.id || req.auth?.id;
 
     const payment = await verifyPayment(id, adminId);
-
-    return res.status(200).json({
-      success: true,
-      message: "Payment verified successfully",
-      payment,
-    });
+    emitEvent(req, "payment_updated");
+    return res.status(200).json({ success: true, message: "Payment verified successfully", payment });
   } catch (error) {
     return res.status(400).json({
       success: false,
@@ -148,6 +135,7 @@ export const updatePaymentAdmin = async (req, res) => {
     }
 
     const payment = await updatePayment(id, req.body, adminId);
+    emitEvent(req, "payment_updated");
     return res.status(200).json({ success: true, message: "Payment updated", payment });
   } catch (error) {
     console.error("updatePaymentAdmin error:", error);
@@ -164,6 +152,7 @@ export const deletePaymentAdmin = async (req, res) => {
     const { id } = req.params;
     const adminId = req.admin?.id || req.auth?.id;
     await deletePayment(id, adminId);
+    emitEvent(req, "payment_updated");
     return res.status(200).json({ success: true, message: "Payment deleted" });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });

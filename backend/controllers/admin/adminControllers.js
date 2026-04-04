@@ -223,11 +223,8 @@ export const deleteUser = async (req, res) => {
     const { userId } = req.params;
 
     await deleteUserService(req.admin.instance, userId);
-
-    return res.status(200).json({
-      success: true,
-      message: "User deleted successfully"
-    });
+    emitEvent(req, "tenants_updated");
+    return res.status(200).json({ success: true, message: "User deleted successfully" });
 
 
   } catch (error) {
@@ -368,11 +365,8 @@ export const updateUserApproval = async (req, res) => {
     const { status } = req.body;
 
     await updateTenantApprovalService(req.admin.instance, userId, status);
-
-    return res.status(200).json({
-      success: true,
-      message: `Tenant ${status} successfully`
-    });
+    emitEvent(req, "tenants_updated");
+    return res.status(200).json({ success: true, message: `Tenant ${status} successfully` });
 
   } catch (error) {
     console.error("updateUserApproval error:", error.message, "| userId:", req.params.userId, "| status:", req.body?.status);

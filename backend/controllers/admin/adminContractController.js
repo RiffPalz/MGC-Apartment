@@ -1,15 +1,12 @@
 import {
-    createContractByAdmin,
-    terminateContract,
-    renewContract,
-    editContract,
-    getAdminDashboardData,
-    getExpiringContracts,
-    completeContract
-} from "../../services/admin/adminContractService.js";import { generateContractPdf } from "../../services/admin/contractPdfService.js";
+    createContractByAdmin, terminateContract, renewContract,
+    editContract, getAdminDashboardData, getExpiringContracts, completeContract
+} from "../../services/admin/adminContractService.js";
+import { generateContractPdf } from "../../services/admin/contractPdfService.js";
 import Contract from "../../models/contract.js";
 import User from "../../models/user.js";
 import Unit from "../../models/unit.js";
+import { emitEvent } from "../../utils/emitEvent.js";
 
 // Create a new contract and link tenants
 export const createContractAdmin = async (req, res) => {
@@ -36,19 +33,10 @@ export const createContractAdmin = async (req, res) => {
             termination_renewal_conditions,
             contract_file,
         }, adminId);
-
-        return res.status(201).json({
-            success: true,
-            message: "Contract created successfully.",
-            contract
-        });
-
+        emitEvent(req, "contract_updated");
+        return res.status(201).json({ success: true, message: "Contract created successfully.", contract });
     } catch (error) {
-
-        return res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        return res.status(400).json({ success: false, message: error.message });
     }
 };
 
@@ -57,14 +45,9 @@ export const terminateContractAdmin = async (req, res) => {
     try {
         const { id } = req.params;
         const adminId = req.admin?.id || req.auth?.id;
-
-        const contract = await terminateContract(id, adminId); // Pass Admin ID
-
-        return res.status(200).json({
-            success: true,
-            message: "Contract terminated successfully.",
-            contract
-        });
+        const contract = await terminateContract(id, adminId);
+        emitEvent(req, "contract_updated");
+        return res.status(200).json({ success: true, message: "Contract terminated successfully.", contract });
 
     } catch (error) {
 
@@ -105,7 +88,7 @@ export const renewContractAdmin = async (req, res) => {
         });
 
         await fullContract.update({ contract_file: pdfUrl });
-
+        emitEvent(req, "contract_updated");
         return res.status(200).json({
             success: true,
             message: "Contract renewed and PDF regenerated successfully.",
@@ -126,13 +109,9 @@ export const editContractAdmin = async (req, res) => {
 
         if (req.file) updates.contract_file = req.file.secure_url || req.file.path;
 
-        const updatedContract = await editContract(id, updates, adminId); // Pass Admin ID
-
-        return res.status(200).json({
-            success: true,
-            message: "Contract updated successfully.",
-            contract: updatedContract
-        });
+        const updatedContract = await editContract(id, updates, adminId);
+        emitEvent(req, "contract_updated");
+        return res.status(200).json({ success: true, message: "Contract updated successfully.", contract: updatedContract });
 
     } catch (error) {
 
@@ -187,13 +166,9 @@ export const completeContractAdmin = async (req, res) => {
         const { id } = req.params;
         const adminId = req.admin?.id || req.auth?.id;
 
-        const contract = await completeContract(id, adminId); // Pass Admin ID
-
-        return res.status(200).json({
-            success: true,
-            message: "Contract completed successfully.",
-            contract
-        });
+        const contract = await completeContract(id, adminId);
+        emitEvent(req, "contract_updated");
+        return res.status(200).json({ success: true, message: "Contract completed successfully.", contract });
 
     } catch (error) {
 

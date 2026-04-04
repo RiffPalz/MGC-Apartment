@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {
+import { useSocketEvent } from "../../hooks/useSocketEvent";import {
   FaSearch, FaChevronLeft, FaChevronRight, FaTools, FaSyncAlt,
   FaWrench, FaMoneyCheckAlt, FaUserCog, FaClock, FaHistory
 } from "react-icons/fa";
@@ -54,6 +54,7 @@ export default function CaretakerActivityLogs() {
   }, [search]);
 
   useEffect(() => { load(); }, [load]);
+  useSocketEvent(["maintenance_updated", "payment_updated", "announcements_updated"], load);
 
   const filtered = logs.filter((l) => {
     const q = search.toLowerCase();

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSocketEvent } from "../../hooks/useSocketEvent";
 import { useNavigate } from "react-router-dom";
 import {
   FaSearch, FaPrint, FaEye, FaTrashAlt,
@@ -58,6 +59,7 @@ export default function AdminTenants() {
   };
 
   useEffect(() => { load(); }, []);
+  useSocketEvent("tenants_updated", load);
 
   const rows = tenants.map((t) => {
     const contract = t.contracts?.[0] ?? null;

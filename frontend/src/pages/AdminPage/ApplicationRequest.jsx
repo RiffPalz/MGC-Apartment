@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {
+import { useSocketEvent } from "../../hooks/useSocketEvent";import {
   FaSearch, FaTrashAlt, FaEye, FaFileAlt, FaPrint,
   FaUsers, FaCalendarDay, FaCalendarAlt,
   FaChevronLeft, FaChevronRight, FaIdCard, FaEnvelope, FaPhone, FaCommentAlt,
@@ -40,6 +40,7 @@ export default function AdminApplicationRequest() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useSocketEvent("applications_updated", load);
 
   const filtered = applications.filter((a) => {
     const q = search.toLowerCase();

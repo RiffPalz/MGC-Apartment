@@ -8,6 +8,7 @@ import {
   FaDoorClosed,
   FaChevronLeft,
   FaHistory,
+  FaCog,
 } from "react-icons/fa";
 import { MdDashboard, MdSwitchAccount } from "react-icons/md";
 import { GrVmMaintenance, GrAnnounce } from "react-icons/gr";
@@ -45,6 +46,7 @@ export default function AdminSidebar({ open = true, setOpen }) {
       path: "/admin/applicationrequest",
     },
     { name: "Activity Logs", icon: <FaHistory />, path: "/admin/activity-logs" },
+    { name: "System Config", icon: <FaCog />, path: "/admin/system-config" },
   ];
 
 

@@ -1,9 +1,7 @@
 import {
-  getAnnouncements,
-  createAnnouncement,
-  updateAnnouncement,
-  deleteAnnouncement,
+  getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement,
 } from "../../services/caretaker/caretakerAnnouncementService.js";
+import { emitEvent } from "../../utils/emitEvent.js";
 
 export const getAnnouncementsController = async (req, res) => {
   try {
@@ -19,6 +17,7 @@ export const createAnnouncementController = async (req, res) => {
   try {
     const caretakerId = req.caretaker.id;
     const announcement = await createAnnouncement({ ...req.body, caretakerId });
+    emitEvent(req, "announcements_updated");
     return res.status(201).json({ success: true, message: "Announcement created", announcement });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
@@ -29,6 +28,7 @@ export const updateAnnouncementController = async (req, res) => {
   try {
     const caretakerId = req.caretaker.id;
     const announcement = await updateAnnouncement(req.params.id, req.body, caretakerId);
+    emitEvent(req, "announcements_updated");
     return res.status(200).json({ success: true, message: "Announcement updated", announcement });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
@@ -39,6 +39,7 @@ export const deleteAnnouncementController = async (req, res) => {
   try {
     const caretakerId = req.caretaker.id;
     await deleteAnnouncement(req.params.id, caretakerId);
+    emitEvent(req, "announcements_updated");
     return res.status(200).json({ success: true, message: "Announcement deleted" });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
