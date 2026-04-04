@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEnvelope, FaTimes } from "react-icons/fa";
+import { FaEnvelope, FaTimes, FaClock } from "react-icons/fa";
 
 export default function PendingVerificationModal({ isOpen, onClose }) {
   const navigate = useNavigate();
@@ -13,58 +13,86 @@ export default function PendingVerificationModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+
+      {/* Modal Container */}
       <div
-        className="relative w-full max-w-md bg-[#fffaf5] rounded-none shadow-2xl border-t-[6px] border-[#db6747] overflow-hidden"
+        className="relative bg-white w-full max-w-md rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col"
         data-aos="zoom-in"
       >
-        {/* Close Icon */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <FaTimes size={18} />
-        </button>
+        {/* Signature Top Accent Bar */}
+        <div className="h-1.5 w-full bg-[#db6747] shrink-0" />
 
-        <div className="p-8 sm:p-12 text-center">
-          {/* Header */}
-          <h2 className="text-3xl font-OswaldRegular text-[#1a1a1a] uppercase tracking-wider mb-3">
-            Registration Pending
-          </h2>
+        {/* Header Section */}
+        <div className="flex justify-between items-center px-6 sm:px-8 py-4 sm:py-5 border-b border-slate-100 bg-slate-50/80 shrink-0">
+          <div>
+            <h2 className="text-slate-800 font-bold text-xs sm:text-sm uppercase tracking-widest">
+              Registration Received
+            </h2>
+            <p className="text-slate-400 text-[9px] sm:text-[10px] uppercase tracking-widest mt-0.5 font-bold">
+              MGC Building
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-800 transition-colors p-2 active:scale-90"
+            aria-label="Close"
+          >
+            <FaTimes size={18} />
+          </button>
+        </div>
 
-          <p className="text-[11px] text-gray-500 uppercase tracking-[2px] mb-10 leading-relaxed px-4">
-            Please allow 2-3 business days for account approval. You will
-            receive an email or SMS once verified.
-          </p>
-
-          {/* Icon/Visual Area */}
-          <div className="flex flex-col items-center mb-10">
-            <div className="w-full border-b border-[#db6747] relative flex justify-center">
-              <div className="absolute -bottom-3 bg-[#fffaf5] px-4">
-                <FaEnvelope className="text-[#db6747] text-xl" />
-              </div>
+        <div className="p-8 sm:p-10 text-center overflow-y-auto custom-scrollbar flex-1">
+          {/* Visual Icon Area */}
+          <div className="relative inline-flex items-center justify-center mb-6">
+            <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center border border-orange-100 shadow-sm relative z-10">
+              <FaEnvelope className="text-[#db6747] text-3xl" />
             </div>
+            {/* Pulsing decoration behind icon */}
+            <div className="absolute w-20 h-20 bg-[#db6747]/10 rounded-full animate-ping opacity-20" />
           </div>
 
-          {/* Information Detail */}
-          <div className="mb-10">
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[2px] mb-2">
-              Current Status
+          {/* Text Content */}
+          <h2 className="text-2xl sm:text-3xl font-OswaldRegular text-slate-900 uppercase tracking-wider mb-3">
+            Status: Pending
+          </h2>
+
+          <p className="text-[11px] sm:text-xs text-slate-500 uppercase tracking-[2px] font-semibold mb-8 leading-relaxed">
+            Please allow 2-3 business days for account approval. <br />
+            You will be notified via email once verified.
+          </p>
+
+          {/* Status Indicator Card */}
+          <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 mb-8 shadow-inner">
+            <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-[2px] mb-2">
+              Processing Stage
             </label>
-            <div className="text-sm font-bold text-gray-800 uppercase tracking-widest">
+            <div className="flex items-center justify-center gap-2 text-sm font-black text-slate-700 uppercase tracking-widest">
+              <FaClock className="text-amber-500" size={14} />
               Awaiting Administrative Review
             </div>
           </div>
 
-          {/* The Styled Button */}
+          {/* Action Button */}
           <button
             onClick={handleBackToLogin}
-            className="w-full bg-[#db6747] hover:bg-[#3a0f08] text-white py-4 text-xs tracking-[3px] font-bold uppercase transition-all duration-300 shadow-lg active:scale-[0.98]"
+            className="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-xl font-bold text-xs tracking-[3px] uppercase transition-all duration-300 shadow-lg active:scale-95"
           >
             Proceed to Login
           </button>
+
+          <p className="mt-6 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+            Need assistance? <a href="mailto:mgcbuilding762@gmail.com" className="text-[#db6747] hover:underline ml-1">Contact Office</a>
+          </p>
         </div>
       </div>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      `}</style>
     </div>
   );
 }

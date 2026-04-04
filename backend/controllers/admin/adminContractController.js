@@ -6,8 +6,7 @@ import {
     getAdminDashboardData,
     getExpiringContracts,
     completeContract
-} from "../../services/admin/adminContractService.js";
-import { generateContractPdf } from "../../services/admin/contractPdfService.js";
+} from "../../services/admin/adminContractService.js";import { generateContractPdf } from "../../services/admin/contractPdfService.js";
 import Contract from "../../models/contract.js";
 import User from "../../models/user.js";
 import Unit from "../../models/unit.js";
@@ -243,6 +242,19 @@ export const generateContractPdfAdmin = async (req, res) => {
         });
     } catch (error) {
         console.error("PDF generation error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Permanently delete a contract
+export const deleteContractAdmin = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const contract = await Contract.findByPk(id);
+        if (!contract) return res.status(404).json({ success: false, message: "Contract not found." });
+        await contract.destroy();
+        return res.status(200).json({ success: true, message: "Contract deleted successfully." });
+    } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
 };

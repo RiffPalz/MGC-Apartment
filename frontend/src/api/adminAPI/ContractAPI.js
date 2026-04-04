@@ -55,3 +55,9 @@ export const generateContractPdf = async (id) => {
 /** Get proxied PDF URL for viewing/downloading (avoids CORS) */
 export const getContractPdfProxyUrl = (id) =>
   `${import.meta.env.VITE_BACKEND_URL}/admin/contracts/${id}/pdf`;
+
+/** Delete a contract permanently */
+export const deleteContract = async (id) => {
+  const res = await api.delete(`/admin/contracts/${id}`);
+  return res.data;
+};

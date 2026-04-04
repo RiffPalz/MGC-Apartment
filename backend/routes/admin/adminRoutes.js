@@ -38,12 +38,11 @@ adminRouter.post("/profile/picture", adminAuth, uploadProfilePicture.single("pro
 adminRouter.post("/caretaker", adminAuth, createCaretaker);
 adminRouter.post("/admin", adminAuth, createAdmin);
 adminRouter.get("/staff", adminAuth, getStaffUsers);
-adminRouter.delete("/users/:userId", adminAuth, deleteUser);
-
 /* TENANT MANAGEMENT */
 adminRouter.get("/users/pending", adminAuth, getPendingUsers);
 adminRouter.get("/users/approved-no-contract", adminAuth, getApprovedTenantsNoContract);
 adminRouter.patch("/users/:userId/approval", adminAuth, updateUserApproval);
+adminRouter.delete("/users/:userId", adminAuth, deleteUser);
 adminRouter.get("/tenants/overview", adminAuth, getTenantsOverview);
 adminRouter.get("/tenants/:id", adminAuth, getTenantProfile);
 

@@ -124,11 +124,11 @@ const Login = () => {
       } else {
         navigate("/tenant/dashboard");
       }
-      
+
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Invalid credentials. Please try again."
+        "Invalid credentials. Please try again."
       );
     } finally {
       setLoading(false);
@@ -150,11 +150,11 @@ const Login = () => {
           data-aos="fade-down"
           className="relative z-10 flex flex-col items-center lg:items-start"
         >
-          <img src={logo} alt="Logo" className="w-24 lg:w-32 mb-4 lg:mb-6" />
-          <h1 className="font-RegularMilk text-xl lg:text-2xl text-white uppercase tracking-[4px] text-center lg:text-left">
+          <img src={logo} alt="Logo" className="w-24 lg:w-32 mb-4 lg:mb-6 drop-shadow-lg" />
+          <h1 className="font-RegularMilk text-xl lg:text-2xl text-white uppercase tracking-[4px] text-center lg:text-left drop-shadow-md">
             MGC Building
           </h1>
-          <div className="w-12 h-1 bg-[#db6747] mt-4 hidden lg:block"></div>
+          <div className="w-12 h-1 bg-[#db6747] mt-4 hidden lg:block rounded-full"></div>
         </div>
 
         <div
@@ -163,27 +163,27 @@ const Login = () => {
         >
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-3 text-white/70 hover:text-white transition-all group font-RegularMilk text-[10px] tracking-widest uppercase"
+            className="flex items-center gap-3 text-white/70 hover:text-white transition-all group font-RegularMilk text-[10px] tracking-widest uppercase active:scale-95"
           >
-            <div className="p-2 border border-white/20 rounded-full group-hover:bg-[#db6747] group-hover:border-transparent transition-all">
+            <div className="p-2.5 border border-white/20 rounded-full group-hover:bg-[#db6747] group-hover:border-transparent transition-all shadow-sm">
               <FaHome size={14} />
             </div>
             Back to Home
           </button>
           <button
             onClick={() => navigate("/createAccount")}
-            className="flex items-center gap-3 text-white/70 hover:text-white transition-all group font-RegularMilk text-[10px] tracking-widest uppercase"
+            className="flex items-center gap-3 text-white/70 hover:text-white transition-all group font-RegularMilk text-[10px] tracking-widest uppercase active:scale-95"
           >
-            <div className="p-2 border border-white/20 rounded-full group-hover:bg-[#db6747] group-hover:border-transparent transition-all">
+            <div className="p-2.5 border border-white/20 rounded-full group-hover:bg-[#db6747] group-hover:border-transparent transition-all shadow-sm">
               <FaArrowRight size={14} />
             </div>
             Create Account
           </button>
           <button
             onClick={() => setShowCheckStatus(true)}
-            className="flex items-center gap-3 text-white/70 hover:text-white transition-all group font-RegularMilk text-[10px] tracking-widest uppercase"
+            className="flex items-center gap-3 text-white/70 hover:text-white transition-all group font-RegularMilk text-[10px] tracking-widest uppercase active:scale-95"
           >
-            <div className="p-2 border border-white/20 rounded-full group-hover:bg-[#db6747] group-hover:border-transparent transition-all">
+            <div className="p-2.5 border border-white/20 rounded-full group-hover:bg-[#db6747] group-hover:border-transparent transition-all shadow-sm">
               <FaSearch size={14} />
             </div>
             Check Status
@@ -198,18 +198,18 @@ const Login = () => {
             <h4 className="text-[#db6747] font-bold tracking-[4px] uppercase text-xs mb-2">
               Authorized Access
             </h4>
-            <h2 className="text-4xl font-OswaldRegular text-gray-900 uppercase">
+            <h2 className="text-4xl font-OswaldRegular text-gray-900 uppercase tracking-wide">
               Welcome Back
             </h2>
-            <div className="w-16 h-1 bg-[#db6747] mt-4 mx-auto lg:mx-0"></div>
+            <div className="w-16 h-1.5 bg-[#db6747] mt-4 mx-auto lg:mx-0 rounded-full"></div>
           </div>
 
           <div
-            className="mb-8 bg-white border border-gray-100 p-4 shadow-sm"
+            className="mb-8 bg-white border border-orange-100 p-4 rounded-xl shadow-sm"
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            <p className="text-[11px] text-gray-500 uppercase tracking-wider leading-relaxed text-center lg:text-left">
+            <p className="text-[11px] text-slate-500 uppercase tracking-wider leading-relaxed text-center lg:text-left font-bold">
               <strong className="text-[#db6747]">Note:</strong> Only verified
               tenants are authorized to access the building management
               dashboard.
@@ -218,15 +218,15 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-8">
             <div data-aos="fade-up" data-aos-delay="200">
-              <label className="block text-[9px] font-bold tracking-[2px] text-gray-400 mb-2 uppercase font-RegularMilk">
+              <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 mb-2 uppercase font-RegularMilk">
                 {isAdmin ? "Email Address" : "Username"}
               </label>
-              <div className="flex items-center border-b border-gray-200 focus-within:border-[#db6747] transition-all py-2 group">
-                <FaUser className="text-gray-300 group-focus-within:text-[#db6747] mr-3 transition-colors" />
+              <div className="flex items-center border-b-2 border-slate-200 focus-within:border-[#db6747] transition-all py-2.5 group">
+                <FaUser className="text-slate-300 group-focus-within:text-[#db6747] mr-3 transition-colors" />
                 <input
                   type={isAdmin ? "email" : "text"}
                   placeholder={isAdmin ? "admin@email.com" : "Enter unique ID"}
-                  className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-200"
+                  className="w-full bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-300 font-semibold"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
@@ -234,23 +234,23 @@ const Login = () => {
             </div>
 
             <div data-aos="fade-up" data-aos-delay="300">
-              <label className="block text-[9px] font-bold tracking-[2px] text-gray-400 uppercase font-LemonMilkRegular mb-2">
+              <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 uppercase font-LemonMilkRegular mb-2">
                 Password
               </label>
 
-              <div className="flex items-center border-b border-gray-200 focus-within:border-[#db6747] transition-all py-2 group">
-                <RiLockPasswordFill className="text-gray-300 group-focus-within:text-[#db6747] mr-3 transition-colors" />
+              <div className="flex items-center border-b-2 border-slate-200 focus-within:border-[#db6747] transition-all py-2.5 group">
+                <RiLockPasswordFill className="text-slate-300 group-focus-within:text-[#db6747] mr-3 transition-colors" />
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-200"
+                  className="w-full bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-300 font-semibold"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-gray-300 hover:text-[#db6747] transition-colors"
+                  className="text-slate-300 hover:text-[#db6747] transition-colors p-1"
                 >
                   {showPassword ? (
                     <LuEye size={18} />
@@ -260,11 +260,11 @@ const Login = () => {
                 </button>
               </div>
 
-              <div className="flex justify-end mt-3">
+              <div className="flex justify-end mt-4">
                 <button
                   type="button"
                   onClick={() => setShowForgot(true)}
-                  className="text-[9px] uppercase tracking-widest text-gray-400 hover:text-[#db6747] transition-colors font-bold"
+                  className="text-[9px] uppercase tracking-widest text-slate-400 hover:text-[#db6747] transition-colors font-bold"
                 >
                   Forgot Password?
                 </button>
@@ -272,7 +272,7 @@ const Login = () => {
             </div>
 
             {error && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 text-[10px] text-red-600 font-bold uppercase tracking-widest animate-shake">
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 text-[10px] text-red-600 font-bold uppercase tracking-widest animate-shake rounded-r-xl shadow-sm">
                 {error}
               </div>
             )}
@@ -281,21 +281,21 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#db6747] hover:bg-[#3a0f08] text-white py-5 text-xs tracking-[4px] font-RegularMilk transition-all duration-500 shadow-xl disabled:opacity-60 uppercase active:scale-[0.98]"
+                className="w-full bg-[#db6747] hover:bg-[#c45a3a] text-white py-5 rounded-xl text-xs tracking-[4px] font-RegularMilk transition-all duration-300 shadow-lg shadow-orange-500/30 disabled:opacity-60 uppercase active:scale-95"
               >
-                {loading ? "Authenticating..." : "Login"}
+                {loading ? "Authenticating..." : "Login to Portal"}
               </button>
 
-              <p className="mt-8 text-center text-[10px] text-gray-400 uppercase tracking-[1px] leading-relaxed">
+              <p className="mt-8 text-center text-[10px] text-slate-400 uppercase tracking-widest leading-relaxed font-bold">
                 By logging in, you acknowledge that you agree to our <br />
-                <button type="button" onClick={() => setShowTerms(true)} className="text-[#db6747] font-bold hover:underline">Terms & Conditions</button>{" "}
+                <button type="button" onClick={() => setShowTerms(true)} className="text-[#db6747] font-black hover:underline mt-1">Terms & Conditions</button>{" "}
                 and{" "}
-                <button type="button" onClick={() => setShowPrivacy(true)} className="text-[#db6747] font-bold hover:underline">Privacy Policy</button>.
+                <button type="button" onClick={() => setShowPrivacy(true)} className="text-[#db6747] font-black hover:underline">Privacy Policy</button>.
               </p>
 
-              <p className="mt-4 text-center text-[11px] text-gray-400">
-                Already submitted a registration?{" "}
-                <button type="button" onClick={() => setShowCheckStatus(true)} className="text-[#db6747] font-bold hover:underline">Check status</button>
+              <p className="mt-5 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-orange-50/50 py-3 rounded-lg border border-orange-100/50">
+                Already submitted a registration? <br />
+                <button type="button" onClick={() => setShowCheckStatus(true)} className="text-[#db6747] font-black hover:underline mt-1">Check status</button>
               </p>
             </div>
           </form>
@@ -306,89 +306,104 @@ const Login = () => {
       <TermsAndConditions isOpen={showTerms} onClose={() => setShowTerms(false)} />
       <PrivacyPolicy isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
 
-      {/* CHECK STATUS MODAL */}
+      {/* ── CHECK STATUS MODAL ── */}
       {showCheckStatus && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm shadow-2xl relative overflow-hidden">
-            <div className="h-1.5 w-full bg-[#db6747]" />
-            <div className="p-8">
-              <div className="text-center mb-6">
-                <div className="w-14 h-14 bg-[#FDF2ED] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FaSearch className="text-[#db6747]" size={20} />
-                </div>
-                <h3 className="font-OswaldRegular text-2xl uppercase text-gray-900">Check Status</h3>
-                <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">MGC Building</p>
-              </div>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-2xl sm:rounded-3xl shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
 
+            <div className="h-1.5 w-full bg-[#db6747] shrink-0" />
+            <div className="border-b border-slate-100 px-6 sm:px-8 py-4 sm:py-5 flex items-center justify-between bg-slate-50/80 shrink-0">
+              <div>
+                <h2 className="text-slate-800 font-bold text-xs sm:text-sm uppercase tracking-widest">Check Status</h2>
+                <p className="text-slate-400 text-[9px] sm:text-[10px] uppercase tracking-widest mt-0.5 font-bold">MGC Building</p>
+              </div>
+              <button onClick={closeCheckStatus} className="text-slate-400 hover:text-slate-800 transition-colors text-lg px-2 active:scale-90">✕</button>
+            </div>
+
+            <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar flex-1">
               {!checkResult ? (
-                <form onSubmit={handleCheckStatus} className="space-y-5">
-                  <p className="text-sm text-gray-500 text-center leading-relaxed">
-                    Enter your email address to view the current status of your registration request.
-                  </p>
+                <form onSubmit={handleCheckStatus} className="space-y-6">
+                  <div className="text-center mb-6">
+                    <div className="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-orange-100 shadow-sm">
+                      <FaSearch className="text-[#db6747]" size={20} />
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-semibold">
+                      Enter your email address to view the current status of your registration request.
+                    </p>
+                  </div>
+
                   <div>
-                    <label className="block text-[9px] font-bold tracking-[2px] text-gray-400 mb-2 uppercase">Email Address <span className="text-red-500">*</span></label>
+                    <label className="block text-[10px] font-bold tracking-[2px] text-slate-400 mb-2 uppercase">Email Address <span className="text-red-500">*</span></label>
                     <input type="email" required value={checkEmail}
                       onChange={e => setCheckEmail(e.target.value)}
                       placeholder="your@email.com"
-                      className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#db6747] transition-colors bg-gray-50" />
+                      className="w-full border border-slate-200 rounded-xl px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] transition-all bg-slate-50 font-semibold text-slate-700 shadow-sm" />
                   </div>
+
                   {checkError && (
-                    <p className="text-[11px] text-red-500 font-bold uppercase tracking-widest bg-red-50 px-3 py-2 border-l-4 border-red-500">{checkError}</p>
+                    <p className="text-[11px] text-red-600 font-bold uppercase tracking-widest bg-red-50 px-4 py-3 rounded-r-xl border-l-4 border-red-500 shadow-sm">{checkError}</p>
                   )}
-                  <div className="flex gap-3 pt-2">
+
+                  <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-slate-100 mt-6">
                     <button type="button" onClick={closeCheckStatus}
-                      className="flex-1 py-3 border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors uppercase tracking-widest">
-                      ← Back
+                      className="flex-1 py-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors uppercase tracking-widest active:scale-95">
+                      Cancel
                     </button>
                     <button type="submit" disabled={checkLoading}
-                      className="flex-1 py-3 bg-[#db6747] hover:bg-[#3a0f08] text-white text-sm font-bold transition-colors uppercase tracking-widest disabled:opacity-60">
+                      className="flex-1 py-3 rounded-xl bg-[#db6747] hover:bg-[#c45a3a] text-white text-xs font-bold transition-all shadow-md disabled:opacity-60 uppercase tracking-widest active:scale-95">
                       {checkLoading ? "Checking..." : "Check Status"}
                     </button>
                   </div>
-                  <p className="text-center text-xs text-gray-400">
+
+                  <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6">
                     Don't have an account?{" "}
                     <button type="button" onClick={() => { closeCheckStatus(); navigate("/createAccount"); }}
-                      className="text-[#db6747] font-bold hover:underline">Sign up here.</button>
+                      className="text-[#db6747] font-black hover:underline">Sign up here</button>
                   </p>
                 </form>
               ) : (
-                <div className="space-y-5">
-                  <div className="text-center">
+                <div className="space-y-6">
+                  <div className="text-center py-4">
                     {checkResult.status === "Approved" ? (
-                      <FaCheckCircle className="text-emerald-500 mx-auto mb-3" size={40} />
+                      <FaCheckCircle className="text-emerald-500 mx-auto mb-4 drop-shadow-sm" size={48} />
                     ) : checkResult.status === "Declined" ? (
-                      <FaTimesCircle className="text-red-500 mx-auto mb-3" size={40} />
+                      <FaTimesCircle className="text-red-500 mx-auto mb-4 drop-shadow-sm" size={48} />
                     ) : (
-                      <FaClock className="text-amber-500 mx-auto mb-3" size={40} />
+                      <FaClock className="text-amber-500 mx-auto mb-4 drop-shadow-sm" size={48} />
                     )}
-                    <p className="text-base font-bold text-gray-900">{checkResult.fullName}</p>
-                    <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">
+                    <p className="text-xl font-black text-slate-900">{checkResult.fullName}</p>
+                    <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-bold">
                       {checkResult.type === "account" ? "Account Registration" : "Application Request"}
                     </p>
                   </div>
 
-                  <div className="bg-gray-50 border border-gray-100 p-4 text-center">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Current Status</p>
-                    <span className={`text-sm font-black uppercase tracking-widest
-                      ${checkResult.status === "Approved" ? "text-emerald-600" :
-                        checkResult.status === "Declined" ? "text-red-600" : "text-amber-600"}`}>
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 text-center shadow-inner">
+                    <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Current Status</p>
+                    <span className={`inline-block text-[11px] font-black px-4 py-1.5 rounded-lg uppercase tracking-widest border shadow-sm
+                      ${checkResult.status === "Approved" ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
+                        checkResult.status === "Declined" ? "bg-red-50 text-red-600 border-red-200" : "bg-amber-50 text-amber-600 border-amber-200"}`}>
                       {checkResult.status}
                     </span>
-                    {checkResult.status === "Approved" && (
-                      <p className="text-xs text-gray-500 mt-2">Your account is ready. You can now log in.</p>
-                    )}
-                    {checkResult.status === "Under Review" && (
-                      <p className="text-xs text-gray-500 mt-2">Your application is being reviewed. We'll notify you via email.</p>
-                    )}
-                    {checkResult.status === "Declined" && (
-                      <p className="text-xs text-gray-500 mt-2">Your application was not approved. Please contact the office for more information.</p>
-                    )}
+
+                    <div className="mt-4 pt-4 border-t border-slate-200/60">
+                      {checkResult.status === "Approved" && (
+                        <p className="text-xs text-slate-600 font-semibold leading-relaxed">Your account is ready. You can now log in to the portal.</p>
+                      )}
+                      {checkResult.status === "Under Review" && (
+                        <p className="text-xs text-slate-600 font-semibold leading-relaxed">Your application is currently being reviewed. We'll notify you via email once a decision is made.</p>
+                      )}
+                      {checkResult.status === "Declined" && (
+                        <p className="text-xs text-slate-600 font-semibold leading-relaxed">Your application was not approved. Please contact the property management office for more details.</p>
+                      )}
+                    </div>
                   </div>
 
-                  <button onClick={closeCheckStatus}
-                    className="w-full py-3 bg-[#db6747] hover:bg-[#3a0f08] text-white text-sm font-bold transition-colors uppercase tracking-widest">
-                    Close
-                  </button>
+                  <div className="pt-2">
+                    <button onClick={closeCheckStatus}
+                      className="w-full py-3.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition-all shadow-md uppercase tracking-widest active:scale-95">
+                      Close Window
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -406,6 +421,11 @@ const Login = () => {
           30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
           40%, 60% { transform: translate3d(4px, 0, 0); }
         }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
       `}</style>
     </div>
   );

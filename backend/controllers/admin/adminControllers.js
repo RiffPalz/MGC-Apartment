@@ -374,9 +374,8 @@ export const updateUserApproval = async (req, res) => {
       message: `Tenant ${status} successfully`
     });
 
-
   } catch (error) {
-
+    console.error("updateUserApproval error:", error.message, "| userId:", req.params.userId, "| status:", req.body?.status);
     return res.status(400).json({
       success: false,
       message: error.message

@@ -17,41 +17,41 @@ export default function TermsAndConditions({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
-      {/* Backdrop with premium blur */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity duration-300"
-        onClick={onClose}
-      ></div>
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
 
       {/* Modal Container */}
-      <div className="relative bg-white w-full max-w-3xl max-h-[90vh] flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden border-t-4 border-[#db6747]">
+      <div className="relative bg-white w-full max-w-3xl rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
+
+        {/* Signature Top Accent Bar */}
+        <div className="h-1.5 w-full bg-[#db6747] shrink-0" />
+
         {/* Header Area */}
-        <div className="flex justify-between items-center px-8 py-6 border-b border-gray-100 bg-white z-10 shrink-0">
+        <div className="flex justify-between items-center px-6 sm:px-8 py-4 sm:py-5 border-b border-slate-100 bg-slate-50/80 shrink-0">
           <div>
-            <h2 className="font-OswaldRegular text-2xl uppercase tracking-[3px] text-gray-900 leading-none">
-              Terms & <span className="text-[#db6747]">Conditions</span>
+            <h2 className="text-slate-800 font-bold text-sm sm:text-base uppercase tracking-widest">
+              Terms & Conditions
             </h2>
-            <p className="font-NunitoSans text-[10px] text-gray-400 uppercase tracking-widest mt-2">
+            <p className="text-slate-400 text-[9px] sm:text-[10px] uppercase tracking-widest mt-1 font-bold">
               Last Updated: January 2026
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-[#fff7f1] text-gray-400 hover:text-[#db6747] transition-all rounded-full active:scale-90"
+            className="text-slate-400 hover:text-slate-800 transition-colors p-2 active:scale-90"
             aria-label="Close Terms and Conditions"
           >
-            <IoMdClose size={28} />
+            <IoMdClose size={24} />
           </button>
         </div>
 
         {/* Content Area */}
-        <div className="px-8 py-8 overflow-y-auto font-NunitoSans text-sm text-gray-600 space-y-8 leading-relaxed scrollbar-thin scrollbar-thumb-gray-200">
-          <section className="space-y-3">
-            <p className="font-bold text-gray-800 uppercase tracking-wide underline decoration-[#db6747] underline-offset-4">
+        <div className="px-6 sm:px-8 py-6 sm:py-8 overflow-y-auto custom-scrollbar font-sans text-sm text-slate-600 space-y-8 leading-relaxed flex-1">
+
+          <section className="space-y-2.5">
+            <p className="font-bold text-slate-800 uppercase tracking-widest text-[11px] underline decoration-[#db6747]/50 underline-offset-4">
               Legal Agreement for MGC Building Website
             </p>
-            <p>
+            <p className="font-medium text-slate-500">
               Welcome to the MGC Building website. By accessing or using this
               platform, you agree to be bound by these Terms and Conditions.
               These terms govern your use of our digital services and
@@ -61,26 +61,26 @@ export default function TermsAndConditions({ isOpen, onClose }) {
           </section>
 
           {/* Grid Layout for readability */}
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
+            <div className="space-y-3">
               <h3 className="section-title">1. About the Website</h3>
-              <p className="text-xs">
+              <p className="text-xs font-medium text-slate-500">
                 An online platform providing premium services and unit
                 information for the MGC Building residential complex.
               </p>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <h3 className="section-title">2. Eligibility</h3>
-              <p className="text-xs">
+              <p className="text-xs font-medium text-slate-500">
                 Users must be at least 18 years old or possess legal
                 parental/guardian consent to utilize this platform.
               </p>
             </div>
           </div>
 
-          <div className="space-y-4 bg-gray-50 p-6 border-l-4 border-gray-200">
+          <div className="space-y-3 bg-slate-50 p-5 sm:p-6 border-l-4 border-slate-200 rounded-r-xl shadow-inner">
             <h3 className="section-title">3. Acceptable Use Policy</h3>
-            <ul className="custom-list grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+            <ul className="custom-list grid grid-cols-1 sm:grid-cols-2 gap-x-4 font-medium text-slate-500">
               <li>No unlawful or unauthorized use</li>
               <li>No attempts to disrupt security</li>
               <li>No distribution of harmful code</li>
@@ -88,35 +88,35 @@ export default function TermsAndConditions({ isOpen, onClose }) {
             </ul>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <h3 className="section-title">4. Intellectual Property</h3>
-            <p>
+            <p className="font-medium text-slate-500">
               All architectural photography, branding, and content are the sole
-              property of <strong>MGC Building</strong>. Unauthorized
+              property of <strong className="text-slate-700">MGC Building</strong>. Unauthorized
               reproduction, distribution, or commercial use is strictly
               prohibited.
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <h3 className="section-title">5. Limitation of Liability</h3>
-            <p className="bg-[#fff7f1] p-4 border-l-2 border-[#db6747] italic text-xs">
+            <p className="bg-orange-50 p-4 border-l-4 border-[#db6747] text-slate-600 font-medium rounded-r-xl shadow-sm italic text-xs">
               MGC Building management shall not be held liable for any indirect
               loss or data damages arising from the use or inability to use this
               digital platform.
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <h3 className="section-title">6. Contact & Governing Law</h3>
-            <div className="bg-gray-900 text-white p-6 rounded-sm">
-              <p className="font-LemonMilkRegular text-[10px] tracking-widest text-[#db6747] mb-2">
+            <div className="bg-slate-50 border border-slate-100 p-5 rounded-xl shadow-inner">
+              <p className="font-bold text-[10px] tracking-widest text-[#db6747] uppercase mb-1">
                 Legal Jurisdiction
               </p>
-              <p className="text-gray-300 text-xs mb-4">
+              <p className="text-slate-500 font-medium text-sm mb-4">
                 Republic of the Philippines
               </p>
-              <p className="font-bold text-sm tracking-wide">
+              <p className="text-slate-800 font-bold mt-1 text-sm tracking-wide">
                 MGC Building Management
               </p>
               <p className="text-[#db6747] font-bold mt-1 text-xs">
@@ -125,17 +125,17 @@ export default function TermsAndConditions({ isOpen, onClose }) {
             </div>
           </div>
 
-          <p className="pt-4 text-[10px] text-gray-400 uppercase tracking-[2px] text-center border-t border-gray-50">
+          <p className="pt-6 text-[10px] text-slate-400 uppercase tracking-widest text-center border-t border-slate-100 font-bold">
             Continued use of this website constitutes full acceptance of these
             terms.
           </p>
         </div>
 
         {/* Footer Action */}
-        <div className="px-8 py-5 border-t border-gray-100 bg-gray-50 flex justify-end shrink-0">
+        <div className="px-6 sm:px-8 py-4 sm:py-5 border-t border-slate-100 bg-slate-50/80 flex justify-end shrink-0">
           <button
             onClick={onClose}
-            className="bg-gray-900 text-white px-10 py-3 font-OswaldRegular uppercase text-xs tracking-[2px] hover:bg-[#db6747] transition-all duration-300 active:scale-95"
+            className="w-full sm:w-auto bg-[#db6747] hover:bg-[#c45a3a] text-white px-8 py-3 rounded-xl font-bold uppercase text-xs tracking-widest transition-all duration-300 shadow-md active:scale-95"
           >
             I Agree
           </button>
@@ -144,11 +144,10 @@ export default function TermsAndConditions({ isOpen, onClose }) {
         {/* Internal Styles */}
         <style>{`
           .section-title {
-            font-family: "LemonMilkRegular", sans-serif;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 10px;
+            letter-spacing: 0.1em;
+            font-size: 11px;
             color: #db6747;
             display: block;
           }
@@ -158,20 +157,23 @@ export default function TermsAndConditions({ isOpen, onClose }) {
           }
           .custom-list li {
             position: relative;
-            padding-left: 1.5rem;
+            padding-left: 1.25rem;
             margin-bottom: 0.5rem;
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #666;
           }
           .custom-list li::before {
             content: "→";
             position: absolute;
             left: 0;
             color: #db6747;
-            font-weight: bold;
+            font-weight: 900;
           }
+          .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+          .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+          .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         `}</style>
       </div>
     </div>

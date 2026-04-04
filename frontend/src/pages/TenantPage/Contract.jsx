@@ -95,6 +95,7 @@ export default function ContractCards() {
       setDownloading(false);
     }
   };
+
   const fmt = (d) =>
     d
       ? new Date(d).toLocaleDateString("en-US", {
@@ -141,96 +142,94 @@ export default function ContractCards() {
   const conditions = parseLines(contract.termination_renewal_conditions);
 
   return (
-    <div className="bg-[#FFF9F6] min-h-screen w-full px-4 sm:px-6 md:px-10 py-6 md:py-10 text-[#330101]">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="bg-[#FFF9F6] min-h-screen w-full px-4 sm:px-6 md:px-10 2xl:px-14 py-6 md:py-10 2xl:py-14 text-[#330101]">
+      <div className="max-w-[1600px] mx-auto space-y-6 lg:space-y-8">
 
-        {/* STAT TILES */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* STAT TILES - Responsive grid for all sizes */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 2xl:gap-6">
           <StatTile icon={<FaCalendarAlt />} label="Start Date" value={fmt(contract.start_date)} color="text-indigo-500" bg="bg-indigo-50" />
           <StatTile icon={<FaCalendarAlt />} label="End Date" value={fmt(contract.end_date)} color="text-[#D96648]" bg="bg-[#FDF2ED]" />
           <StatTile icon={<FaMoneyBillWave />} label="Monthly Rent"
             value={`₱${parseFloat(contract.rent_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
             color="text-emerald-600" bg="bg-emerald-50"
           />
-          <div className="bg-[#5c1f10] p-4 sm:p-5 rounded-3xl shadow-sm flex items-center gap-3 sm:gap-4">
+          <div className="bg-[#5c1f10] p-4 sm:p-5 2xl:p-6 rounded-3xl shadow-sm flex items-center gap-3 sm:gap-4 transition-all hover:scale-[1.02]">
             <div className="p-2.5 sm:p-3 bg-white/10 rounded-2xl shrink-0" style={{ color: st.text }}>
               {st.icon}
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Status</p>
-              <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight truncate">{contract.status}</p>
+              <p className="text-[10px] 2xl:text-xs font-bold text-white/40 uppercase tracking-widest mb-1">Status</p>
+              <p className="text-sm sm:text-base 2xl:text-lg font-black text-white uppercase tracking-tight truncate">{contract.status}</p>
             </div>
           </div>
         </div>
 
         {/* UNIT INFO STRIP */}
         {profile?.unitNumber && (
-          <div className="bg-white border border-[#F2DED4] rounded-2xl px-6 py-4 flex items-center gap-4 shadow-sm">
-            <div className="p-2.5 bg-[#FDF2ED] text-[#D96648] rounded-xl shrink-0">
-              <FaHome size={16} />
+          <div className="bg-white border border-[#F2DED4] rounded-2xl px-6 py-4 2xl:py-5 flex items-center gap-4 shadow-sm">
+            <div className="p-2.5 2xl:p-3 bg-[#FDF2ED] text-[#D96648] rounded-xl shrink-0">
+              <FaHome size={16} className="2xl:w-5 2xl:h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest">Assigned Unit</p>
-              <p className="font-black text-[#330101]">Unit {profile.unitNumber}</p>
+              <p className="text-[10px] 2xl:text-xs font-bold text-[#330101]/40 uppercase tracking-widest">Assigned Unit</p>
+              <p className="font-black text-[#330101] 2xl:text-lg">Unit {profile.unitNumber}</p>
             </div>
           </div>
         )}
 
         {/* MAIN GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 2xl:gap-10">
 
-          {/* LEFT: ACTIONS */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
+          {/* LEFT: ACTIONS - Sticky on large screens */}
+          <div className="lg:col-span-4 2xl:col-span-3 flex flex-col gap-4">
+            <div className="lg:sticky lg:top-6 space-y-4">
+              <button
+                onClick={openPdfModal}
+                disabled={!contract.contract_file}
+                className="w-full flex items-center justify-center gap-3 py-4 sm:py-5 rounded-2xl font-bold text-xs 2xl:text-sm uppercase tracking-widest bg-[#5c1f10] text-[#FFEDE1] hover:bg-[#7a2e1a] active:scale-[0.98] transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <FaEye size={16} /> View Full Agreement
+              </button>
 
-            {/* View PDF */}
-            <button
-              onClick={openPdfModal}
-              disabled={!contract.contract_file}
-              className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl font-bold text-xs uppercase tracking-widest bg-[#5c1f10] text-[#FFEDE1] hover:bg-[#7a2e1a] active:scale-[0.98] transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <FaEye size={16} /> View Full Agreement
-            </button>
+              <button
+                onClick={handleDownload}
+                disabled={!contract.contract_file || downloading}
+                className={`w-full flex items-center justify-center gap-3 py-4 sm:py-5 rounded-2xl font-bold text-xs 2xl:text-sm uppercase tracking-widest border border-[#F2DED4] bg-white text-[#330101] hover:bg-[#FFF9F6] active:scale-[0.98] transition-all ${!contract.contract_file ? "opacity-40 cursor-not-allowed" : ""}`}
+              >
+                <FaFileDownload size={16} /> {downloading ? "Downloading..." : "Download Digital Copy"}
+              </button>
 
-            {/* Download PDF */}
-            <button
-              onClick={handleDownload}
-              disabled={!contract.contract_file || downloading}
-              className={`w-full flex items-center justify-center gap-3 py-5 rounded-2xl font-bold text-xs uppercase tracking-widest border border-[#F2DED4] bg-white text-[#330101] hover:bg-[#FFF9F6] active:scale-[0.98] transition-all ${!contract.contract_file ? "opacity-40 cursor-not-allowed" : ""}`}
-            >
-              <FaFileDownload size={16} /> {downloading ? "Downloading..." : "Download Digital Copy"}
-            </button>
-
-            {/* Secure badge */}
-            <div className="bg-white border border-[#F2DED4] rounded-4xl p-6 flex-1 flex flex-col items-center justify-center text-center gap-3">
-              <div className="p-4 bg-[#FDF2ED] rounded-2xl">
-                <FaShieldAlt className="text-[#D96648]" size={22} />
+              <div className="bg-white border border-[#F2DED4] rounded-4xl p-6 2xl:p-8 flex flex-col items-center justify-center text-center gap-3 shadow-sm">
+                <div className="p-4 2xl:p-5 bg-[#FDF2ED] rounded-2xl">
+                  <FaShieldAlt className="text-[#D96648] 2xl:w-8 2xl:h-8" size={22} />
+                </div>
+                <h4 className="font-black text-sm 2xl:text-base text-[#330101]">Secure Agreement</h4>
+                <p className="text-[11px] 2xl:text-xs text-[#330101]/40 leading-relaxed max-w-[200px] 2xl:max-w-none">
+                  This contract is legally binding and stored securely in the MGC Portal.
+                </p>
               </div>
-              <h4 className="font-black text-sm text-[#330101]">Secure Agreement</h4>
-              <p className="text-[11px] text-[#330101]/40 leading-relaxed max-w-[200px]">
-                This contract is legally binding and stored securely in the MGC Portal.
-              </p>
             </div>
           </div>
 
           {/* RIGHT: TERMS */}
-          <div className="lg:col-span-8">
-            <div className="bg-white rounded-4xl border border-[#F2DED4] shadow-sm overflow-hidden">
-              <div className="px-7 py-5 border-b border-[#F2DED4] flex items-center gap-3">
-                <div className="p-2.5 bg-[#FDF2ED] text-[#D96648] rounded-xl">
-                  <FaClipboardList size={16} />
+          <div className="lg:col-span-8 2xl:col-span-9">
+            <div className="bg-white rounded-4xl border border-[#F2DED4] shadow-sm overflow-hidden flex flex-col h-full">
+              <div className="px-7 py-5 2xl:py-7 border-b border-[#F2DED4] flex items-center gap-3 shrink-0">
+                <div className="p-2.5 2xl:p-3 bg-[#FDF2ED] text-[#D96648] rounded-xl">
+                  <FaClipboardList size={16} className="2xl:w-5 2xl:h-5" />
                 </div>
-                <h2 className="text-sm font-black uppercase tracking-widest text-[#330101]">
+                <h2 className="text-sm 2xl:text-base font-black uppercase tracking-widest text-[#330101]">
                   Terms & Conditions
                 </h2>
               </div>
 
-              <div className="p-6 sm:p-8 space-y-8 max-h-[520px] overflow-y-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="p-6 sm:p-8 2xl:p-10 space-y-8 flex-1 overflow-y-auto custom-scrollbar lg:max-h-[650px]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 2xl:gap-12">
                   <RulesSection title="Tenancy Rules" items={rules} />
                   <RulesSection title="Renewal & Termination" items={conditions} />
                 </div>
-                <div className="pt-6 border-t border-dashed border-[#F2DED4]">
-                  <p className="text-[10px] font-bold text-[#330101]/20 uppercase tracking-widest text-center">
+                <div className="pt-6 2xl:pt-8 border-t border-dashed border-[#F2DED4]">
+                  <p className="text-[10px] 2xl:text-xs font-bold text-[#330101]/20 uppercase tracking-widest text-center">
                     End of Document — MGC Building Management
                   </p>
                 </div>
@@ -243,37 +242,63 @@ export default function ContractCards() {
       {/* PDF VIEWER MODAL */}
       {pdfModal && (
         <ModalPortal>
-          <div className="fixed inset-0 bg-black/70 z-50 flex flex-col">
-            <div className="bg-[#5c1f10] px-5 py-3 flex items-center justify-between shrink-0">
-              <span className="text-white font-black text-sm uppercase tracking-widest">Lease Agreement</span>
+          <div className="fixed inset-0 bg-[#323639] z-[9999] flex flex-col animate-in fade-in duration-300">
+            
+            {/* Header: Locked to top */}
+            <div className="bg-[#5c1f10] px-4 sm:px-6 py-3 2xl:py-4 flex items-center justify-between shrink-0 shadow-xl z-10 border-b border-black/20">
               <div className="flex items-center gap-3">
-                <button onClick={handleDownload} disabled={downloading}
-                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all uppercase tracking-widest disabled:opacity-60">
-                  <FaFileDownload size={12} /> {downloading ? "..." : "Download"}
+                <div className="p-2 bg-white/10 rounded-lg hidden sm:block">
+                  <FaShieldAlt className="text-[#f7b094]" size={14} />
+                </div>
+                <span className="text-white font-black text-xs sm:text-sm uppercase tracking-[0.2em]">
+                  Lease Agreement
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2 sm:gap-4">
+                <button 
+                  onClick={handleDownload} 
+                  disabled={downloading}
+                  className="flex items-center gap-2 bg-[#D96648] hover:bg-[#b5553b] text-white text-[10px] sm:text-xs font-bold px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl transition-all uppercase tracking-widest disabled:opacity-60 shadow-lg active:scale-95"
+                >
+                  <FaFileDownload size={12} /> 
+                  <span className="hidden xs:inline">{downloading ? "..." : "Download PDF"}</span>
                 </button>
-                <button onClick={closePdfModal} className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all">
-                  <FaTimes size={16} />
+                <button 
+                  onClick={closePdfModal} 
+                  className="p-2 sm:p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all active:scale-90"
+                  aria-label="Close modal"
+                >
+                  <FaTimes size={18} />
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-hidden bg-[#323639] flex items-center justify-center">
+
+            {/* PDF Container: EDGE-TO-EDGE */}
+            <div className="flex-1 w-full relative bg-[#323639]">
               {pdfLoading ? (
-                <div className="flex flex-col items-center gap-3 text-white/50">
-                  <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                  <p className="text-xs uppercase tracking-widest font-bold">Loading PDF...</p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white/40">
+                  <div className="w-12 h-12 border-3 border-white/10 border-t-[#D96648] rounded-full animate-spin" />
+                  <p className="text-[10px] uppercase tracking-[0.3em] font-black">Loading Document...</p>
                 </div>
               ) : pdfBlobUrl ? (
                 <iframe
                   src={pdfBlobUrl}
-                  className="w-full h-full border-0"
-                  title="Lease Agreement"
+                  className="absolute inset-0 w-full h-full border-0"
+                  title="Lease Agreement Preview"
                 />
               ) : (
-                <div className="flex flex-col items-center gap-3 text-white/50">
-                  <p className="text-sm">Could not load PDF.</p>
-                  <button onClick={handleDownload}
-                    className="bg-[#D96648] hover:bg-[#b5553b] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all text-white">
-                    Download Instead
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 text-white/50 text-center px-6">
+                  <div className="p-6 bg-white/5 rounded-3xl border border-white/10 max-w-md">
+                    <FaExclamationTriangle className="text-[#D96648] w-12 h-12 mb-4 mx-auto" />
+                    <p className="text-sm font-bold text-white mb-2">Preview Unavailable</p>
+                    <p className="text-xs leading-relaxed">Direct browser preview failed. Your agreement is still secure and ready for download.</p>
+                  </div>
+                  <button 
+                    onClick={handleDownload}
+                    className="bg-white text-[#330101] hover:bg-[#FFEDE1] px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95"
+                  >
+                    Download & Open Locally
                   </button>
                 </div>
               )}
@@ -289,13 +314,13 @@ export default function ContractCards() {
 
 function StatTile({ icon, label, value, color, bg }) {
   return (
-    <div className="bg-white px-4 sm:px-5 py-4 rounded-3xl border border-[#F2DED4] shadow-sm flex items-center gap-3 sm:gap-4">
-      <div className={`p-2.5 sm:p-3 ${bg} ${color} rounded-2xl shrink-0`}>
+    <div className="bg-white px-4 sm:px-5 py-4 2xl:p-6 rounded-3xl border border-[#F2DED4] shadow-sm flex items-center gap-3 sm:gap-4 transition-all hover:scale-[1.02]">
+      <div className={`p-2.5 sm:p-3 2xl:p-4 ${bg} ${color} rounded-2xl shrink-0`}>
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-[9px] font-bold text-[#330101]/40 uppercase tracking-widest mb-1">{label}</p>
-        <h3 className="text-xs sm:text-sm font-black text-[#330101] truncate">{value}</h3>
+        <p className="text-[9px] 2xl:text-xs font-bold text-[#330101]/40 uppercase tracking-widest mb-1">{label}</p>
+        <h3 className="text-xs sm:text-sm 2xl:text-base font-black text-[#330101] truncate">{value}</h3>
       </div>
     </div>
   );
@@ -303,18 +328,18 @@ function StatTile({ icon, label, value, color, bg }) {
 
 function RulesSection({ title, items }) {
   return (
-    <div className="space-y-4">
-      <h3 className="text-xs font-black text-[#D96648] uppercase tracking-widest flex items-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#D96648] shrink-0" /> {title}
+    <div className="space-y-4 2xl:space-y-6">
+      <h3 className="text-xs 2xl:text-sm font-black text-[#D96648] uppercase tracking-widest flex items-center gap-2">
+        <span className="w-1.5 h-1.5 2xl:w-2 2xl:h-2 rounded-full bg-[#D96648] shrink-0" /> {title}
       </h3>
       {items.length === 0 ? (
-        <p className="text-xs text-[#330101]/30 italic">No items listed.</p>
+        <p className="text-xs 2xl:text-sm text-[#330101]/30 italic text-center py-4">No items listed.</p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-3 2xl:space-y-4">
           {items.map((item, i) => (
-            <li key={i} className="flex gap-3 items-start">
-              <span className="mt-2 w-1 h-1 rounded-full bg-[#F2DED4] shrink-0" />
-              <span className="text-xs text-[#330101]/70 leading-relaxed">{item}</span>
+            <li key={i} className="flex gap-3 items-start group">
+              <span className="mt-2 w-1 h-1 rounded-full bg-[#F2DED4] shrink-0 group-hover:bg-[#D96648] transition-colors" />
+              <span className="text-xs 2xl:text-sm text-[#330101]/70 leading-relaxed group-hover:text-[#330101] transition-colors">{item}</span>
             </li>
           ))}
         </ul>

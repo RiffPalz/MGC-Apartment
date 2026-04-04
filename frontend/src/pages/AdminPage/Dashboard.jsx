@@ -80,13 +80,13 @@ export default function AdminDashboard() {
   const maintenance = data?.maintenance?.requests ?? [];
   const pendingMaint = maintenance.filter((m) => m.status === "Pending").length;
   const inProgressMaint = maintenance.filter((m) => m.status === "In Progress").length;
-  const doneMaint = maintenance.filter((m) => m.status === "Done").length;
+
 
   const revenueMap = {};
   (payDash.monthlyRevenue || []).forEach((r) => {
     const [year, month] = r.billing_month.split("-").map(Number);
     const key = `${year}-${month - 1}`;
-    
+
     // Fix: Add to the existing value instead of overwriting it
     revenueMap[key] = (revenueMap[key] || 0) + parseFloat(r.total || 0);
   });
@@ -155,8 +155,8 @@ export default function AdminDashboard() {
   const vacantCount = allUnits.length - occupiedCount;
   const totalUnits = allUnits.length;
   const hasAlerts = payDash.pendingVerification > 0 || payDash.overduePayments > 0 || payDash.unpaidBills > 0;
-  const appRequests = data?.appRequests?.applications ?? [];
-  const appReqCount = data?.appRequests?.count ?? 0;
+
+
   const todayApps = data?.todayApps?.applications ?? [];
   const todayAppsCount = data?.todayApps?.count ?? 0;
 

@@ -227,10 +227,6 @@ export const deleteUserService = async (adminUser, userId) => {
 
     if (!user) throw new Error("User not found");
 
-    if (!["admin", "caretaker"].includes(user.role)) {
-        throw new Error("Only admin or caretaker can be deleted");
-    }
-
     if (user.ID === adminUser.ID) {
         throw new Error("You cannot delete your own account");
     }

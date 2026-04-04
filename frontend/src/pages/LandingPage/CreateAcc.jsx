@@ -203,11 +203,11 @@ const CreateAcc = () => {
           data-aos="fade-down"
           className="relative z-10 flex flex-col items-center lg:items-start"
         >
-          <img src={logo} alt="Logo" className="w-24 lg:w-32 mb-4 lg:mb-6" />
-          <h1 className="font-LemonMilkRegular text-xl lg:text-2xl text-white uppercase tracking-[4px] text-center lg:text-left">
+          <img src={logo} alt="Logo" className="w-24 lg:w-32 mb-4 lg:mb-6 drop-shadow-lg" />
+          <h1 className="font-LemonMilkRegular text-xl lg:text-2xl text-white uppercase tracking-[4px] text-center lg:text-left drop-shadow-md">
             MGC Building
           </h1>
-          <div className="w-12 h-1 bg-[#db6747] mt-4 hidden lg:block"></div>
+          <div className="w-12 h-1 bg-[#db6747] mt-4 hidden lg:block rounded-full"></div>
         </div>
 
         {/* NAVIGATION CONTROLS (Desktop & Mobile Friendly) */}
@@ -217,18 +217,18 @@ const CreateAcc = () => {
         >
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-3 text-white/70 hover:text-white transition-all group font-LemonMilkRegular text-[10px] tracking-widest"
+            className="flex items-center gap-3 text-white/70 hover:text-white transition-all group font-LemonMilkRegular text-[10px] tracking-widest active:scale-95"
           >
-            <div className="p-2 border border-white/20 rounded-full group-hover:bg-[#db6747] group-hover:border-transparent transition-all">
+            <div className="p-2.5 border border-white/20 rounded-full group-hover:bg-[#db6747] group-hover:border-transparent transition-all shadow-sm">
               <FaHome size={14} />
             </div>
             BACK TO HOME
           </button>
           <button
             onClick={() => navigate("/login")}
-            className="flex items-center gap-3 text-white/70 hover:text-white transition-all group font-LemonMilkRegular text-[10px] tracking-widest"
+            className="flex items-center gap-3 text-white/70 hover:text-white transition-all group font-LemonMilkRegular text-[10px] tracking-widest active:scale-95"
           >
-            <div className="p-2 border border-white/20 rounded-full group-hover:bg-[#db6747] group-hover:border-transparent transition-all">
+            <div className="p-2.5 border border-white/20 rounded-full group-hover:bg-[#db6747] group-hover:border-transparent transition-all shadow-sm">
               <FaArrowLeft size={14} />
             </div>
             BACK TO LOGIN
@@ -243,15 +243,15 @@ const CreateAcc = () => {
           <div className="mb-10">
             <div className="flex justify-between items-end mb-4">
               <div>
-                <h2 className="text-3xl lg:text-4xl font-OswaldRegular text-gray-900 uppercase">
+                <h2 className="text-3xl lg:text-4xl font-OswaldRegular text-gray-900 uppercase tracking-wide">
                   Registration
                 </h2>
-                <p className="text-gray-400 text-[10px] uppercase tracking-[3px] mt-1 font-bold">
+                <p className="text-slate-400 text-[10px] uppercase tracking-[3px] mt-1 font-bold">
                   Tenant Account Setup
                 </p>
               </div>
               <div className="text-right">
-                <span className="text-[10px] font-bold text-gray-300 tracking-widest uppercase block">
+                <span className="text-[10px] font-bold text-slate-300 tracking-widest uppercase block">
                   Progress
                 </span>
                 <p className="text-2xl font-OswaldRegular text-[#db6747] leading-none">
@@ -260,9 +260,9 @@ const CreateAcc = () => {
               </div>
             </div>
             {/* Progress Bar Container */}
-            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden shadow-inner">
               <div
-                className="h-full bg-[#db6747] transition-all duration-700 ease-out"
+                className="h-full bg-[#db6747] transition-all duration-700 ease-out rounded-full"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
@@ -287,7 +287,7 @@ const CreateAcc = () => {
               />
               <Input
                 icon={<MdEmail />}
-                label="Email"
+                label="Email Address"
                 name="email"
                 placeholder="email@example.com"
                 value={form.email}
@@ -310,54 +310,31 @@ const CreateAcc = () => {
                   onChange={handleChange}
                 >
                   <option value="" disabled>Select unit...</option>
-                  {/* Grouping units by floor */}
-                  <optgroup
-                    label="1st Floor"
-                    className="text-[#db6747] font-bold bg-gray-50"
-                  >
+                  <optgroup label="1st Floor" className="text-[#db6747] font-bold bg-slate-50">
                     {[101, 102, 103, 104, 105, 106, 107].map((n) => (
-                      <option key={n} value={n} disabled={takenUnits.includes(n)}
-                        className="text-gray-700">
-                        Unit {n}{takenUnits.includes(n) ? " (taken)" : ""}
+                      <option key={n} value={n} disabled={takenUnits.includes(n)} className="text-slate-700">
+                        Unit {n}{takenUnits.includes(n) ? " (Occupied)" : ""}
                       </option>
                     ))}
                   </optgroup>
-
-                  <optgroup
-                    label="2nd Floor"
-                    className="text-[#db6747] font-bold bg-gray-50"
-                  >
+                  <optgroup label="2nd Floor" className="text-[#db6747] font-bold bg-slate-50">
                     {[201, 202, 203, 204, 205, 206].map((n) => (
-                      <option key={n} value={n} disabled={takenUnits.includes(n)}
-                        className="text-gray-700">
-                        Unit {n}{takenUnits.includes(n) ? " (taken)" : ""}
+                      <option key={n} value={n} disabled={takenUnits.includes(n)} className="text-slate-700">
+                        Unit {n}{takenUnits.includes(n) ? " (Occupied)" : ""}
                       </option>
                     ))}
                   </optgroup>
-
-                  <optgroup
-                    label="3rd Floor"
-                    className="text-[#db6747] font-bold bg-gray-50"
-                  >
-                    {[
-                      301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311,
-                      312, 313, 314, 315, 316,
-                    ].map((n) => (
-                      <option key={n} value={n} disabled={takenUnits.includes(n)}
-                        className="text-gray-700">
-                        Unit {n}{takenUnits.includes(n) ? " (taken)" : ""}
+                  <optgroup label="3rd Floor" className="text-[#db6747] font-bold bg-slate-50">
+                    {[301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316].map((n) => (
+                      <option key={n} value={n} disabled={takenUnits.includes(n)} className="text-slate-700">
+                        Unit {n}{takenUnits.includes(n) ? " (Occupied)" : ""}
                       </option>
                     ))}
                   </optgroup>
-
-                  <optgroup
-                    label="4th Floor"
-                    className="text-[#db6747] font-bold bg-gray-50"
-                  >
+                  <optgroup label="4th Floor" className="text-[#db6747] font-bold bg-slate-50">
                     {[401, 402, 403, 404, 405, 406, 407, 408].map((n) => (
-                      <option key={n} value={n} disabled={takenUnits.includes(n)}
-                        className="text-gray-700">
-                        Unit {n}{takenUnits.includes(n) ? " (taken)" : ""}
+                      <option key={n} value={n} disabled={takenUnits.includes(n)} className="text-slate-700">
+                        Unit {n}{takenUnits.includes(n) ? " (Occupied)" : ""}
                       </option>
                     ))}
                   </optgroup>
@@ -390,10 +367,10 @@ const CreateAcc = () => {
                   value={form.username}
                   onChange={handleChange}
                   onBlur={handleUsernameBlur}
-                  readOnly // Prevents manual editing
-                  className="bg-gray-100/50 cursor-not-allowed text-gray-400 font-bold"
+                  readOnly
+                  className="bg-slate-100/50 cursor-not-allowed text-slate-400 font-bold w-full outline-none text-sm placeholder:text-slate-300"
                 />
-                <p className="text-[8px] text-[#db6747] mt-1 uppercase tracking-wider font-bold">
+                <p className="text-[8px] text-[#db6747] mt-1.5 uppercase tracking-wider font-bold">
                   * Locked to your unit number for security
                 </p>
                 {usernameError && (
@@ -411,7 +388,7 @@ const CreateAcc = () => {
                 show={showPassword}
                 toggle={() => setShowPassword(!showPassword)}
               />
-              <p className="text-[8px] text-gray-400 -mt-4 leading-relaxed">
+              <p className="text-[9px] text-slate-400 -mt-4 leading-relaxed font-semibold">
                 Min. 8 chars · uppercase · lowercase · number · special character (!@#$%...)
               </p>
 
@@ -427,23 +404,23 @@ const CreateAcc = () => {
 
             {/* Submit & Legal Section */}
             <div
-              className="md:col-span-2 pt-6 space-y-6"
+              className="md:col-span-2 pt-6 space-y-6 border-t border-orange-200/50"
               data-aos="zoom-in"
               data-aos-delay="300"
             >
-              <label className="flex items-start gap-4 bg-white border border-gray-100 p-5 shadow-sm cursor-pointer group">
+              <label className="flex items-start gap-4 bg-white border border-slate-100 p-5 rounded-xl shadow-sm cursor-pointer group hover:border-orange-200 transition-colors">
                 <input
                   type="checkbox"
                   name="agreed"
                   checked={form.agreed}
                   onChange={handleChange}
-                  className="mt-1 accent-[#db6747] w-4 h-4 shrink-0"
+                  className="mt-1 accent-[#db6747] w-4 h-4 shrink-0 cursor-pointer"
                 />
-                <span className="text-[10px] lg:text-[11px] uppercase tracking-wider text-gray-500 leading-relaxed">
+                <span className="text-[10px] lg:text-[11px] uppercase tracking-wider text-slate-500 leading-relaxed font-semibold">
                   I certify accuracy and agree to the{" "}
                   <button
                     type="button"
-                    onClick={() => setShowTerms(true)}
+                    onClick={(e) => { e.preventDefault(); setShowTerms(true); }}
                     className="text-[#db6747] font-black hover:underline"
                   >
                     Terms
@@ -451,7 +428,7 @@ const CreateAcc = () => {
                   &{" "}
                   <button
                     type="button"
-                    onClick={() => setShowPrivacy(true)}
+                    onClick={(e) => { e.preventDefault(); setShowPrivacy(true); }}
                     className="text-[#db6747] font-black hover:underline"
                   >
                     Privacy Policy
@@ -460,7 +437,7 @@ const CreateAcc = () => {
               </label>
 
               {error && (
-                <div className="bg-red-50 border-l-4 border-red-500 p-4 text-[10px] text-red-600 font-bold uppercase tracking-widest animate-shake">
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 text-[10px] text-red-600 font-bold uppercase tracking-widest animate-shake rounded-r-xl shadow-sm">
                   {error}
                 </div>
               )}
@@ -468,7 +445,7 @@ const CreateAcc = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#db6747] hover:bg-[#3a0f08] text-white py-5 text-xs tracking-[4px] font-LemonMilkRegular transition-all duration-500 shadow-xl disabled:opacity-60 uppercase active:scale-[0.98]"
+                className="w-full bg-[#db6747] hover:bg-[#c45a3a] text-white py-5 rounded-xl text-xs tracking-[4px] font-LemonMilkRegular transition-all duration-300 shadow-lg shadow-orange-500/30 disabled:opacity-60 uppercase active:scale-95"
               >
                 {loading ? "Processing..." : "Complete Registration"}
               </button>
@@ -508,19 +485,19 @@ const CreateAcc = () => {
 
 /* ===== Reusable Styled Components ===== */
 
-const Input = ({ icon, label, name, ...props }) => (
+const Input = ({ icon, label, name, className, ...props }) => (
   <div className="w-full">
-    <label className="block text-[9px] font-bold tracking-[2px] text-gray-400 mb-2 uppercase font-LemonMilkRegular">
+    <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 mb-2 uppercase font-LemonMilkRegular">
       {label}
     </label>
-    <div className="flex items-center border-b border-gray-200 focus-within:border-[#db6747] transition-all py-2 group">
-      <span className="text-gray-300 group-focus-within:text-[#db6747] mr-3 transition-colors">
+    <div className="flex items-center border-b-2 border-slate-200 focus-within:border-[#db6747] transition-all py-2.5 group">
+      <span className="text-slate-300 group-focus-within:text-[#db6747] mr-3 transition-colors">
         {icon}
       </span>
       <input
         {...props}
         name={name}
-        className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-200"
+        className={className || "w-full bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-300 font-semibold"}
       />
     </div>
   </div>
@@ -528,13 +505,13 @@ const Input = ({ icon, label, name, ...props }) => (
 
 const Select = ({ label, children, name, ...props }) => (
   <div className="w-full">
-    <label className="block text-[9px] font-bold tracking-[2px] text-gray-400 mb-2 uppercase font-LemonMilkRegular">
+    <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 mb-2 uppercase font-LemonMilkRegular">
       {label}
     </label>
     <select
       {...props}
       name={name}
-      className="w-full bg-transparent border-b border-gray-200 focus:border-[#db6747] py-2 text-sm text-gray-700 outline-none appearance-none cursor-pointer"
+      className="w-full bg-transparent border-b-2 border-slate-200 focus:border-[#db6747] py-2.5 text-sm text-slate-800 outline-none appearance-none cursor-pointer font-semibold"
     >
       {children}
     </select>
@@ -543,21 +520,21 @@ const Select = ({ label, children, name, ...props }) => (
 
 const Password = ({ label, name, show, toggle, ...props }) => (
   <div className="w-full">
-    <label className="block text-[9px] font-bold tracking-[2px] text-gray-400 mb-2 uppercase font-LemonMilkRegular">
+    <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 mb-2 uppercase font-LemonMilkRegular">
       {label}
     </label>
-    <div className="flex items-center border-b border-gray-200 focus-within:border-[#db6747] transition-all py-2 group">
-      <RiLockPasswordFill className="text-gray-300 group-focus-within:text-[#db6747] mr-3 transition-colors" />
+    <div className="flex items-center border-b-2 border-slate-200 focus-within:border-[#db6747] transition-all py-2.5 group">
+      <RiLockPasswordFill className="text-slate-300 group-focus-within:text-[#db6747] mr-3 transition-colors" />
       <input
         {...props}
         name={name}
         type={show ? "text" : "password"}
-        className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-200"
+        className="w-full bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-300 font-semibold"
       />
       <button
         type="button"
         onClick={toggle}
-        className="text-gray-400 hover:text-[#db6747] transition-colors"
+        className="text-slate-300 hover:text-[#db6747] transition-colors p-1"
       >
         {show ? <LuEye size={18} /> : <LuEyeClosed size={18} />}
       </button>

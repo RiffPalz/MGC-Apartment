@@ -11,6 +11,7 @@ import {
    getExpiringContractsAdmin,
    completeContractAdmin,
    generateContractPdfAdmin,
+   deleteContractAdmin,
 } from "../../controllers/admin/adminContractController.js";
 import axios from "axios";
 import Contract from "../../models/contract.js";
@@ -67,6 +68,9 @@ router.put(
 
 // Generate a PDF contract dynamically
 router.post("/:id/generate-pdf", adminAuth, generateContractPdfAdmin);
+
+// Delete a contract permanently
+router.delete("/:id", adminAuth, deleteContractAdmin);
 
 // Proxy: streams PDF from Cloudinary — avoids CORS/preview issues in browser
 router.get("/:id/pdf", adminAuth, async (req, res) => {
