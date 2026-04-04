@@ -74,13 +74,17 @@ function Home() {
     fetchConfig().then((data) => {
       if (data?.config) {
         const cfg = data.config;
-        // Merge with hardcoded defaults: for gallery, fall back to local images if URL is empty
+        // Merge by slot so order in DB doesn't matter
+        const remoteBySlot = {};
+        (cfg.gallery_images || []).forEach((img) => {
+          if (img.slot) remoteBySlot[img.slot] = img;
+        });
         setConfig({
           ...HARDCODED_DEFAULTS,
           ...cfg,
-          gallery_images: HARDCODED_DEFAULTS.gallery_images.map((def, i) => {
-            const remote = (cfg.gallery_images || [])[i];
-            return remote && remote.url ? { ...def, ...remote, src: remote.url } : def;
+          gallery_images: HARDCODED_DEFAULTS.gallery_images.map((def) => {
+            const remote = remoteBySlot[def.slot];
+            return remote && remote.url ? { ...def, ...remote } : def;
           }),
         });
       }

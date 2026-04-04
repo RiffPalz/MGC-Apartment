@@ -3,8 +3,11 @@ import api from "../config";
 
 /** GET /api/config — public, no auth required */
 export const fetchConfig = async () => {
-  const base = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL?.replace(/\/api$/, "") || "";
-  const res = await axios.get(`${base}/api/config`);
+  // VITE_BACKEND_URL already ends with /api (e.g. https://your-backend.com/api)
+  // so we just append /config directly
+  const base = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || "";
+  const url = base ? `${base}/config` : "/api/config";
+  const res = await axios.get(url);
   return res.data;
 };
 
