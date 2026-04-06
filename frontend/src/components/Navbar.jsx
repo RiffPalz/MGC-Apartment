@@ -14,7 +14,7 @@ export default function Navbar() {
   const lastScrollY = useRef(0);
 
   const { config } = useConfig();
-  const mgcName = config?.mgc_name || "MGC Building";
+  const mgcName = config?.mgc_name || "MGC";
 
   const location    = useLocation();
   const isLandingPage = location.pathname === "/";
