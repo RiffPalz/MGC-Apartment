@@ -165,8 +165,37 @@ useSocketEvent("payment_updated", () => load(true));
 
           {/* Table Area */}
           {loading ? (
-            <div className="flex items-center justify-center py-20 2xl:py-32">
-              <div className="animate-spin rounded-full h-10 w-10 2xl:w-12 2xl:h-12 border-b-2 border-[#D96648]" />
+            <div className="animate-pulse space-y-2 py-4">
+              <div className="hidden lg:block">
+                <div className="h-10 bg-[#5c1f10]/10 rounded-t-xl w-full mb-1" />
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="flex gap-4 px-6 py-4 border-b border-[#F2DED4]">
+                    <div className="h-4 w-20 bg-slate-200 rounded" />
+                    <div className="h-4 w-28 bg-slate-100 rounded" />
+                    <div className="h-4 w-24 bg-slate-100 rounded" />
+                    <div className="h-4 w-20 bg-slate-200 rounded" />
+                    <div className="h-4 w-24 bg-slate-100 rounded" />
+                    <div className="h-4 w-16 bg-slate-100 rounded" />
+                    <div className="h-5 w-20 bg-slate-100 rounded-full" />
+                    <div className="h-4 w-16 bg-slate-100 rounded ml-auto" />
+                  </div>
+                ))}
+              </div>
+              <div className="lg:hidden space-y-3">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl border border-[#F2DED4] p-4 space-y-3">
+                    <div className="flex justify-between">
+                      <div className="h-5 w-20 bg-slate-200 rounded" />
+                      <div className="h-5 w-16 bg-slate-100 rounded-full" />
+                    </div>
+                    <div className="h-6 w-28 bg-slate-200 rounded" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="h-8 bg-slate-100 rounded" />
+                      <div className="h-8 bg-slate-100 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-20 2xl:py-32 text-[#330101]/30 text-sm 2xl:text-base italic">No records found.</div>

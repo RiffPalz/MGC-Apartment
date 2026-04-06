@@ -126,10 +126,15 @@ export default function CaretakerActivityLogs() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
-                  <tr><td colSpan={5} className="py-24 text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#db6747] mx-auto mb-3" />
-                    <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Loading logs...</p>
-                  </td></tr>
+                  [...Array(6)].map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-5 py-3.5"><div className="h-4 w-6 bg-slate-100 rounded" /></td>
+                      <td className="px-5 py-3.5"><div className="h-4 w-28 bg-slate-100 rounded" /></td>
+                      <td className="px-5 py-3.5"><div className="h-5 w-20 bg-slate-100 rounded-md" /></td>
+                      <td className="px-5 py-3.5"><div className="h-4 w-full max-w-xs bg-slate-100 rounded" /></td>
+                      <td className="px-5 py-3.5"><div className="h-4 w-16 bg-slate-100 rounded" /></td>
+                    </tr>
+                  ))
                 ) : paginated.length === 0 ? (
                   <tr><td colSpan={5} className="py-24 text-center">
                     <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm border border-slate-100">
@@ -163,8 +168,22 @@ export default function CaretakerActivityLogs() {
           {/* Mobile Cards View */}
           <div className="lg:hidden flex-1 overflow-y-auto divide-y divide-slate-100 bg-slate-50/30">
             {loading ? (
-              <div className="py-24 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#db6747] mx-auto mb-4" />
+              <div className="divide-y divide-slate-100 animate-pulse">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="p-5 space-y-3">
+                    <div className="flex gap-2">
+                      <div className="h-5 w-20 bg-slate-100 rounded-md" />
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                      <div className="h-4 w-full bg-slate-100 rounded mb-2" />
+                      <div className="h-4 w-3/4 bg-slate-100 rounded" />
+                    </div>
+                    <div className="flex justify-between">
+                      <div className="h-4 w-24 bg-slate-100 rounded" />
+                      <div className="h-4 w-20 bg-slate-100 rounded" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : paginated.length === 0 ? (
               <div className="py-24 text-center px-4">

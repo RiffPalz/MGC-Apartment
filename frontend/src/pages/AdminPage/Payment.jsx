@@ -369,10 +369,18 @@ export default function AdminPayment() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {loading ? (
-                    <tr><td colSpan={8} className="py-24 text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#db6747] mx-auto mb-3" />
-                      <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Loading Payments...</p>
-                    </td></tr>
+                    [...Array(6)].map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td className="px-5 py-4"><div className="h-5 w-10 bg-slate-100 rounded" /></td>
+                        <td className="px-5 py-4"><div className="h-4 w-32 bg-slate-200 rounded mb-1" /><div className="h-3 w-20 bg-slate-100 rounded" /></td>
+                        <td className="px-5 py-4"><div className="h-4 w-24 bg-slate-100 rounded" /></td>
+                        <td className="px-5 py-4"><div className="h-4 w-20 bg-slate-100 rounded" /></td>
+                        <td className="px-5 py-4"><div className="h-5 w-20 bg-slate-200 rounded" /></td>
+                        <td className="px-5 py-4"><div className="h-4 w-16 bg-slate-100 rounded" /></td>
+                        <td className="px-5 py-4"><div className="h-6 w-24 bg-slate-100 rounded-md" /></td>
+                        <td className="px-5 py-4 text-right"><div className="h-6 w-16 bg-slate-100 rounded ml-auto" /></td>
+                      </tr>
+                    ))
                   ) : paginated.length === 0 ? (
                     <tr><td colSpan={8} className="py-24 text-center">
                       <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
@@ -441,8 +449,25 @@ export default function AdminPayment() {
             {/* Mobile Cards View */}
             <div className="lg:hidden flex-1 overflow-y-auto divide-y divide-slate-100 bg-slate-50/30">
               {loading ? (
-                <div className="py-24 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#db6747] mx-auto mb-4" />
+                <div className="divide-y divide-slate-100 animate-pulse">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="p-5 space-y-3">
+                      <div className="flex gap-2">
+                        <div className="h-5 w-16 bg-slate-200 rounded" />
+                        <div className="h-5 w-20 bg-slate-100 rounded" />
+                      </div>
+                      <div className="h-5 w-40 bg-slate-200 rounded" />
+                      <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl">
+                        <div className="h-8 bg-slate-100 rounded" />
+                        <div className="h-8 bg-slate-100 rounded" />
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="h-9 flex-1 bg-slate-100 rounded-lg" />
+                        <div className="h-9 flex-1 bg-slate-100 rounded-lg" />
+                        <div className="h-9 flex-1 bg-slate-100 rounded-lg" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : paginated.length === 0 ? (
                 <div className="py-24 text-center px-4">

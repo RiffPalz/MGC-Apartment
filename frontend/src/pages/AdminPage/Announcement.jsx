@@ -308,9 +308,25 @@ export default function AdminAnnouncement() {
           {/* ANNOUNCEMENTS FEED */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-24 gap-4 text-slate-400 flex-1">
-                <div className="w-8 h-8 border-2 border-slate-200 border-t-[#db6747] rounded-full animate-spin" />
-                <p className="text-[10px] font-bold uppercase tracking-widest">Loading Announcements...</p>
+              <div className="flex flex-col gap-0 flex-1 animate-pulse">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex gap-2">
+                        <div className="h-5 w-20 bg-slate-100 rounded-md" />
+                        <div className="h-5 w-28 bg-slate-100 rounded-md" />
+                      </div>
+                      <div className="h-5 bg-slate-200 rounded w-2/3" />
+                      <div className="h-4 bg-slate-100 rounded w-full" />
+                      <div className="h-4 bg-slate-100 rounded w-4/5" />
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <div className="h-8 w-14 bg-slate-100 rounded-md" />
+                      <div className="h-8 w-8 bg-slate-100 rounded-md" />
+                      <div className="h-8 w-8 bg-slate-100 rounded-md" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : paginated.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-slate-400 flex-1">

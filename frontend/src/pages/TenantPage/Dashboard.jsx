@@ -437,9 +437,11 @@ export default function DashboardCards() {
 
               <div className="p-5 sm:p-8 overflow-y-auto custom-scrollbar">
                 {announcementModal.loading ? (
-                  <div className="text-center py-8 sm:py-10">
-                    <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-b-2 border-[#D96648] mx-auto"></div>
-                    <p className="text-[10px] sm:text-xs text-[#330101]/60 mt-3 sm:mt-4 uppercase tracking-widest font-bold">Loading update...</p>
+                  <div className="animate-pulse space-y-3 py-4 px-2">
+                    <div className="h-5 w-3/4 bg-[#F2DED4] rounded mx-auto" />
+                    <div className="h-4 w-full bg-[#F2DED4]/60 rounded" />
+                    <div className="h-4 w-5/6 bg-[#F2DED4]/60 rounded" />
+                    <div className="h-4 w-4/5 bg-[#F2DED4]/60 rounded" />
                   </div>
                 ) : announcementModal.announcement ? (
                   <div className="space-y-4 sm:space-y-6">

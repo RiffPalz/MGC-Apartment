@@ -117,8 +117,20 @@ export default function ContractCards() {
 
   if (loading) {
     return (
-      <div className="bg-[#FFF9F6] min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D96648]" />
+      <div className="bg-[#FFF9F6] min-h-screen w-full px-4 sm:px-6 md:px-10 py-6 md:py-10 animate-pulse">
+        <div className="max-w-3xl mx-auto space-y-5">
+          <div className="h-8 bg-[#F2DED4] rounded w-48" />
+          <div className="bg-white rounded-2xl border border-[#F2DED4] p-6 space-y-4 shadow-sm">
+            <div className="h-5 bg-slate-200 rounded w-32" />
+            <div className="grid grid-cols-2 gap-4">
+              {[...Array(4)].map((_, i) => <div key={i} className="h-14 bg-slate-100 rounded-xl" />)}
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-[#F2DED4] p-6 space-y-4 shadow-sm">
+            <div className="h-5 bg-slate-200 rounded w-40" />
+            <div className="h-32 bg-slate-100 rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }

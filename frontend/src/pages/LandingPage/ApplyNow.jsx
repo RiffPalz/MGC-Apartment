@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import applynowbg from "../../assets/images/applynowbg.png";
 import Navbar from "../../components/Navbar.jsx";
 import { FaBuilding, FaIdCard, FaMapMarkerAlt, FaUpload, FaCheckCircle } from "react-icons/fa";
@@ -18,6 +18,12 @@ function Applypage() {
   const [success, setSuccess] = useState(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setPageLoading(false), 600);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleIdUpload = (e) => {
     const file = e.target.files[0];
@@ -75,6 +81,58 @@ function Applypage() {
       setLoading(false);
     }
   };
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen bg-white font-NunitoSans overflow-y-auto">
+        <Navbar />
+        <div className="relative min-h-screen bg-cover bg-center flex items-center pt-28 pb-16 px-4 sm:px-10 lg:px-20"
+          style={{ backgroundImage: `url(${applynowbg})` }}>
+          <div className="absolute inset-0 bg-slate-900/70" />
+          <div className="relative z-10 w-full max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-start animate-pulse">
+
+            {/* Left info skeleton */}
+            <div className="space-y-8 lg:sticky lg:top-32">
+              <div className="space-y-4">
+                <div className="h-3 w-32 bg-white/20 rounded" />
+                <div className="h-16 w-64 bg-white/20 rounded-xl" />
+                <div className="h-4 w-full max-w-sm bg-white/10 rounded" />
+                <div className="h-4 w-4/5 max-w-sm bg-white/10 rounded" />
+              </div>
+              <div className="flex gap-4">
+                <div className="h-14 w-36 bg-white/10 rounded-xl" />
+                <div className="h-14 w-36 bg-white/10 rounded-xl" />
+              </div>
+              <div className="pt-6 space-y-3">
+                <div className="h-3 w-40 bg-white/20 rounded" />
+                <div className="w-full h-[220px] bg-white/10 rounded-2xl" />
+              </div>
+            </div>
+
+            {/* Right form skeleton */}
+            <div className="bg-white/10 backdrop-blur-sm p-8 sm:p-10 rounded-2xl space-y-6">
+              <div className="space-y-2 text-center sm:text-left">
+                <div className="h-8 w-48 bg-white/20 rounded-lg" />
+                <div className="h-3 w-56 bg-white/10 rounded" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className={`space-y-2 ${i === 2 || i === 3 ? "md:col-span-2" : ""}`}>
+                    <div className="h-3 w-20 bg-white/20 rounded" />
+                    <div className="h-10 bg-white/10 rounded-lg border-b-2 border-white/20" />
+                  </div>
+                ))}
+                <div className="md:col-span-2 h-24 bg-white/10 rounded-xl border-2 border-dashed border-white/20" />
+                <div className="md:col-span-2 h-24 bg-white/10 rounded-xl" />
+                <div className="md:col-span-2 h-14 bg-white/20 rounded-xl" />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (

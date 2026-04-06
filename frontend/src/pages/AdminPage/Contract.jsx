@@ -386,9 +386,25 @@ export default function AdminContract() {
           {/* TABLE / CARDS CONTAINER */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-24 gap-4 text-slate-400 flex-1">
-                <div className="w-8 h-8 border-2 border-slate-200 border-t-[#db6747] rounded-full animate-spin" />
-                <p className="text-[10px] font-bold uppercase tracking-widest">Loading Contracts...</p>
+              <div className="flex flex-col gap-0 flex-1 animate-pulse">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex gap-2">
+                        <div className="h-5 w-10 bg-slate-200 rounded" />
+                        <div className="h-5 w-32 bg-slate-100 rounded" />
+                        <div className="h-5 w-20 bg-slate-100 rounded-md" />
+                      </div>
+                      <div className="h-4 w-48 bg-slate-100 rounded" />
+                      <div className="h-3 w-36 bg-slate-100 rounded" />
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <div className="h-8 w-8 bg-slate-100 rounded-md" />
+                      <div className="h-8 w-8 bg-slate-100 rounded-md" />
+                      <div className="h-8 w-8 bg-slate-100 rounded-md" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-slate-400 flex-1">

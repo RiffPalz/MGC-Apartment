@@ -217,8 +217,18 @@ function MaintenanceCards() {
 
               <div className="space-y-3 sm:space-y-4 2xl:space-y-5">
                 {isLoading ? (
-                  <div className="flex items-center justify-center py-20">
-                    <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-b-2 border-[#f7b094]" />
+                  <div className="animate-pulse space-y-3 sm:space-y-4">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-3">
+                        <div className="flex justify-between">
+                          <div className="h-5 w-20 bg-white/10 rounded-full" />
+                          <div className="h-4 w-24 bg-white/10 rounded" />
+                        </div>
+                        <div className="h-5 w-48 bg-white/10 rounded" />
+                        <div className="h-4 w-full bg-white/5 rounded" />
+                        <div className="h-4 w-3/4 bg-white/5 rounded" />
+                      </div>
+                    ))}
                   </div>
                 ) : maintenanceRequests.length === 0 ? (
                   <div className="text-center py-20 text-white/20 text-xs sm:text-sm italic">

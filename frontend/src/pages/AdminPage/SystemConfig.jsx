@@ -180,10 +180,19 @@ export default function AdminSystemConfig() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-screen bg-[#f8fafc] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#db6747] mx-auto mb-3" />
-          <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Loading configuration...</p>
+      <div className="w-full min-h-screen bg-[#f8fafc] p-4 md:p-6 animate-pulse">
+        <div className="max-w-[1200px] mx-auto space-y-6">
+          <div className="h-8 bg-slate-200 rounded w-64" />
+          <div className="h-4 bg-slate-100 rounded w-48" />
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4 shadow-sm">
+              <div className="h-5 bg-slate-200 rounded w-40" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="h-10 bg-slate-100 rounded-lg" />
+                <div className="h-10 bg-slate-100 rounded-lg" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

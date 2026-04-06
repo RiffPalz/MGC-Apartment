@@ -69,8 +69,33 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#db6747]" />
+      <div className="w-full flex flex-col gap-4 sm:gap-5 font-sans animate-pulse">
+        {/* Welcome Banner Skeleton */}
+        <div className="h-24 bg-slate-200 rounded-2xl w-full" />
+        {/* Stat Cards Skeleton */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-slate-100 p-5 flex items-center gap-4 shadow-sm">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 bg-slate-100 rounded w-2/3" />
+                <div className="h-6 bg-slate-200 rounded w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Chart + Side Panel Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-5 h-64 shadow-sm" />
+          <div className="bg-white rounded-2xl border border-slate-100 p-5 h-64 shadow-sm space-y-3">
+            {[...Array(4)].map((_, i) => <div key={i} className="h-10 bg-slate-100 rounded-xl" />)}
+          </div>
+        </div>
+        {/* Bottom Row Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-white rounded-2xl border border-slate-100 p-5 h-48 shadow-sm" />
+          <div className="bg-white rounded-2xl border border-slate-100 p-5 h-48 shadow-sm" />
+        </div>
       </div>
     );
   }

@@ -101,8 +101,21 @@ export default function AccountSetting() {
 
   if (loading) {
     return (
-      <div className="bg-[#FFF9F6] min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-[#D96648]" />
+      <div className="bg-[#FFF9F6] min-h-screen w-full px-4 sm:px-6 md:px-10 py-6 md:py-10 animate-pulse">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <div className="bg-white rounded-2xl border border-[#F2DED4] p-6 space-y-5 shadow-sm">
+            <div className="flex gap-5 items-center">
+              <div className="w-20 h-20 bg-slate-200 rounded-2xl shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-6 bg-slate-200 rounded w-1/2" />
+                <div className="h-4 bg-slate-100 rounded w-1/3" />
+              </div>
+            </div>
+            <div className="space-y-4">
+              {[...Array(4)].map((_, i) => <div key={i} className="h-12 bg-slate-100 rounded-xl" />)}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

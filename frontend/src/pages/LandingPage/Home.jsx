@@ -44,8 +44,7 @@ function Home() {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
   const [config, setConfig] = useState(HARDCODED_DEFAULTS);
 
-  // 1. NEW: State to track if the database is currently sending the config data
-  const [isFetchingConfig, setIsFetchingConfig] = useState(true);
+  const [isFetchingConfig, setIsFetchingConfig] = useState(false);
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
@@ -92,7 +91,7 @@ function Home() {
         });
       }
     }).catch(() => { })
-      // 2. NEW: Tell the state we are done loading, regardless of success or failure
+      // Tell the state we are done loading, regardless of success or failure
       .finally(() => {
         setIsFetchingConfig(false);
       });
@@ -102,21 +101,9 @@ function Home() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 3. NEW: If we are fetching data, show the Tailwind Skeleton Loader instead of the page
+  // If we are fetching data, show the Tailwind Skeleton Loader instead of the page
   if (isFetchingConfig) {
-    return (
-      <div className="min-h-screen w-full bg-white animate-pulse overflow-hidden">
-        {/* Fake Navbar Skeleton */}
-        <div className="h-20 bg-slate-100 w-full border-b border-slate-200" />
-
-        {/* Fake Hero Skeleton */}
-        <div className="w-full h-screen bg-slate-100 flex flex-col items-center justify-center gap-6 px-4">
-          <div className="h-16 sm:h-24 md:h-32 bg-slate-200 rounded-3xl w-full max-w-4xl" />
-          <div className="h-6 bg-slate-200 rounded-full w-2/3 max-w-lg" />
-          <div className="mt-8 h-14 bg-slate-200 rounded-xl w-40" />
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // Everything below here is completely untouched!

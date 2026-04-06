@@ -207,9 +207,17 @@ export default function AdminUnitsCards() {
       {/* ── FLOOR BLOCKS ── */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 md:p-6 flex-1">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4 text-slate-400">
-            <div className="w-10 h-10 border-4 border-slate-100 border-t-[#db6747] rounded-full animate-spin" />
-            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest">Loading units...</p>
+          <div className="animate-pulse space-y-6">
+            {[...Array(3)].map((_, f) => (
+              <div key={f} className="space-y-3">
+                <div className="h-5 w-32 bg-slate-200 rounded" />
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                  {[...Array(8)].map((_, u) => (
+                    <div key={u} className="h-20 bg-slate-100 rounded-xl" />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         ) : filtered.length > 0 ? (
           FLOORS.map((floor) => (
