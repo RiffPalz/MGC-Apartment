@@ -2,6 +2,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "../context/AuthContext.jsx";
 import { SocketProvider } from "../context/SocketContext.jsx";
+import { ConfigProvider } from "../context/ConfigContext.jsx";
 import { getToken, getRole } from "../api/authStorage.js";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -76,6 +77,7 @@ const LoginRedirect = () => {
 export default function MGCRouter() {
   return (
     <BrowserRouter>
+      <ConfigProvider>
       <AuthProvider>
         <SocketProvider>
           <Suspense fallback={<PageLoader />}>
@@ -140,6 +142,7 @@ export default function MGCRouter() {
           </Suspense>
         </SocketProvider>
       </AuthProvider>
+      </ConfigProvider>
       <Analytics debug={false} />
     </BrowserRouter>
   );

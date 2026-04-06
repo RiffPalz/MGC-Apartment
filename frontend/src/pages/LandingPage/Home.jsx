@@ -18,23 +18,15 @@ import GalleryLayout from "../../components/GalleryLayout.jsx";
 import Navbar from "../../components/Navbar.jsx";
 import TermsAndConditions from "./TermsAndConditions.jsx";
 import PrivacyPolicy from "./PrivacyPolicy.jsx";
-import { fetchConfig } from "../../api/adminAPI/ConfigAPI.js";
+import { useConfig } from "../../context/ConfigContext.jsx";
 
-const HARDCODED_DEFAULTS = {
-  mgc_name: "MGC",
-  address: "762 F. Gomez St., Barangay Ibaba, Santa Rosa, Laguna",
-  monthly_rate: 3000,
-  monthly_rate_description: "Our units are priced competitively to ensure affordability for working professionals.",
-  deposit_terms: "One-month advance payment, One-month security deposit, Minimum 6-month contract, Subleasing is strictly prohibited",
-  deposit_terms_description: "",
-  gallery_images: [
-    { url: img1, caption: "Front View", slot: "left1" },
-    { url: img2, caption: "Main Gate", slot: "rightTop" },
-    { url: img3, caption: "Parking Space", slot: "left2" },
-    { url: img4, caption: "Inside the Building", slot: "rightLarge" },
-    { url: img5, caption: "Main Road", slot: "left3" },
-  ],
-};
+const LOCAL_GALLERY = [
+  { url: img1, caption: "Front View", slot: "left1" },
+  { url: img2, caption: "Main Gate", slot: "rightTop" },
+  { url: img3, caption: "Parking Space", slot: "left2" },
+  { url: img4, caption: "Inside the Building", slot: "rightLarge" },
+  { url: img5, caption: "Main Road", slot: "left3" },
+];
 
 function Home() {
   const formRef = useRef();
@@ -42,9 +34,18 @@ function Home() {
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
-  const [config, setConfig] = useState(HARDCODED_DEFAULTS);
 
-  const [isFetchingConfig, setIsFetchingConfig] = useState(false);
+  const { config: rawConfig } = useConfig();
+
+  // Merge remote gallery images with local fallbacks
+  const config = {
+    ...rawConfig,
+    gallery_images: LOCAL_GALLERY.map((def, i) => {
+      const remote = (rawConfig.gallery_images || [])[i];
+      const isValidWebUrl = remote && remote.url && remote.url.startsWith("http");
+      return isValidWebUrl ? { ...def, ...remote, src: remote.url } : { ...def, src: def.url };
+    }),
+  };
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
@@ -64,49 +65,13 @@ function Home() {
   };
 
   useEffect(() => {
-    AOS.init({
-      duration: 1200,
-      once: true,
-      mirror: false,
-      disable: false,
-    });
+    AOS.init({ duration: 1200, once: true, mirror: false, disable: false });
     AOS.refresh();
-
-    fetchConfig().then((data) => {
-      if (data?.config) {
-        const cfg = data.config;
-
-        setConfig({
-          ...HARDCODED_DEFAULTS,
-          ...cfg,
-          gallery_images: HARDCODED_DEFAULTS.gallery_images.map((def, i) => {
-            const remote = (cfg.gallery_images || [])[i];
-
-            const isValidWebUrl = remote && remote.url && remote.url.startsWith("http");
-
-            return isValidWebUrl
-              ? { ...def, ...remote, src: remote.url }
-              : { ...def, src: def.url }; // Fallback to your local images
-          }),
-        });
-      }
-    }).catch(() => { })
-      // Tell the state we are done loading, regardless of success or failure
-      .finally(() => {
-        setIsFetchingConfig(false);
-      });
 
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  // If we are fetching data, show the Tailwind Skeleton Loader instead of the page
-  if (isFetchingConfig) {
-    return null;
-  }
-
-  // Everything below here is completely untouched!
   return (
     <div className="overflow-x-hidden bg-white">
       <Navbar />

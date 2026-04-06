@@ -5,24 +5,19 @@ import { Link as ScrollLink, animateScroll as scroll } from "react-scroll";
 import { FaBars } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
 import logo from "../assets/images/logo.png";
-import { fetchConfig } from "../api/adminAPI/ConfigAPI";
+import { useConfig } from "../context/ConfigContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen]       = useState(false);
   const [scrolled, setScrolled]   = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
-  const [mgcName, setMgcName]     = useState("MGC Building");
   const lastScrollY = useRef(0);
+
+  const { config } = useConfig();
+  const mgcName = config?.mgc_name || "MGC Building";
 
   const location    = useLocation();
   const isLandingPage = location.pathname === "/";
-
-  /* fetch mgc name from config */
-  useEffect(() => {
-    fetchConfig().then((data) => {
-      if (data?.config?.mgc_name) setMgcName(data.config.mgc_name);
-    }).catch(() => {});
-  }, []);
 
   /* scroll hide / hero color */
   useEffect(() => {
