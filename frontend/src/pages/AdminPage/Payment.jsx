@@ -288,7 +288,7 @@ export default function AdminPayment() {
         </table>
         <div className="mt-8 pt-4 border-t border-slate-200 flex justify-between text-[9px] uppercase tracking-widest text-slate-400 font-bold">
           <p>Total Records: <span className="text-slate-800 text-[11px] ml-1">{filtered.length}</span></p>
-          <p>MGC Building — Enterprise Property Management System</p>
+          <p>MGC Building — Apartment Monitoring System</p>
           <p>CONFIDENTIAL</p>
         </div>
       </div>
