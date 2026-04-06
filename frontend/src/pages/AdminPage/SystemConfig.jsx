@@ -1,5 +1,3 @@
-/* eslint-disable no-undef */
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import {
   FaEdit, FaSave, FaTimes, FaBuilding,
@@ -32,7 +30,7 @@ const DEFAULT_GALLERY = {
 
 const inputCls =
   "w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 transition-colors shadow-sm";
-const textareaCls = inputCls + " resize-none";
+const textareaCls = "w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 transition-colors shadow-sm resize-none";
 
 // Reusable UI Components
 function SectionCard({ icon, title, subtitle, editButton, children }) {
@@ -69,7 +67,7 @@ function FieldRow({ label, value, multiline }) {
 export default function AdminSystemConfig() {
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  
   const [editingSections, setEditingSections] = useState({});
   const [savingSections, setSavingSections] = useState({});
 
@@ -89,7 +87,7 @@ export default function AdminSystemConfig() {
       const isValidWebUrl = img.url && img.url.startsWith("http");
 
       return {
-        displayUrl: isValidWebUrl ? img.url : DEFAULT_GALLERY[slot].url,
+        displayUrl: isValidWebUrl ? img.url : DEFAULT_GALLERY[slot].url, 
         dbUrl: isValidWebUrl ? img.url : "", // Prevents saving local paths to DB
         caption: img.caption || DEFAULT_GALLERY[slot].caption,
         slot,
@@ -97,6 +95,14 @@ export default function AdminSystemConfig() {
         preview: null,
       };
     });
+  };
+
+  const applyConfig = (cfg) => {
+    setConfig(cfg);
+    setIdentityDraft({ mgc_name: cfg.mgc_name || "", address: cfg.address || "" });
+    setRateDraft({ monthly_rate: cfg.monthly_rate ?? "" });
+    setDepositDraft({ deposit_terms: cfg.deposit_terms || "" });
+    setGallerySlots(buildGallerySlots(cfg.gallery_images));
   };
 
   // Initialization
@@ -113,15 +119,8 @@ export default function AdminSystemConfig() {
       }
     };
     load();
-  }, [applyConfig]);
-
-  const applyConfig = useCallback((cfg) => {
-    setConfig(cfg);
-    setIdentityDraft({ mgc_name: cfg.mgc_name || "", address: cfg.address || "" });
-    setRateDraft({ monthly_rate: cfg.monthly_rate ?? "" });
-    setDepositDraft({ deposit_terms: cfg.deposit_terms || "" });
-    setGallerySlots(buildGallerySlots(cfg.gallery_images));
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Edit toggles
   const openEdit = (section) => {
@@ -146,7 +145,7 @@ export default function AdminSystemConfig() {
 
       if (section === "identity") {
         if (identityDraft.mgc_name.trim()) fd.append("mgc_name", identityDraft.mgc_name.trim());
-        if (identityDraft.address.trim()) fd.append("address", identityDraft.address.trim());
+        if (identityDraft.address.trim())  fd.append("address",  identityDraft.address.trim());
       }
 
       if (section === "rate") {
@@ -175,24 +174,30 @@ export default function AdminSystemConfig() {
     }
   };
 
-  const EditBtn = ({ section }) =>
-    isEditing(section) ? (
-      <div className="flex w-full sm:w-auto gap-2">
-        <button onClick={() => cancelEdit(section)}
-          className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all active:scale-95">
-          <FaTimes size={10} /> Cancel
-        </button>
-        <button onClick={() => save(section)} disabled={isSaving(section)}
-          className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm active:scale-95 disabled:opacity-60">
-          <FaSave size={10} /> {isSaving(section) ? "Saving..." : "Save"}
-        </button>
-      </div>
-    ) : (
+  // FIXED: Converted from a React Component to a standard Helper Function
+  const renderEditBtn = (section) => {
+    if (isEditing(section)) {
+      return (
+        <div className="flex w-full sm:w-auto gap-2">
+          <button onClick={() => cancelEdit(section)}
+            className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all active:scale-95">
+            <FaTimes size={10} /> Cancel
+          </button>
+          <button onClick={() => save(section)} disabled={isSaving(section)}
+            className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm active:scale-95 disabled:opacity-60">
+            <FaSave size={10} /> {isSaving(section) ? "Saving..." : "Save"}
+          </button>
+        </div>
+      );
+    }
+    
+    return (
       <button onClick={() => openEdit(section)}
         className="w-full sm:w-auto flex justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[#db6747] text-white hover:bg-[#c45a3a] transition-all shadow-sm active:scale-95">
         <FaEdit size={10} /> Edit
       </button>
     );
+  };
 
   if (loading) {
     return (
@@ -224,7 +229,7 @@ export default function AdminSystemConfig() {
             <p className="text-[11px] text-slate-400 uppercase tracking-widest mt-1">Manage landing page content and building details</p>
           </div>
 
-          <SectionCard icon={<FaBuilding size={15} />} title="Building Identity" subtitle="Name and address shown on the landing page" editButton={<EditBtn section="identity" />}>
+          <SectionCard icon={<FaBuilding size={15} />} title="Building Identity" subtitle="Name and address shown on the landing page" editButton={renderEditBtn("identity")}>
             {isEditing("identity") ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
@@ -244,7 +249,7 @@ export default function AdminSystemConfig() {
             )}
           </SectionCard>
 
-          <SectionCard icon={<FaMoneyBillWave size={15} />} title="Monthly Rate" subtitle="Rent rate displayed on the landing page" editButton={<EditBtn section="rate" />}>
+          <SectionCard icon={<FaMoneyBillWave size={15} />} title="Monthly Rate" subtitle="Rent rate displayed on the landing page" editButton={renderEditBtn("rate")}>
             {isEditing("rate") ? (
               <div className="max-w-xs">
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Monthly Rate (₱)</label>
@@ -255,7 +260,7 @@ export default function AdminSystemConfig() {
             )}
           </SectionCard>
 
-          <SectionCard icon={<FaFileAlt size={15} />} title="Deposit Terms" subtitle="Bullet items in the Security & Terms section" editButton={<EditBtn section="deposit" />}>
+          <SectionCard icon={<FaFileAlt size={15} />} title="Deposit Terms" subtitle="Bullet items in the Security & Terms section" editButton={renderEditBtn("deposit")}>
             {isEditing("deposit") ? (
               <div className="max-w-lg">
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Terms <span className="normal-case text-slate-400">(one per line, or comma-separated)</span></label>
@@ -271,11 +276,11 @@ export default function AdminSystemConfig() {
             )}
           </SectionCard>
 
-          <SectionCard icon={<FaImage size={15} />} title="Gallery Images" subtitle="5 image slots displayed in the landing page gallery" editButton={<EditBtn section="gallery" />}>
+          <SectionCard icon={<FaImage size={15} />} title="Gallery Images" subtitle="5 image slots displayed in the landing page gallery" editButton={renderEditBtn("gallery")}>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {gallerySlots.map((slot, i) => (
                 <div key={slot.slot} className="flex flex-col gap-2">
-
+                  
                   <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center">
                     {slot.preview || slot.displayUrl ? (
                       <img src={slot.preview || slot.displayUrl} alt={slot.caption || slot.slot} className="w-full h-full object-cover" />
