@@ -150,7 +150,7 @@ export default function CaretakerAnnouncement() {
     <>
       <style>{`
         @media print {
-          @page { size: A4 portrait; margin: 15mm; }
+          @page { size: A4 landscape; margin: 15mm; }
           body { background: white !important; }
           body * { visibility: hidden; }
           #ann-print, #ann-print * { visibility: visible; }
@@ -189,7 +189,7 @@ export default function CaretakerAnnouncement() {
         </div>
         <div className="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-[9px] uppercase tracking-widest text-slate-400 font-bold">
           <p>Total Records: <span className="text-slate-800 text-[11px] ml-1">{filtered.length}</span></p>
-          <p>MGC Building — Enterprise Property Management System</p>
+          <p>MGC Building — Apartment Monitoring System</p>
           <p>CONFIDENTIAL</p>
         </div>
       </div>
