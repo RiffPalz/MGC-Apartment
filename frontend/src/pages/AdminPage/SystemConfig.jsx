@@ -67,7 +67,7 @@ function FieldRow({ label, value, multiline }) {
 export default function AdminSystemConfig() {
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [editingSections, setEditingSections] = useState({});
   const [savingSections, setSavingSections] = useState({});
 
@@ -87,7 +87,7 @@ export default function AdminSystemConfig() {
       const isValidWebUrl = img.url && img.url.startsWith("http");
 
       return {
-        displayUrl: isValidWebUrl ? img.url : DEFAULT_GALLERY[slot].url, 
+        displayUrl: isValidWebUrl ? img.url : DEFAULT_GALLERY[slot].url,
         dbUrl: isValidWebUrl ? img.url : "", // Prevents saving local paths to DB
         caption: img.caption || DEFAULT_GALLERY[slot].caption,
         slot,
@@ -119,7 +119,7 @@ export default function AdminSystemConfig() {
       }
     };
     load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Edit toggles
@@ -145,7 +145,7 @@ export default function AdminSystemConfig() {
 
       if (section === "identity") {
         if (identityDraft.mgc_name.trim()) fd.append("mgc_name", identityDraft.mgc_name.trim());
-        if (identityDraft.address.trim())  fd.append("address",  identityDraft.address.trim());
+        if (identityDraft.address.trim()) fd.append("address", identityDraft.address.trim());
       }
 
       if (section === "rate") {
@@ -190,7 +190,7 @@ export default function AdminSystemConfig() {
         </div>
       );
     }
-    
+
     return (
       <button onClick={() => openEdit(section)}
         className="w-full sm:w-auto flex justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[#db6747] text-white hover:bg-[#c45a3a] transition-all shadow-sm active:scale-95">
@@ -280,7 +280,7 @@ export default function AdminSystemConfig() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {gallerySlots.map((slot, i) => (
                 <div key={slot.slot} className="flex flex-col gap-2">
-                  
+
                   <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center">
                     {slot.preview || slot.displayUrl ? (
                       <img src={slot.preview || slot.displayUrl} alt={slot.caption || slot.slot} className="w-full h-full object-cover" />
