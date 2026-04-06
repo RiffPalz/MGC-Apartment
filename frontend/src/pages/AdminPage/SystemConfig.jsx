@@ -1,3 +1,5 @@
+/* eslint-disable no-undef */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import {
   FaEdit, FaSave, FaTimes, FaBuilding,
@@ -6,17 +8,33 @@ import {
 import toast from "../../utils/toast";
 import { fetchConfig, updateConfig } from "../../api/adminAPI/ConfigAPI";
 
+// Local fallback images
+import img1 from "../../assets/images/LP-img1.jpg";
+import img2 from "../../assets/images/LP-img2.png";
+import img3 from "../../assets/images/LP-img3.png";
+import img4 from "../../assets/images/LP-img4.jpg";
+import img5 from "../../assets/images/LP-img5.jpg";
+
 const SLOT_KEYS = ["left1", "left2", "left3", "rightTop", "rightLarge"];
 const SLOT_LABELS = {
   left1: "Left 1", left2: "Left 2", left3: "Left 3",
   rightTop: "Right Top", rightLarge: "Right Large",
 };
 
+// Default gallery mappings
+const DEFAULT_GALLERY = {
+  left1: { url: img1, caption: "Front View" },
+  rightTop: { url: img2, caption: "Main Gate" },
+  left2: { url: img3, caption: "Parking Space" },
+  rightLarge: { url: img4, caption: "Inside the Building" },
+  left3: { url: img5, caption: "Main Road" },
+};
+
 const inputCls =
   "w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 transition-colors shadow-sm";
 const textareaCls = inputCls + " resize-none";
 
-/* ── Reusable section card ── */
+// Reusable UI Components
 function SectionCard({ icon, title, subtitle, editButton, children }) {
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -28,7 +46,6 @@ function SectionCard({ icon, title, subtitle, editButton, children }) {
             {subtitle && <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">{subtitle}</p>}
           </div>
         </div>
-        {/* Responsive wrapper for the action buttons */}
         <div className="w-full sm:w-auto mt-3 sm:mt-0">
           {editButton}
         </div>
@@ -38,7 +55,6 @@ function SectionCard({ icon, title, subtitle, editButton, children }) {
   );
 }
 
-/* ── Read-only field row ── */
 function FieldRow({ label, value, multiline }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 py-3 border-b border-slate-50 last:border-0">
@@ -54,22 +70,36 @@ export default function AdminSystemConfig() {
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Which sections are being edited (independent per section)
   const [editingSections, setEditingSections] = useState({});
   const [savingSections, setSavingSections] = useState({});
 
   const isEditing = (section) => !!editingSections[section];
   const isSaving = (section) => !!savingSections[section];
 
-  // Draft states per section
+  // Form drafts
   const [identityDraft, setIdentityDraft] = useState({ mgc_name: "", address: "" });
   const [rateDraft, setRateDraft] = useState({ monthly_rate: "" });
   const [depositDraft, setDepositDraft] = useState({ deposit_terms: "" });
-  const [gallerySlots, setGallerySlots] = useState(
-    SLOT_KEYS.map((slot) => ({ url: "", caption: "", slot, file: null, preview: null }))
-  );
+  const [gallerySlots, setGallerySlots] = useState([]);
 
-  /* ── Load config on mount ── */
+  // Safely assign fallback images
+  const buildGallerySlots = (images = []) => {
+    return SLOT_KEYS.map((slot) => {
+      const img = images.find((i) => i.slot === slot) || {};
+      const isValidWebUrl = img.url && img.url.startsWith("http");
+
+      return {
+        displayUrl: isValidWebUrl ? img.url : DEFAULT_GALLERY[slot].url,
+        dbUrl: isValidWebUrl ? img.url : "", // Prevents saving local paths to DB
+        caption: img.caption || DEFAULT_GALLERY[slot].caption,
+        slot,
+        file: null,
+        preview: null,
+      };
+    });
+  };
+
+  // Initialization
   useEffect(() => {
     const load = async () => {
       try {
@@ -83,36 +113,23 @@ export default function AdminSystemConfig() {
       }
     };
     load();
-  }, []);
+  }, [applyConfig]);
 
-  const applyConfig = (cfg) => {
+  const applyConfig = useCallback((cfg) => {
     setConfig(cfg);
     setIdentityDraft({ mgc_name: cfg.mgc_name || "", address: cfg.address || "" });
     setRateDraft({ monthly_rate: cfg.monthly_rate ?? "" });
     setDepositDraft({ deposit_terms: cfg.deposit_terms || "" });
-    const images = cfg.gallery_images || [];
-    setGallerySlots(
-      SLOT_KEYS.map((slot) => {
-        const img = images.find((i) => i.slot === slot) || {};
-        return { url: img.url || "", caption: img.caption || "", slot, file: null, preview: null };
-      })
-    );
-  };
+    setGallerySlots(buildGallerySlots(cfg.gallery_images));
+  });
 
-  /* ── Open/cancel edit per section ── */
+  // Edit toggles
   const openEdit = (section) => {
-    // Reset that section's draft from current config before opening
     if (config) {
       if (section === "identity") setIdentityDraft({ mgc_name: config.mgc_name || "", address: config.address || "" });
       if (section === "rate") setRateDraft({ monthly_rate: config.monthly_rate ?? "" });
       if (section === "deposit") setDepositDraft({ deposit_terms: config.deposit_terms || "" });
-      if (section === "gallery") {
-        const images = config.gallery_images || [];
-        setGallerySlots(SLOT_KEYS.map((slot) => {
-          const img = images.find((i) => i.slot === slot) || {};
-          return { url: img.url || "", caption: img.caption || "", slot, file: null, preview: null };
-        }));
-      }
+      if (section === "gallery") setGallerySlots(buildGallerySlots(config.gallery_images));
     }
     setEditingSections((prev) => ({ ...prev, [section]: true }));
   };
@@ -121,7 +138,7 @@ export default function AdminSystemConfig() {
     setEditingSections((prev) => ({ ...prev, [section]: false }));
   };
 
-  /* ── Build FormData and submit ── */
+  // Save handler
   const save = async (section) => {
     try {
       setSavingSections((prev) => ({ ...prev, [section]: true }));
@@ -129,7 +146,7 @@ export default function AdminSystemConfig() {
 
       if (section === "identity") {
         if (identityDraft.mgc_name.trim()) fd.append("mgc_name", identityDraft.mgc_name.trim());
-        if (identityDraft.address.trim())  fd.append("address",  identityDraft.address.trim());
+        if (identityDraft.address.trim()) fd.append("address", identityDraft.address.trim());
       }
 
       if (section === "rate") {
@@ -142,7 +159,7 @@ export default function AdminSystemConfig() {
 
       if (section === "gallery") {
         fd.append("gallery_images", JSON.stringify(
-          gallerySlots.map((s) => ({ url: s.url, caption: s.caption, slot: s.slot }))
+          gallerySlots.map((s) => ({ url: s.dbUrl, caption: s.caption, slot: s.slot }))
         ));
         gallerySlots.forEach((s, i) => { if (s.file) fd.append(`gallery_${i}`, s.file); });
       }
@@ -158,7 +175,6 @@ export default function AdminSystemConfig() {
     }
   };
 
-  /* ── Edit button helper ── */
   const EditBtn = ({ section }) =>
     isEditing(section) ? (
       <div className="flex w-full sm:w-auto gap-2">
@@ -200,36 +216,24 @@ export default function AdminSystemConfig() {
 
   return (
     <div className="w-full bg-[#f8fafc] p-4 md:p-6 text-slate-800 font-sans min-h-screen">
-      {/* 4K Guardrail Wrapper */}
       <div className="max-w-[1600px] w-full mx-auto">
         <div className="max-w-[1200px] w-full mx-auto flex flex-col gap-6">
 
-          {/* Page Header */}
           <div>
             <h1 className="text-xl font-black text-slate-800 uppercase tracking-widest">System Configuration</h1>
             <p className="text-[11px] text-slate-400 uppercase tracking-widest mt-1">Manage landing page content and building details</p>
           </div>
 
-          {/* ── SECTION 1: Identity ── */}
-          <SectionCard
-            icon={<FaBuilding size={15} />}
-            title="Building Identity"
-            subtitle="Name and address shown on the landing page"
-            editButton={<EditBtn section="identity" />}
-          >
+          <SectionCard icon={<FaBuilding size={15} />} title="Building Identity" subtitle="Name and address shown on the landing page" editButton={<EditBtn section="identity" />}>
             {isEditing("identity") ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">MGC Name</label>
-                  <input type="text" value={identityDraft.mgc_name}
-                    onChange={(e) => setIdentityDraft((d) => ({ ...d, mgc_name: e.target.value }))}
-                    className={inputCls} />
+                  <input type="text" value={identityDraft.mgc_name} onChange={(e) => setIdentityDraft((d) => ({ ...d, mgc_name: e.target.value }))} className={inputCls} />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Address</label>
-                  <input type="text" value={identityDraft.address}
-                    onChange={(e) => setIdentityDraft((d) => ({ ...d, address: e.target.value }))}
-                    className={inputCls} />
+                  <input type="text" value={identityDraft.address} onChange={(e) => setIdentityDraft((d) => ({ ...d, address: e.target.value }))} className={inputCls} />
                 </div>
               </div>
             ) : (
@@ -240,73 +244,41 @@ export default function AdminSystemConfig() {
             )}
           </SectionCard>
 
-          {/* ── SECTION 2: Monthly Rate ── */}
-          <SectionCard
-            icon={<FaMoneyBillWave size={15} />}
-            title="Monthly Rate"
-            subtitle="Rent rate displayed on the landing page"
-            editButton={<EditBtn section="rate" />}
-          >
+          <SectionCard icon={<FaMoneyBillWave size={15} />} title="Monthly Rate" subtitle="Rent rate displayed on the landing page" editButton={<EditBtn section="rate" />}>
             {isEditing("rate") ? (
               <div className="max-w-xs">
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Monthly Rate (₱)</label>
-                <input type="number" value={rateDraft.monthly_rate}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "").slice(0, 4);
-                    setRateDraft({ monthly_rate: val });
-                  }}
-                  min="0" max="9999" step="1"
-                  className={inputCls} />
+                <input type="number" value={rateDraft.monthly_rate} onChange={(e) => { const val = e.target.value.replace(/\D/g, "").slice(0, 4); setRateDraft({ monthly_rate: val }); }} min="0" max="9999" step="1" className={inputCls} />
               </div>
             ) : (
               <FieldRow label="Monthly Rate" value={config?.monthly_rate ? `₱${parseInt(config.monthly_rate)}` : null} />
             )}
           </SectionCard>
 
-          {/* ── SECTION 3: Deposit Terms ── */}
-          <SectionCard
-            icon={<FaFileAlt size={15} />}
-            title="Deposit Terms"
-            subtitle="Bullet items in the Security & Terms section"
-            editButton={<EditBtn section="deposit" />}
-          >
+          <SectionCard icon={<FaFileAlt size={15} />} title="Deposit Terms" subtitle="Bullet items in the Security & Terms section" editButton={<EditBtn section="deposit" />}>
             {isEditing("deposit") ? (
               <div className="max-w-lg">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">
-                  Terms <span className="normal-case text-slate-400">(one per line, or comma-separated)</span>
-                </label>
-                <textarea rows={5} value={depositDraft.deposit_terms}
-                  onChange={(e) => setDepositDraft({ deposit_terms: e.target.value })}
-                  className={textareaCls} />
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Terms <span className="normal-case text-slate-400">(one per line, or comma-separated)</span></label>
+                <textarea rows={5} value={depositDraft.deposit_terms} onChange={(e) => setDepositDraft({ deposit_terms: e.target.value })} className={textareaCls} />
               </div>
             ) : (
               <ul className="space-y-2">
                 {(config?.deposit_terms || "").split(",").map((t) => t.trim()).filter(Boolean).map((t) => (
-                  <li key={t} className="flex items-start gap-2 text-sm font-semibold text-slate-800">
-                    <FaCheck className="text-[#db6747] mt-0.5 shrink-0" size={11} /> {t}
-                  </li>
+                  <li key={t} className="flex items-start gap-2 text-sm font-semibold text-slate-800"><FaCheck className="text-[#db6747] mt-0.5 shrink-0" size={11} /> {t}</li>
                 ))}
                 {!config?.deposit_terms && <span className="text-slate-300 italic text-sm">—</span>}
               </ul>
             )}
           </SectionCard>
 
-          {/* ── SECTION 4: Gallery Images ── */}
-          <SectionCard
-            icon={<FaImage size={15} />}
-            title="Gallery Images"
-            subtitle="5 image slots displayed in the landing page gallery"
-            editButton={<EditBtn section="gallery" />}
-          >
-            {/* Mobile optimized grid */}
+          <SectionCard icon={<FaImage size={15} />} title="Gallery Images" subtitle="5 image slots displayed in the landing page gallery" editButton={<EditBtn section="gallery" />}>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {gallerySlots.map((slot, i) => (
                 <div key={slot.slot} className="flex flex-col gap-2">
-                  {/* Image preview */}
+
                   <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center">
-                    {slot.preview || slot.url ? (
-                      <img src={slot.preview || slot.url} alt={slot.caption || slot.slot}
-                        className="w-full h-full object-cover" />
+                    {slot.preview || slot.displayUrl ? (
+                      <img src={slot.preview || slot.displayUrl} alt={slot.caption || slot.slot} className="w-full h-full object-cover" />
                     ) : (
                       <FaImage className="text-slate-300" size={22} />
                     )}
@@ -324,9 +296,7 @@ export default function AdminSystemConfig() {
                           return;
                         }
                         const preview = URL.createObjectURL(file);
-                        setGallerySlots((prev) =>
-                          prev.map((s, idx) => idx === i ? { ...s, file, preview } : s)
-                        );
+                        setGallerySlots((prev) => prev.map((s, idx) => idx === i ? { ...s, file, preview } : s));
                       }} />
                   ) : (
                     <div className="text-center">
