@@ -84,15 +84,14 @@ function MaintenanceCards() {
     });
   };
 
-  // 1. Validation & Trigger Submit Modal
   const handlePreSubmit = () => {
-    if (!messageTitle.trim() || !message.trim()) {
-      return alert("Please fill in both the title and description."); 
+    if (!messageTitle.trim()) {
+      return alert("Please fill in the title.");
     }
     setSubmitConfirmOpen(true);
   };
 
-  // 2. Execute Submit (Fires when they click Confirm inside the modal)
+
   const executeSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -116,7 +115,7 @@ function MaintenanceCards() {
     }
   };
 
-  // 3. Execute Follow Up (Fires when they click Confirm inside the modal)
+  
   const executeFollowUp = async () => {
     if (!followUpConfirmId) return;
     setFollowingUpId(followUpConfirmId);
@@ -182,7 +181,7 @@ function MaintenanceCards() {
                     Description
                   </label>
                   <textarea
-                    className="w-full bg-[#FFF9F6] border border-[#F2DED4] rounded-xl sm:rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 2xl:py-5 text-xs sm:text-sm 2xl:text-base font-bold focus:ring-2 focus:ring-[#f7b094] outline-none transition resize-none min-h-[120px] sm:min-h-[130px] 2xl:min-h-[160px] placeholder:opacity-30"
+                    className="w-full bg-[#FFF9F6] border border-[#F2DED4] rounded-xl sm:rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 2xl:py-5 text-xs sm:text-sm 2xl:text-base font-bold focus:ring-2 focus:ring-[#f7b094] outline-none transition resize-none min-h-[120px] sm:min-h-[130px] 2xl:min-h-40 placeholder:opacity-30"
                     placeholder="Describe the issue so our team can prepare..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}

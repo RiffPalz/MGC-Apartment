@@ -246,7 +246,7 @@ export default function DashboardCards() {
           </div>
 
           {/* RIGHT: Announcements (4 cols) */}
-          <div className="lg:col-span-4 h-[350px] lg:h-auto lg:min-h-[320px]">
+          <div className="lg:col-span-4 h-[350px] lg:h-auto lg:min-h-80">
             <div className="bg-[#7a2e1a] rounded-2xl sm:rounded-3xl p-4 sm:p-7 text-[#FFEDE1] shadow-xl flex flex-col relative overflow-hidden h-full">
               <div className="flex items-center justify-between mb-4 sm:mb-5">
                 <h2 className="flex items-center gap-2 font-bold text-sm sm:text-base">
@@ -514,7 +514,7 @@ function PaymentCard({ title, bill, onPay, utilityBillFile, onViewBill }) {
   const isPaid = bill?.status === "Paid" || bill?.status === "Pending Verification";
 
   return (
-    <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-[2rem] shadow-sm border border-[#F2DED4] flex flex-col justify-between h-full group hover:border-[#f7b094] transition-all">
+    <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-4xl shadow-sm border border-[#F2DED4] flex flex-col justify-between h-full group hover:border-[#f7b094] transition-all">
       <div>
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-3 sm:mb-5">
           <p className="text-[#330101]/50 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest leading-tight">{title}</p>

@@ -239,7 +239,7 @@ export default function AdminDashboard() {
       )}
 
       {/* ── MIDDLE ROW: Chart + Maintenance ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-[320px]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-80">
         {/* Chart */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col h-full">
           <div className="flex items-center justify-between mb-4">
