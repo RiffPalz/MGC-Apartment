@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDebounceCallback } from "../../hooks/useDebounceCallback";
 import {
   FaUsers, FaTools, FaMoneyBillWave, FaClipboardList,
   FaCheckCircle, FaClock, FaArrowRight,
@@ -65,7 +66,8 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
-  useSocketEvent(["maintenance_updated", "payment_updated", "contract_updated", "tenants_updated", "announcements_updated", "applications_updated", "units_updated"], loadDashboard);
+  const debouncedLoad = useDebounceCallback(loadDashboard, 1500);
+  useSocketEvent(["maintenance_updated", "payment_updated", "contract_updated", "tenants_updated", "announcements_updated", "applications_updated", "units_updated"], debouncedLoad);
 
   if (loading) {
     return (

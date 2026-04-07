@@ -11,8 +11,8 @@ import { sms } from "../utils/smsTemplates.js";
 export const createMaintenance = async (userId, data) => {
   const { category, title, description } = data;
 
-  if (!category || !title || !description) {
-    throw new Error("Category, title, and description are required");
+  if (!category || !title) {
+    throw new Error("Category and title are required");
   }
 
   const user = await User.findByPk(userId);
