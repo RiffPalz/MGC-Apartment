@@ -270,18 +270,18 @@ export default function CaretakerMaintenance() {
 
                 <div className="h-6 w-px bg-slate-200 hidden sm:block mx-1" />
 
-                <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
                   <button onClick={load}
-                    className="flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm uppercase tracking-widest active:scale-95">
+                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-[10px] sm:text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm uppercase tracking-widest active:scale-95 whitespace-nowrap">
                     Refresh
                   </button>
                   <button onClick={() => window.print()}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm active:scale-95">
-                    <FaPrint size={12} /> <span className="uppercase tracking-widest">Print</span>
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-[10px] sm:text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm active:scale-95 whitespace-nowrap">
+                    <FaPrint size={11} /> <span className="uppercase tracking-widest">Print</span>
                   </button>
                   <button onClick={() => setCreateModal(true)}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold bg-[#db6747] text-white hover:bg-[#c45a3a] transition-all shadow-sm active:scale-95">
-                    <FaPlus size={11} /> <span className="uppercase tracking-widest">New Request</span>
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-[10px] sm:text-xs font-bold bg-[#db6747] text-white hover:bg-[#c45a3a] transition-all shadow-sm active:scale-95 whitespace-nowrap">
+                    <FaPlus size={10} /> <span className="uppercase tracking-widest">New Request</span>
                   </button>
                 </div>
               </div>

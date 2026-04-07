@@ -1,43 +1,32 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   FaBars,
   FaRegBell,
   FaBell,
   FaChevronDown,
-  FaCog,
   FaSignOutAlt,
   FaUserCircle,
   FaCheck,
 } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
 import {
-  fetchAdminNotifications,
+  fetchUserNotifications,
   markNotificationRead,
   markAllNotificationsRead,
-} from "../api/adminAPI/NotificationAPI";
+} from "../api/tenantAPI/NotificationAPI";
 import GeneralConfirmationModal from "./GeneralConfirmationModal";
 
-// Socket
-import { useSocket } from "../context/SocketContext";
-
 const PAGE_TITLES = {
-  "/admin": "Dashboard",
-  "/admin/dashboard": "Dashboard",
-  "/admin/tenants": "Tenants",
-  "/admin/units": "Units",
-  "/admin/payments": "Payment Overview",
-  "/admin/maintenance": "Maintenance",
-  "/admin/announcement": "Announcement",
-  "/admin/contract": "Contract",
-  "/admin/approvalpage": "Pending Approval",
-  "/admin/applicationrequest": "Application Requests",
-  "/admin/activity-logs": "Activity Logs",
-  "/admin/settings": "Settings",
-  "/admin/profile": "My Profile",
+  "/tenant/dashboard": "Dashboard",
+  "/tenant/maintenance": "Maintenance",
+  "/tenant/payments": "Payments",
+  "/tenant/contracts": "My Contract",
+  "/tenant/announcements": "Announcements",
+  "/tenant/myAccount": "My Account",
 };
 
-// Format time (e.g., 2m ago)
 const fmtTime = (d) => {
   if (!d) return "";
   const diff = Date.now() - new Date(d).getTime();
@@ -49,12 +38,10 @@ const fmtTime = (d) => {
   return `${Math.floor(h / 24)}d ago`;
 };
 
-export default function AdminHeader({ open, setOpen }) {
+export default function TenantHeader({ setOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-
-  // Socket instance
   const socket = useSocket();
 
   const [showMenu, setShowMenu] = useState(false);
@@ -62,42 +49,61 @@ export default function AdminHeader({ open, setOpen }) {
   const [notifications, setNotifications] = useState([]);
   const [notifsLoading, setNotifsLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const lastFetchRef = useRef(0);
+  const MIN_NOTIFICATION_REFRESH_MS = 10000;
 
-  const title = PAGE_TITLES[location.pathname] ?? "Admin Panel";
-  const displayName = user?.fullName || user?.userName || "Administrator";
-  const initial = displayName[0]?.toUpperCase() ?? "A";
+  const title = PAGE_TITLES[location.pathname] ?? "Tenant Portal";
+  const displayName = user?.fullName || user?.userName || "Tenant";
+
+  const initials = displayName
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   const unread = notifications.filter((n) => !n.is_read).length;
 
-  // Load notifications
+  const userId = user?.id || user?.ID;
+
   const loadNotifications = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastFetchRef.current < MIN_NOTIFICATION_REFRESH_MS) return;
+
     try {
       setNotifsLoading(true);
-      const data = await fetchAdminNotifications();
-      if (data.success) setNotifications(data.notifications || []);
+      const data = await fetchUserNotifications();
+      const notificationsPayload =
+        data?.notifications ??
+        (Array.isArray(data) ? data : []);
+      setNotifications(notificationsPayload);
+      lastFetchRef.current = Date.now();
     } catch {
+      /* silent */
     } finally {
       setNotifsLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    if (!userId) return;
     loadNotifications();
-  }, [loadNotifications]);
+  }, [userId, loadNotifications]);
 
-  // Listen for real-time notifications
+  useEffect(() => {
+    if (!userId) return;
+    loadNotifications();
+  }, [location.pathname, userId, loadNotifications]);
+
   useEffect(() => {
     if (!socket) return;
-
     const handleNewNotification = (newNotif) => {
       setNotifications((prev) => [newNotif, ...prev]);
     };
-
     socket.on("new_notification", handleNewNotification);
-
     return () => socket.off("new_notification", handleNewNotification);
   }, [socket]);
 
-  // Mark one as read
   const markRead = async (id) => {
     try {
       await markNotificationRead(id);
@@ -107,7 +113,6 @@ export default function AdminHeader({ open, setOpen }) {
     } catch {}
   };
 
-  // Mark all as read
   const markAllRead = async () => {
     try {
       await markAllNotificationsRead();
@@ -115,7 +120,6 @@ export default function AdminHeader({ open, setOpen }) {
     } catch {}
   };
 
-  // Logout
   const handleLogout = async () => {
     await logout();
     navigate("/login");
@@ -123,12 +127,12 @@ export default function AdminHeader({ open, setOpen }) {
 
   return (
     <>
-      <header className="h-16 bg-white/90 backdrop-blur-lg border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 shrink-0 shadow-sm">
-        {/* Left section */}
+      <header className="h-16 bg-white border-b border-[#F2DED4] flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 shrink-0 shadow-sm">
+        {/* LEFT SECTION (Original Tenant Style - Screenshot 2) */}
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => setOpen?.(!open)}
-            className="p-2.5 text-slate-500 hover:text-[#db6747] hover:bg-orange-50 rounded-xl lg:hidden shrink-0 transition-colors active:scale-95"
+            onClick={() => setOpen?.((prev) => !prev)}
+            className="p-2.5 text-[#5c1f10] hover:bg-[#FDF2ED] rounded-xl lg:hidden shrink-0 transition-all active:scale-95"
           >
             <FaBars size={18} />
           </button>
@@ -136,15 +140,15 @@ export default function AdminHeader({ open, setOpen }) {
             <h2 className="text-base font-black text-slate-900 uppercase tracking-widest leading-none truncate font-OswaldRegular">
               {title}
             </h2>
-            <p className="text-[10px] font-bold text-slate-400 mt-1 hidden sm:block uppercase tracking-widest">
-              Welcome back, {displayName}
+            <p className="text-[10px] font-bold text-[#D96648] mt-1 hidden sm:block uppercase tracking-widest opacity-70">
+              Welcome back, {`UNIT ${user.unitNumber}`}
             </p>
           </div>
         </div>
 
-        {/* Right section */}
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-          {/* Notifications */}
+        {/* RIGHT SECTION (Original Tenant Style - Screenshot 2) */}
+        <div className="flex items-center gap-3 sm:gap-5 shrink-0">
+          {/* NOTIFICATIONS DROPDOWN (Now Uses Admin Style from Screenshot 1) */}
           <div className="relative">
             <button
               onClick={() => {
@@ -152,20 +156,24 @@ export default function AdminHeader({ open, setOpen }) {
                 setShowMenu(false);
                 if (!showNotifs) loadNotifications();
               }}
-              className={`relative p-2.5 rounded-xl transition-all active:scale-95 ${showNotifs ? "bg-orange-50 text-[#db6747]" : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"}`}
+              className={`relative p-2.5 rounded-xl transition-all active:scale-95 ${
+                showNotifs
+                  ? "bg-orange-50 text-[#db6747]"
+                  : "text-slate-500 hover:bg-slate-100"
+              }`}
             >
               <FaBell
                 size={18}
                 className={unread > 0 || showNotifs ? "text-[#db6747]" : ""}
               />
               {unread > 0 && (
-                <span className="absolute top-1.5 right-1.5 min-w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none border-2 border-white shadow-sm animate-pulse">
+                <span className="absolute top-1.5 right-1.5 min-w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none border-2 border-white animate-pulse">
                   {unread > 9 ? "9+" : unread}
                 </span>
               )}
             </button>
 
-            {/* Mobile overlay */}
+            {/* Mobile Dropdown Backdrop */}
             {showNotifs && (
               <div
                 className="fixed inset-0 z-40 sm:hidden"
@@ -174,8 +182,8 @@ export default function AdminHeader({ open, setOpen }) {
             )}
 
             {showNotifs && (
-              <div className="fixed top-[72px] left-4 right-4 sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-3 sm:w-[380px] bg-white rounded-2xl shadow-2xl sm:shadow-xl border border-slate-200 z-50 overflow-hidden sm:origin-top-right animate-in fade-in zoom-in-95 duration-200 flex flex-col">
-                {/* Header */}
+              <div className="fixed top-[72px] left-4 right-4 sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-3 sm:w-[380px] bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden sm:origin-top-right animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+                {/* Header (Admin Style - Screenshot 1) */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/80 shrink-0">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
@@ -188,14 +196,14 @@ export default function AdminHeader({ open, setOpen }) {
                   {unread > 0 && (
                     <button
                       onClick={markAllRead}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-slate-500 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 rounded-lg transition-all uppercase tracking-widest"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-slate-500 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all uppercase tracking-widest"
                     >
                       <FaCheck size={10} className="text-blue-500" /> All Read
                     </button>
                   )}
                 </div>
 
-                {/* List */}
+                {/* List (Admin Style - Screenshot 1) */}
                 <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto divide-y divide-slate-100 custom-scrollbar">
                   {notifsLoading ? (
                     <div className="py-10 text-center">
@@ -203,9 +211,7 @@ export default function AdminHeader({ open, setOpen }) {
                     </div>
                   ) : notifications.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-3">
-                        <FaCheck className="text-emerald-400 text-xl" />
-                      </div>
+                      <FaCheck className="text-emerald-400 text-xl mb-3" />
                       <p className="text-sm font-bold text-slate-800">
                         All caught up!
                       </p>
@@ -218,13 +224,13 @@ export default function AdminHeader({ open, setOpen }) {
                       <div
                         key={n.ID}
                         onClick={() => !n.is_read && markRead(n.ID)}
-                        className={`flex gap-3 px-5 py-4 cursor-pointer transition-colors ${n.is_read ? "bg-white hover:bg-slate-50" : "bg-blue-50/30 hover:bg-blue-50/50"}`}
+                        className={`flex gap-3 px-5 py-4 cursor-pointer transition-colors ${n.is_read ? "bg-white" : "bg-blue-50/30 hover:bg-blue-50/50"}`}
                       >
                         <div
                           className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.is_read ? "bg-slate-200" : "bg-[#db6747]"}`}
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="flex justify-between items-start gap-2 mb-1">
+                          <div className="flex justify-between items-start mb-1 gap-2">
                             <p
                               className={`text-[13px] font-bold truncate ${n.is_read ? "text-slate-600" : "text-slate-900"}`}
                             >
@@ -246,9 +252,9 @@ export default function AdminHeader({ open, setOpen }) {
             )}
           </div>
 
-          <div className="h-8 w-px bg-slate-200 hidden sm:block" />
+          <div className="h-8 w-px bg-[#F2DED4] hidden sm:block" />
 
-          {/* Profile */}
+          {/* User Profile Chip (Original Tenant Style - Screenshot 2) */}
           <div className="relative">
             <button
               onClick={() => {
@@ -258,29 +264,19 @@ export default function AdminHeader({ open, setOpen }) {
               className="flex items-center gap-3 group text-left transition-all"
             >
               <div className="text-right hidden sm:block">
-                <p className="text-[10px] font-bold text-[#db6747] uppercase tracking-widest leading-none mb-1">
-                  {user?.role ?? "Admin"}
-                </p>
-                <p className="text-sm font-bold text-slate-800 leading-none truncate max-w-[140px] group-hover:text-[#db6747] transition-colors">
+                <p className="text-xs font-black text-[#330101] leading-none truncate max-w-[140px] group-hover:text-[#D96648] transition-colors">
                   {displayName}
                 </p>
+                <p className="text-[10px] font-bold text-[#D96648] uppercase tracking-widest leading-none mt-1 opacity-80">
+                  {user?.unitNumber ? `UNIT ${user.unitNumber}` : "TENANT"}
+                </p>
               </div>
-
-              {user?.profilePicture ? (
-                <img
-                  src={user.profilePicture}
-                  alt="Profile"
-                  className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0 group-hover:border-[#db6747] transition-all"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-[#db6747] font-black text-sm shadow-sm group-hover:bg-[#db6747] group-hover:text-white transition-all shrink-0">
-                  {initial}
-                </div>
-              )}
-
+              <div className="h-10 w-10 rounded-xl bg-[#FDF2ED] border border-[#F2DED4] flex items-center justify-center text-[#D96648] font-black text-xs shadow-sm group-hover:bg-[#5c1f10] group-hover:text-white transition-all shrink-0">
+                {initials}
+              </div>
               <FaChevronDown
                 size={10}
-                className={`text-slate-400 transition-transform hidden sm:block ${showMenu ? "rotate-180" : ""}`}
+                className={`text-slate-300 transition-transform hidden sm:block ${showMenu ? "rotate-180" : ""}`}
               />
             </button>
 
@@ -290,26 +286,17 @@ export default function AdminHeader({ open, setOpen }) {
                   className="fixed inset-0 z-10"
                   onClick={() => setShowMenu(false)}
                 />
-                <div className="absolute right-0 mt-3 w-48 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute right-0 mt-3 w-48 bg-white rounded-2xl shadow-xl border border-[#F2DED4] py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
                   <button
                     onClick={() => {
                       setShowMenu(false);
-                      navigate("/admin/profile");
+                      navigate("/tenant/myAccount");
                     }}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-[#db6747] transition-colors"
+                    className="w-full flex items-center gap-3 px-5 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-[#FDF2ED] hover:text-[#D96648] transition-colors"
                   >
-                    <FaUserCircle size={14} /> My Profile
+                    <FaUserCircle size={14} /> My Account
                   </button>
-                  <button
-                    onClick={() => {
-                      setShowMenu(false);
-                      navigate("/admin/settings");
-                    }}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-[#db6747] transition-colors"
-                  >
-                    <FaCog size={14} /> Settings
-                  </button>
-                  <div className="h-px bg-slate-100 my-1" />
+                  <div className="h-px bg-[#F2DED4] my-1" />
                   <button
                     onClick={() => {
                       setShowMenu(false);
