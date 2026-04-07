@@ -1,88 +1,88 @@
-import { useState, useEffect } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+import React, { useState, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import TenantSidebar from "../components/TenantSidebar.jsx";
-import UserHeader from "../components/Header.jsx";
+import TenantHeader from "../components/TenantHeader.jsx";
 import { useSocket } from "../context/SocketContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { getToken, setAuth } from "../api/authStorage.js";
 
 export default function TenantLayout() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
+  const [open, setOpen] = useState(true);
   const location = useLocation();
   const socket = useSocket();
   const { updateUser } = useAuth();
+  const isMounted = useRef(false);
 
-  // Sync profile updates from socket → AuthContext
+  // Sync profile updates
   useEffect(() => {
     if (!socket) return;
+
     const handler = (updated) => {
       updateUser(updated);
       setAuth(getToken(), updated, updated.role);
     };
+
     socket.on("profile_updated", handler);
     return () => socket.off("profile_updated", handler);
   }, [socket, updateUser]);
 
-  // 1. Resize Listener: Auto-switch between "Mobile Drawer" and "Desktop Sidebar"
+  // Toggle sidebar on resize
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 1024;
-      setIsMobile(mobile);
-      if (!mobile) setIsSidebarOpen(true);
-      else setIsSidebarOpen(false);
+      if (window.innerWidth < 1024) {
+        setOpen(false);
+      } else {
+        setOpen(true);
+      }
     };
 
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 2. Auto-close Sidebar on Mobile when navigating
+  // Close mobile sidebar on route change
   useEffect(() => {
-    if (isMobile) setIsSidebarOpen(false);
-  }, [location, isMobile]);
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+
+    if (window.innerWidth < 1024) {
+      setOpen(false);
+    }
+  }, [location.pathname]);
 
   return (
-    <div className="flex h-screen bg-[#f8f9fa] font-NunitoSans overflow-hidden relative">
-      {/* === MOBILE LAYOUT (Floating Drawer) === */}
-      {isMobile && (
-        <>
-          {/* Dark Overlay/Backdrop */}
-          <div
-            className={`fixed inset-0 bg-[#330101]/60 z-40 transition-opacity duration-300 backdrop-blur-sm ${isSidebarOpen
-                ? "opacity-100 pointer-events-auto"
-                : "opacity-0 pointer-events-none"
-              }`}
-            onClick={() => setIsSidebarOpen(false)}
-          />
+    <div className="flex h-screen bg-[#f8f9fa] overflow-hidden font-NunitoSans relative">
+      {/* Mobile overlay */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+          onClick={() => setOpen(false)}
+        />
+      )}
 
-          {/* Floating Sidebar Container 
-              FIX: Changed 'w-72' to 'max-w-[80vw] w-72' to prevent overflow on tiny screens 
-          */}
-          <div
-            className={`fixed inset-y-0 left-0 z-50 max-w-[80vw] w-72 h-full shadow-2xl transition-transform duration-300 ease-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-              }`}
-          >
-            <TenantSidebar open={true} setOpen={setIsSidebarOpen} />
+      {/* Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 lg:static lg:shrink-0 transition-all duration-300 ease-in-out shadow-2xl lg:shadow-xl
+        ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} 
+        ${open ? "w-72 max-w-[80vw]" : "lg:w-20 w-72 max-w-[80vw]"}`}
+      >
+        <TenantSidebar open={open} setOpen={setOpen} />
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300">
+        {/* Header */}
+        <TenantHeader setOpen={setOpen} />
+
+        {/* Page content */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto scroll-smooth bg-[#f8f9fa]">
+          <div className="w-full max-w-[1600px] mx-auto min-h-full">
+            <Outlet />
           </div>
-        </>
-      )}
-
-      {/* === DESKTOP LAYOUT (Fixed Sidebar) === */}
-      {!isMobile && (
-        <div className="h-full shadow-xl z-20 relative shrink-0">
-          <TenantSidebar open={isSidebarOpen} setOpen={setIsSidebarOpen} />
-        </div>
-      )}
-
-      {/* === MAIN CONTENT AREA === */}
-      <div className="flex-1 flex flex-col h-full relative overflow-hidden transition-all duration-300 min-w-0">
-        {/* Role-based Header */}
-        <UserHeader onMenuClick={() => setIsSidebarOpen(true)} />
-
-        {/* Dashboard Content */}
-        <main className="flex-1 overflow-y-auto scroll-smooth bg-[#f8f9fa]">
-          <Outlet />
         </main>
       </div>
     </div>

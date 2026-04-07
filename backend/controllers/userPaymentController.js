@@ -1,17 +1,15 @@
 import cloudinary from "../config/cloudinary.js";
 import {
-  getMyPayments, getPaymentDetails, uploadPaymentReceipt
+  getMyPayments,
+  getPaymentDetails,
+  uploadPaymentReceipt
 } from "../services/userPaymentService.js";
 import { emitEvent } from "../utils/emitEvent.js";
 
-
-/* GET TENANT PAYMENTS */
+// Get user's payments
 export const getMyPaymentsController = async (req, res) => {
   try {
-
-    const userId = req.auth.id;
-
-    const payments = await getMyPayments(userId);
+    const payments = await getMyPayments(req.auth.id);
 
     return res.status(200).json({
       success: true,
@@ -20,8 +18,6 @@ export const getMyPaymentsController = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
-
     return res.status(500).json({
       success: false,
       message: error.message
@@ -29,15 +25,10 @@ export const getMyPaymentsController = async (req, res) => {
   }
 };
 
-
-/* GET PAYMENT DETAILS */
+// Get payment details
 export const getPaymentDetailsController = async (req, res) => {
   try {
-
-    const userId = req.auth.id;
-    const { id } = req.params;
-
-    const payment = await getPaymentDetails(id, userId);
+    const payment = await getPaymentDetails(req.params.id, req.auth.id);
 
     return res.status(200).json({
       success: true,
@@ -45,21 +36,16 @@ export const getPaymentDetailsController = async (req, res) => {
     });
 
   } catch (error) {
-
     return res.status(400).json({
       success: false,
       message: error.message
     });
-
   }
 };
 
-
-/* UPLOAD RECEIPT */
+// Upload receipt + notify admin/caretaker
 export const uploadReceiptController = async (req, res) => {
   try {
-
-    const userId = req.auth.id;
     const { id } = req.params;
     const { paymentType, referenceNumber } = req.body;
 
@@ -70,15 +56,37 @@ export const uploadReceiptController = async (req, res) => {
       });
     }
 
-    const imageUrl = req.file.path;
+    const payment = await uploadPaymentReceipt(
+      id,
+      req.file.path,
+      req.auth.id,
+      paymentType,
+      referenceNumber
+    );
 
-    const payment = await uploadPaymentReceipt(id, imageUrl, userId, paymentType, referenceNumber);
     emitEvent(req, "payment_updated");
-    return res.status(200).json({ success: true, message: "Receipt uploaded successfully", payment });
+
+    // Send notification
+    const io = req.app.get("io");
+    const payload = {
+      title: "Payment Receipt Uploaded",
+      message: "A tenant uploaded a payment receipt.",
+      type: "payment",
+      is_read: false,
+      created_at: new Date().toISOString()
+    };
+
+    io.to("admin").emit("new_notification", payload);
+    io.to("caretaker").emit("new_notification", payload);
+
+    return res.status(200).json({
+      success: true,
+      message: "Receipt uploaded successfully",
+      payment
+    });
 
   } catch (error) {
-
-    // Delete uploaded image if validation fails
+    // Cleanup uploaded file on error
     if (req.file?.filename) {
       await cloudinary.uploader.destroy(req.file.filename);
     }
@@ -87,6 +95,5 @@ export const uploadReceiptController = async (req, res) => {
       success: false,
       message: error.message
     });
-
   }
 };

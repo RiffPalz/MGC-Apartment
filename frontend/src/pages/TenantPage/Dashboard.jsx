@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -49,50 +49,51 @@ export default function DashboardCards() {
   // Utility bill viewer modal
   const [utilityBillUrl, setUtilityBillUrl] = useState(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const profileRes = await fetchTenantProfile();
-        setProfile(profileRes.user);
-        const annRes = await fetchAnnouncements();
-        if (annRes.success && annRes.announcements) {
-          const grouped = annRes.announcements.reduce((acc, curr) => {
-            const cat = curr.category || "General";
-            if (!acc[cat]) acc[cat] = [];
-            acc[cat].push({
-              id: curr.ID || curr.id,
-              message: curr.title || curr.message || "Update available",
-              date: new Date(
-                curr.created_at || curr.createdAt,
-              ).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-            });
-            return acc;
-          }, {});
-          setAnnouncements(grouped);
-        }
-        const payRes = await fetchMyPayments();
-        if (payRes.success && payRes.payments) {
-          const rent = payRes.payments.find(
-            (p) => p.type === "Rent" || p.category === "Rent",
-          );
-          const util = payRes.payments.find(
-            (p) => p.type === "Utilities" || p.category === "Utilities",
-          );
-          setBills({ rent: rent || null, utilities: util || null });
-        }
-        const contractRes = await fetchUserContracts();
-        if (contractRes.success && contractRes.contracts.length > 0) {
-          const activeContract = contractRes.contracts.find(c => c.status === "Active");
-          if (activeContract) {
-            setContractEndDate(activeContract.end_date);
-          }
-        }
-      } catch (err) {
-        console.error(err);
+  const loadData = useCallback(async () => {
+    try {
+      const profileRes = await fetchTenantProfile();
+      setProfile(profileRes.user);
+      const annRes = await fetchAnnouncements();
+      if (annRes.success && annRes.announcements) {
+        const grouped = annRes.announcements.reduce((acc, curr) => {
+          const cat = curr.category || "General";
+          if (!acc[cat]) acc[cat] = [];
+          acc[cat].push({
+            id: curr.ID || curr.id,
+            message: curr.title || curr.message || "Update available",
+            date: new Date(
+              curr.created_at || curr.createdAt,
+            ).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          });
+          return acc;
+        }, {});
+        setAnnouncements(grouped);
       }
-    };
-    loadData();
+      const payRes = await fetchMyPayments();
+      if (payRes.success && payRes.payments) {
+        const rent = payRes.payments.find(
+          (p) => p.type === "Rent" || p.category === "Rent",
+        );
+        const util = payRes.payments.find(
+          (p) => p.type === "Utilities" || p.category === "Utilities",
+        );
+        setBills({ rent: rent || null, utilities: util || null });
+      }
+      const contractRes = await fetchUserContracts();
+      if (contractRes.success && contractRes.contracts.length > 0) {
+        const activeContract = contractRes.contracts.find(c => c.status === "Active");
+        if (activeContract) {
+          setContractEndDate(activeContract.end_date);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   useEffect(() => {
     const updateCountdown = () => {

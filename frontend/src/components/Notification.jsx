@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { FaBell, FaCheck, FaCheckDouble } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
+import { useLocation } from "react-router-dom";
 import { fetchUserNotifications, markNotificationRead, markAllNotificationsRead } from "../api/tenantAPI/NotificationAPI";
 import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
@@ -34,13 +35,20 @@ export default function Notification({ userRole }) {
   const dropdownRef = useRef(null);
   const socket = useSocket();
   const { loading: authLoading } = useAuth();
+  const location = useLocation();
+  const lastFetchRef = useRef(0);
+  const MIN_NOTIFICATION_REFRESH_MS = 10000;
 
   const loadNotifications = useCallback(async () => {
     if (userRole !== "tenant" || authLoading) return;
+    const now = Date.now();
+    if (now - lastFetchRef.current < MIN_NOTIFICATION_REFRESH_MS) return;
+
     setLoading(true);
     try {
       const data = await fetchUserNotifications();
       setNotifications(data.notifications || []);
+      lastFetchRef.current = Date.now();
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
     } finally {
@@ -48,9 +56,15 @@ export default function Notification({ userRole }) {
     }
   }, [userRole, authLoading]);
 
+  // Load notifications on mount
   useEffect(() => {
     loadNotifications();
   }, [loadNotifications]);
+
+  // Refresh notifications when user navigates to a different page
+  useEffect(() => {
+    loadNotifications();
+  }, [location.pathname, loadNotifications]);
 
   // WebSocket listeners
   useEffect(() => {
@@ -108,14 +122,13 @@ export default function Notification({ userRole }) {
       >
         <FaBell size={18} />
         {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-[#D96648] text-white text-[9px] font-black px-1 rounded-full border-2 border-white flex items-center justify-center leading-none shadow-sm animate-pulse">
+          <span className="absolute top-1.5 right-1.5 min-w-4 h-4 bg-[#D96648] text-white text-[9px] font-black px-1 rounded-full border-2 border-white flex items-center justify-center leading-none shadow-sm animate-pulse">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
 
       {/* ── MOBILE BACKDROP ── */}
-      {/* This ensures clicking outside the notification box on mobile closes it properly */}
       {isOpen && (
         <div
           className="fixed inset-0 z-40 sm:hidden"
