@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useDebounceCallback } from "../hooks/useDebounceCallback";
 import { FaBell, FaCheck, FaCheckDouble } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { useLocation } from "react-router-dom";
@@ -36,23 +37,17 @@ export default function Notification({ userRole }) {
   const socket = useSocket();
   const { loading: authLoading } = useAuth();
   const location = useLocation();
-  const lastFetchRef = useRef(0);
-  const MIN_NOTIFICATION_REFRESH_MS = 10000;
 
-  const loadNotifications = useCallback(async () => {
+  const loadNotifications = useCallback(async (silent = false) => {
     if (userRole !== "tenant" || authLoading) return;
-    const now = Date.now();
-    if (now - lastFetchRef.current < MIN_NOTIFICATION_REFRESH_MS) return;
-
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const data = await fetchUserNotifications();
       setNotifications(data.notifications || []);
-      lastFetchRef.current = Date.now();
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [userRole, authLoading]);
 
@@ -63,18 +58,16 @@ export default function Notification({ userRole }) {
 
   // Refresh notifications when user navigates to a different page
   useEffect(() => {
-    loadNotifications();
+    loadNotifications(true);
   }, [location.pathname, loadNotifications]);
 
-  // WebSocket listeners
+  // WebSocket listeners — debounced so rapid events don't flood requests
+  const debouncedLoad = useDebounceCallback(() => loadNotifications(true), 1500);
   useEffect(() => {
     if (!socket) return;
-    const handler = (notification) => {
-      setNotifications((prev) => [notification, ...prev]);
-    };
-    socket.on("new_notification", handler);
-    return () => socket.off("new_notification", handler);
-  }, [socket]);
+    socket.on("new_notification", debouncedLoad);
+    return () => socket.off("new_notification", debouncedLoad);
+  }, [socket, debouncedLoad]);
 
   // Handle outside clicks
   useEffect(() => {
