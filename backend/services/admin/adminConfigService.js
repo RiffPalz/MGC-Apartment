@@ -1,4 +1,5 @@
 import SystemConfig from "../../models/systemConfig.js";
+import { createActivityLog } from "../../services/activityLogService.js";
 
 const DEFAULT_CONFIG = {
   mgc_name: "MGC Building",
@@ -29,7 +30,7 @@ export const getConfig = async () => {
 };
 
 /* UPDATE CONFIG */
-export const updateConfig = async (data, files = {}) => {
+export const updateConfig = async (data, files = {}, adminId = null) => {
   // Load existing record (or create from defaults)
   let instance = await SystemConfig.findOne();
   if (!instance) {
@@ -80,5 +81,17 @@ export const updateConfig = async (data, files = {}) => {
   }
 
   await instance.save();
+
+  if (adminId) {
+    await createActivityLog({
+      userId: adminId,
+      role: "admin",
+      action: "UPDATE SYSTEM CONFIG",
+      description: "You updated the system configuration settings.",
+      referenceId: instance.id,
+      referenceType: "system_config",
+    });
+  }
+
   return instance;
 };

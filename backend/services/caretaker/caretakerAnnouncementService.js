@@ -38,7 +38,7 @@ export const createAnnouncement = async ({ announcementTitle, announcementMessag
     userId: caretakerId,
     role: "caretaker",
     action: "CREATE ANNOUNCEMENT",
-    description: `Created announcement: ${announcementTitle}`,
+    description: `You posted a new announcement: "${announcementTitle}".`,
     referenceId: announcement.ID,
     referenceType: "announcement",
   });
@@ -57,7 +57,7 @@ export const updateAnnouncement = async (announcementId, updates, caretakerId) =
     userId: caretakerId,
     role: "caretaker",
     action: "UPDATE ANNOUNCEMENT",
-    description: `Updated announcement ID ${announcement.ID}`,
+    description: `You updated the announcement: "${announcement.announcementTitle}".`,
     referenceId: announcement.ID,
     referenceType: "announcement",
   });
@@ -74,7 +74,7 @@ export const deleteAnnouncement = async (announcementId, caretakerId) => {
     userId: caretakerId,
     role: "caretaker",
     action: "DELETE ANNOUNCEMENT",
-    description: `Deleted announcement ID ${announcement.ID}`,
+    description: `You deleted the announcement: "${announcement.announcementTitle}".`,
     referenceId: announcement.ID,
     referenceType: "announcement",
   });

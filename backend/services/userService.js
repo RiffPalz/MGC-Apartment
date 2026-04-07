@@ -103,6 +103,15 @@ export const loginUser = async ({ userName, password }) => {
   user.loginToken = loginToken;
   await user.save();
 
+  await createActivityLog({
+    userId: user.ID,
+    role: user.role,
+    action: "LOGIN",
+    description: `You logged in to your account.`,
+    referenceId: user.ID,
+    referenceType: "user",
+  });
+
   return {
     message: "Login successful",
     accessToken,

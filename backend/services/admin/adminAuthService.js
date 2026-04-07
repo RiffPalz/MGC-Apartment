@@ -3,6 +3,7 @@ import User from "../../models/user.js";
 import { sendMail } from "../../utils/mailer.js";
 import { generateVerificationCode } from "../../utils/codeGenerator.js";
 import { loginEmailTemplate } from "../../utils/emailTemplate.js";
+import { createActivityLog } from "../../services/activityLogService.js";
 
 /* ADMIN LOGIN – SEND OTP */
 export const adminLogin = async ({ email, password }) => {
@@ -63,6 +64,15 @@ export const verifyAdminOtp = async ({ adminId, verificationCode }) => {
     // Generate access token
     const { generateAccessToken } = await import("../../utils/token.js");
     const accessToken = generateAccessToken({ id: user.ID, role: "admin" });
+
+    await createActivityLog({
+        userId: user.ID,
+        role: "admin",
+        action: "LOGIN",
+        description: "You logged in to the admin portal.",
+        referenceId: user.ID,
+        referenceType: "user",
+    });
 
     return {
         message: "Admin login successful",

@@ -1,13 +1,12 @@
 import User from "../../models/user.js";
 import jwt from "jsonwebtoken";
+import { createActivityLog } from "../../services/activityLogService.js";
 
 export const caretakerLogin = async ({ userName, password }) => {
-  // Validate that both fields are provided
   if (!userName || !password) {
     throw new Error("Username and password are required");
   }
 
-  // Find the user and ensure they have the 'caretaker' role
   const user = await User.findOne({
     where: { userName: userName, role: "caretaker" },
   });
@@ -16,22 +15,28 @@ export const caretakerLogin = async ({ userName, password }) => {
     throw new Error("Invalid username or password");
   }
 
-  // Verify the password hash
   const isMatch = await user.comparePassword(password);
   if (!isMatch) {
     throw new Error("Invalid username or password");
   }
 
-  // Generate a JWT for the session
   const token = jwt.sign(
     { id: user.ID, role: "caretaker" },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES || "7d" }
   );
 
-  // Save the token to the user record
   user.loginToken = token;
   await user.save();
+
+  await createActivityLog({
+    userId: user.ID,
+    role: "caretaker",
+    action: "LOGIN",
+    description: "You logged in to your account.",
+    referenceId: user.ID,
+    referenceType: "user",
+  });
 
   return {
     accessToken: token,

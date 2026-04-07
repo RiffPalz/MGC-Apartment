@@ -81,6 +81,11 @@ export const verifyPayment = async (paymentId, caretakerId) => {
                 as: "contract",
                 include: [
                     {
+                        model: Unit,
+                        as: "unit",
+                        attributes: ["unit_number"]
+                    },
+                    {
                         model: User,
                         as: "tenants",
                         attributes: ["ID", "contactNumber"],
@@ -131,7 +136,7 @@ export const verifyPayment = async (paymentId, caretakerId) => {
         userId: caretakerId,
         role: "caretaker",
         action: "VERIFY PAYMENT",
-        description: `Verified payment ${payment.ID}`,
+        description: `You verified Unit ${payment.contract?.unit?.unit_number ?? "—"}'s ${payment.category} receipt.`,
         referenceId: payment.ID,
         referenceType: "payment"
     });

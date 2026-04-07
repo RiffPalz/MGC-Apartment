@@ -62,7 +62,7 @@ export const createMaintenance = async (userId, data) => {
     userId,
     role: "tenant",
     action: "CREATE MAINTENANCE",
-    description: `You created maintenance request: ${title}`,
+    description: `You submitted a maintenance request: "${title}".`,
     referenceId: request.ID,
     referenceType: "maintenance"
   });
@@ -111,7 +111,7 @@ export const followUpMaintenance = async (userId, maintenanceId) => {
     userId,
     role: "tenant",
     action: "FOLLOW-UP MAINTENANCE",
-    description: `Tenant followed up on maintenance request: ${request.title}`,
+    description: `You sent a follow-up on your maintenance request: "${request.title}".`,
     referenceId: request.ID,
     referenceType: "maintenance",
   });

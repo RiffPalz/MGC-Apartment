@@ -100,7 +100,7 @@ export const createContractByAdmin = async (
             userId: adminId,
             role: "admin",
             action: "CREATE CONTRACT",
-            description: `Created contract for unit ${unit.unit_number}`,
+            description: `You created a contract for Unit ${unit.unit_number}.`,
             referenceId: contract.ID,
             referenceType: "contract",
         });
@@ -151,7 +151,7 @@ export const terminateContract = async (contractId, adminId) => {
             userId: adminId,
             role: "admin",
             action: "TERMINATE CONTRACT",
-            description: `Terminated contract ID ${contract.ID}`,
+            description: `You terminated the contract for Unit ${contract.unit?.unit_number ?? "—"}.`,
             referenceId: contract.ID,
             referenceType: "contract",
         });
@@ -198,7 +198,7 @@ export const renewContract = async ({ contractId, newStartDate, newEndDate }, ad
         userId: adminId,
         role: "admin",
         action: "RENEW CONTRACT",
-        description: `Renewed contract ID ${contract.ID} — new dates: ${newStartDate} to ${newEndDate}`,
+        description: `You renewed the contract for Unit ${contract.unit.unit_number} until ${new Date(newEndDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}.`,
         referenceId: contract.ID,
         referenceType: "contract",
     });
@@ -225,7 +225,7 @@ export const editContract = async (contractId, updates, adminId) => {
         userId: adminId,
         role: "admin",
         action: "EDIT CONTRACT",
-        description: `Edited contract ID ${contract.ID}`,
+        description: `You edited the contract for Unit ${contract.unit?.unit_number ?? "—"}.`,
         referenceId: contract.ID,
         referenceType: "contract",
     });
@@ -335,7 +335,13 @@ export const getExpiringContracts = async () => {
 export const completeContract = async (contractId, adminId) => {
     const transaction = await sequelize.transaction();
     try {
-        const contract = await Contract.findByPk(contractId, { include: { model: User, as: "tenants" }, transaction });
+        const contract = await Contract.findByPk(contractId, {
+            include: [
+                { model: User, as: "tenants" },
+                { model: Unit, as: "unit", attributes: ["unit_number"] },
+            ],
+            transaction,
+        });
         if (!contract || contract.status !== "Active") throw new Error("Contract not eligible for completion.");
 
         await contract.update({ status: "Completed" }, { transaction });
@@ -361,7 +367,7 @@ export const completeContract = async (contractId, adminId) => {
             userId: adminId,
             role: "admin",
             action: "COMPLETE CONTRACT",
-            description: `Completed contract ID ${contract.ID}`,
+            description: `You marked the contract for Unit ${contract.unit?.unit_number ?? "—"} as completed.`,
             referenceId: contract.ID,
             referenceType: "contract",
         });

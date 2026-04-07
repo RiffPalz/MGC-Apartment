@@ -20,7 +20,8 @@ export const getTodayUnreadController = async (req, res) => {
 /* MARK APPLICATION REQUEST AS READ */
 export const markApplicationReadController = async (req, res) => {
     try {
-        await markApplicationRequestRead(req.params.id);
+        const adminId = req.admin?.id;
+        await markApplicationRequestRead(req.params.id, adminId);
         return res.status(200).json({ success: true, message: "Marked as read" });
     } catch (error) {
         return res.status(400).json({ success: false, message: error.message });
@@ -55,23 +56,12 @@ export const getAllApplicationRequestsController = async (req, res) => {
 /* DELETE APPLICATION REQUEST */
 export const deleteApplicationRequestController = async (req, res) => {
     try {
-
         const { id } = req.params;
-
-        const result = await deleteApplicationRequest(id);
-
-        return res.status(200).json({
-            success: true,
-            message: result.message
-        });
-
+        const adminId = req.admin?.id;
+        const result = await deleteApplicationRequest(id, adminId);
+        return res.status(200).json({ success: true, message: result.message });
     } catch (error) {
-
-        return res.status(400).json({
-            success: false,
-            message: error.message
-        });
-
+        return res.status(400).json({ success: false, message: error.message });
     }
 };
 

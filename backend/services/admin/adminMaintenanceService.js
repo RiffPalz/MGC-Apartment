@@ -46,7 +46,7 @@ export const createMaintenance = async (data, adminId) => {
     userId: adminId,
     role: "admin",
     action: "CREATE MAINTENANCE",
-    description: `Admin created maintenance request: ${title}`,
+    description: `You created a maintenance request: "${title}" for Unit ${user.unitNumber ?? "—"}.`,
     referenceId: request.ID,
     referenceType: "maintenance",
   });
@@ -93,7 +93,7 @@ export const approveMaintenance = async (maintenanceId, adminId) => {
     userId: adminId,
     role: "admin",
     action: "APPROVE MAINTENANCE",
-    description: `Approved maintenance request ID ${request.ID}`,
+    description: `You approved the maintenance request: "${request.title}" for Unit ${request.user?.unitNumber ?? "—"}.`,
     referenceId: request.ID,
     referenceType: "maintenance",
   });
@@ -105,7 +105,7 @@ export const approveMaintenance = async (maintenanceId, adminId) => {
 export const updateMaintenance = async (maintenanceId, data, adminId) => {
   const { status, startDate, endDate } = data;
   const request = await Maintenance.findByPk(maintenanceId, {
-    include: [{ model: User, as: "user", attributes: ["contactNumber"] }],
+    include: [{ model: User, as: "user", attributes: ["contactNumber", "unitNumber"] }],
   });
   if (!request) throw new Error("Maintenance request not found");
 
@@ -176,7 +176,7 @@ export const updateMaintenance = async (maintenanceId, data, adminId) => {
     userId: adminId,
     role: "admin",
     action: "UPDATE MAINTENANCE",
-    description: `Updated maintenance request ID ${request.ID} to ${request.status}`,
+    description: `You updated Unit ${request.user?.unitNumber ?? "—"}'s maintenance request "${request.title}" to ${request.status}.`,
     referenceId: request.ID,
     referenceType: "maintenance",
   });
@@ -222,7 +222,7 @@ export const deleteMaintenance = async (maintenanceId, adminId) => {
     userId: adminId,
     role: "admin",
     action: "DELETE MAINTENANCE",
-    description: `Admin deleted maintenance request ID ${request.ID}`,
+    description: `You deleted the maintenance request: "${request.title}".`,
     referenceId: request.ID,
     referenceType: "maintenance",
   });

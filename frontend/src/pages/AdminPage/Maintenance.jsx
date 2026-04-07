@@ -382,6 +382,11 @@ export default function AdminMaintenance() {
                               )}
                             </td>
                             <td className="px-5 py-4 whitespace-nowrap">
+                              {req.status === "Done" ? (
+                                <span className={`inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest border ${sc.color}`}>
+                                  Done
+                                </span>
+                              ) : (
                               <div className="relative inline-flex items-center">
                                 <select
                                   value={req.status}
@@ -396,6 +401,7 @@ export default function AdminMaintenance() {
                                 </select>
                                 <span className={`absolute right-2 pointer-events-none text-[8px] ${sc.color.split(" ")[1]}`}>▾</span>
                               </div>
+                              )}
                             </td>
                             <td className="px-5 py-4 whitespace-nowrap text-right">
                               <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -443,6 +449,11 @@ export default function AdminMaintenance() {
                         <div className="grid grid-cols-2 gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
                           <div className="min-w-0 flex flex-col justify-center">
                             <p className="text-[9px] text-slate-400 uppercase tracking-widest font-bold mb-1">Status</p>
+                            {req.status === "Done" ? (
+                              <span className={`inline-flex items-center px-2.5 py-1.5 rounded-md text-[9px] font-bold uppercase tracking-widest border ${sc.color}`}>
+                                Done
+                              </span>
+                            ) : (
                             <div className="relative inline-flex items-center w-full">
                               <select
                                 value={req.status}
@@ -457,6 +468,7 @@ export default function AdminMaintenance() {
                               </select>
                               <span className={`absolute right-2 pointer-events-none text-[8px] ${sc.color.split(" ")[1]}`}>▾</span>
                             </div>
+                            )}
                           </div>
                           <div className="min-w-0 flex flex-col justify-center">
                             <p className="text-[9px] text-slate-400 uppercase tracking-widest font-bold mb-1">Requested</p>

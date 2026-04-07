@@ -5,6 +5,7 @@ import {
 } from "react-icons/fa";
 import toast from "../../utils/toast";
 import { fetchConfig, updateConfig } from "../../api/adminAPI/ConfigAPI";
+import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 // Local fallback images
 import img1 from "../../assets/images/LP-img1.jpg";
@@ -70,6 +71,7 @@ export default function AdminSystemConfig() {
 
   const [editingSections, setEditingSections] = useState({});
   const [savingSections, setSavingSections] = useState({});
+  const [saveConfirm, setSaveConfirm] = useState(null); // section name pending confirm
 
   const isEditing = (section) => !!editingSections[section];
   const isSaving = (section) => !!savingSections[section];
@@ -183,7 +185,7 @@ export default function AdminSystemConfig() {
             className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all active:scale-95">
             <FaTimes size={10} /> Cancel
           </button>
-          <button onClick={() => save(section)} disabled={isSaving(section)}
+          <button onClick={() => setSaveConfirm(section)} disabled={isSaving(section)}
             className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm active:scale-95 disabled:opacity-60">
             <FaSave size={10} /> {isSaving(section) ? "Saving..." : "Save"}
           </button>
@@ -316,6 +318,17 @@ export default function AdminSystemConfig() {
 
         </div>
       </div>
+
+      <GeneralConfirmationModal
+        isOpen={!!saveConfirm}
+        onClose={() => setSaveConfirm(null)}
+        onConfirm={() => { const s = saveConfirm; setSaveConfirm(null); save(s); }}
+        variant="save"
+        title="Save Changes?"
+        message="Are you sure you want to update this configuration? Changes will be reflected on the landing page."
+        confirmText="Save"
+        loading={saveConfirm ? isSaving(saveConfirm) : false}
+      />
     </div>
   );
 }

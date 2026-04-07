@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -20,6 +20,7 @@ import { fetchAnnouncements, fetchSingleAnnouncement } from "../../api/tenantAPI
 import { fetchMyPayments, uploadReceipt } from "../../api/tenantAPI/PaymentAPI";
 import { fetchUserContracts } from "../../api/tenantAPI/ContractAPI";
 import ModalPortal from "../../components/ModalPortal";
+import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 export default function DashboardCards() {
   const [profile, setProfile] = useState(null);
@@ -38,6 +39,7 @@ export default function DashboardCards() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [refNumber, setRefNumber] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [submitConfirm, setSubmitConfirm] = useState(false);
 
   // Announcement modal state
   const [announcementModal, setAnnouncementModal] = useState({
@@ -49,51 +51,50 @@ export default function DashboardCards() {
   // Utility bill viewer modal
   const [utilityBillUrl, setUtilityBillUrl] = useState(null);
 
-  const loadData = useCallback(async () => {
-    try {
-      const profileRes = await fetchTenantProfile();
-      setProfile(profileRes.user);
-      const annRes = await fetchAnnouncements();
-      if (annRes.success && annRes.announcements) {
-        const grouped = annRes.announcements.reduce((acc, curr) => {
-          const cat = curr.category || "General";
-          if (!acc[cat]) acc[cat] = [];
-          acc[cat].push({
-            id: curr.ID || curr.id,
-            message: curr.title || curr.message || "Update available",
-            date: new Date(
-              curr.created_at || curr.createdAt,
-            ).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-          });
-          return acc;
-        }, {});
-        setAnnouncements(grouped);
-      }
-      const payRes = await fetchMyPayments();
-      if (payRes.success && payRes.payments) {
-        const rent = payRes.payments.find(
-          (p) => p.type === "Rent" || p.category === "Rent",
-        );
-        const util = payRes.payments.find(
-          (p) => p.type === "Utilities" || p.category === "Utilities",
-        );
-        setBills({ rent: rent || null, utilities: util || null });
-      }
-      const contractRes = await fetchUserContracts();
-      if (contractRes.success && contractRes.contracts.length > 0) {
-        const activeContract = contractRes.contracts.find(c => c.status === "Active");
-        if (activeContract) {
-          setContractEndDate(activeContract.end_date);
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }, []);
-
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        const profileRes = await fetchTenantProfile();
+        setProfile(profileRes.user);
+        const annRes = await fetchAnnouncements();
+        if (annRes.success && annRes.announcements) {
+          const grouped = annRes.announcements.reduce((acc, curr) => {
+            const cat = curr.category || "General";
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push({
+              id: curr.ID || curr.id,
+              message: curr.title || curr.message || "Update available",
+              date: new Date(
+                curr.created_at || curr.createdAt,
+              ).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+            });
+            return acc;
+          }, {});
+          setAnnouncements(grouped);
+        }
+        const payRes = await fetchMyPayments();
+        if (payRes.success && payRes.payments) {
+          const rent = payRes.payments.find(
+            (p) => p.type === "Rent" || p.category === "Rent",
+          );
+          const util = payRes.payments.find(
+            (p) => p.type === "Utilities" || p.category === "Utilities",
+          );
+          setBills({ rent: rent || null, utilities: util || null });
+        }
+        const contractRes = await fetchUserContracts();
+        if (contractRes.success && contractRes.contracts.length > 0) {
+          const activeContract = contractRes.contracts.find(c => c.status === "Active");
+          if (activeContract) {
+            setContractEndDate(activeContract.end_date);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
     loadData();
-  }, [loadData]);
+  }, []);
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -178,7 +179,11 @@ export default function DashboardCards() {
     if (paymentMethod === "GCash" && !refNumber.trim())
       return alert("Please enter GCash Ref Number.");
     if (!selectedFile) return alert("Please upload a receipt photo.");
+    setSubmitConfirm(true);
+  };
 
+  const doSubmitReceipt = async () => {
+    setSubmitConfirm(false);
     setIsUploading(true);
     try {
       const formData = new FormData();
@@ -198,7 +203,7 @@ export default function DashboardCards() {
   };
 
   return (
-    <div className="bg-[#FFF9F6] w-full min-h-screen font-sans text-[#330101] px-4 sm:px-6 py-6 sm:py-8">
+    <div className="bg-[#FFF9F6] w-full min-h-screen font-sans text-[#330101] px-3 sm:px-5 md:px-6 py-4 sm:py-6 md:py-8">
       <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-5">
         {/* MAIN GRID */}
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-5">
@@ -206,14 +211,14 @@ export default function DashboardCards() {
           <div className="lg:col-span-8 flex flex-col gap-4">
             
             {/* TOP STATS */}
-            <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
               <StatCard icon={<FaHome />}    label="Unit"        value={profile?.unitNumber ?? "---"}  color="text-[#D96648]"  bg="bg-[#FDF2ED]" />
               <StatCard icon={<FaUsers />}   label="Residents"   value={profile?.numberOfTenants ?? "---"} color="text-[#330101]" bg="bg-[#F5E6E0]" />
               <StatCard icon={<FaReceipt />} label="Active Bills" value={Object.values(bills).filter((b) => b && b.status !== "Paid").length} color="text-amber-600" bg="bg-amber-50" />
             </div>
 
             {/* BILLS SECTION */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <PaymentCard title="Monthly Rent" bill={bills.rent}
                 onPay={() => setUploadModal({ isOpen: true, paymentId: bills.rent?.id || bills.rent?.ID, billName: "Rent" })} />
               <PaymentCard title="Utilities (Power & Water)" bill={bills.utilities}
@@ -223,12 +228,12 @@ export default function DashboardCards() {
             </div>
 
             {/* CONTRACT COUNTDOWN */}
-            <div className="bg-white px-4 sm:px-8 py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-sm border border-[#F2DED4] flex items-center">
+            <div className="bg-white px-4 sm:px-6 md:px-8 py-4 sm:py-5 rounded-2xl sm:rounded-3xl shadow-sm border border-[#F2DED4] flex items-center">
               <div className="flex items-center gap-3 sm:gap-4 w-full">
                 <div className="p-3 sm:p-3.5 bg-[#FDF2ED] text-[#D96648] rounded-xl sm:rounded-2xl shrink-0">
                   <FaCalendarAlt className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-[#330101]/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-0.5 sm:mb-1">Contract Ends In</p>
                   <h3 className={`text-sm sm:text-xl font-black truncate ${
                     countdown === "Expired" ? "text-red-500" :
@@ -246,8 +251,8 @@ export default function DashboardCards() {
           </div>
 
           {/* RIGHT: Announcements (4 cols) */}
-          <div className="lg:col-span-4 h-[350px] lg:h-auto lg:min-h-80">
-            <div className="bg-[#7a2e1a] rounded-2xl sm:rounded-3xl p-4 sm:p-7 text-[#FFEDE1] shadow-xl flex flex-col relative overflow-hidden h-full">
+          <div className="lg:col-span-4 min-h-[300px] lg:h-auto lg:min-h-[320px]">
+            <div className="bg-[#7a2e1a] rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-7 text-[#FFEDE1] shadow-xl flex flex-col relative overflow-hidden h-full" style={{ minHeight: "300px" }}>
               <div className="flex items-center justify-between mb-4 sm:mb-5">
                 <h2 className="flex items-center gap-2 font-bold text-sm sm:text-base">
                   <FaBullhorn className="text-[#f7b094]" /> Announcements
@@ -438,11 +443,9 @@ export default function DashboardCards() {
 
               <div className="p-5 sm:p-8 overflow-y-auto custom-scrollbar">
                 {announcementModal.loading ? (
-                  <div className="animate-pulse space-y-3 py-4 px-2">
-                    <div className="h-5 w-3/4 bg-[#F2DED4] rounded mx-auto" />
-                    <div className="h-4 w-full bg-[#F2DED4]/60 rounded" />
-                    <div className="h-4 w-5/6 bg-[#F2DED4]/60 rounded" />
-                    <div className="h-4 w-4/5 bg-[#F2DED4]/60 rounded" />
+                  <div className="text-center py-8 sm:py-10">
+                    <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-b-2 border-[#D96648] mx-auto"></div>
+                    <p className="text-[10px] sm:text-xs text-[#330101]/60 mt-3 sm:mt-4 uppercase tracking-widest font-bold">Loading update...</p>
                   </div>
                 ) : announcementModal.announcement ? (
                   <div className="space-y-4 sm:space-y-6">
@@ -478,6 +481,18 @@ export default function DashboardCards() {
           </div>
         </ModalPortal>
       )}
+
+      {/* CONFIRM: Submit Payment */}
+      <GeneralConfirmationModal
+        isOpen={submitConfirm}
+        onClose={() => setSubmitConfirm(false)}
+        onConfirm={doSubmitReceipt}
+        variant="save"
+        title="Submit Payment?"
+        message={`Confirm submitting your ${uploadModal.billName} receipt via ${paymentMethod}?`}
+        confirmText="Submit"
+        loading={isUploading}
+      />
     </div>
   );
 }
@@ -485,15 +500,15 @@ export default function DashboardCards() {
 // Sub-components - Heavily optimized for mobile scaling
 function StatCard({ icon, label, value, color, bg }) {
   return (
-    <div className="bg-white px-3 sm:px-6 py-3.5 sm:py-5 rounded-2xl sm:rounded-3xl shadow-sm border border-[#F2DED4] flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 transition-all hover:-translate-y-0.5 hover:shadow-md">
-      <div className={`p-2.5 sm:p-3.5 ${bg} ${color} rounded-xl sm:rounded-2xl shrink-0`}>
-        {React.cloneElement(icon, { className: "w-4 h-4 sm:w-5 sm:h-5" })}
+    <div className="bg-white px-2.5 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl shadow-sm border border-[#F2DED4] flex flex-col items-start gap-2 sm:gap-3 transition-all hover:-translate-y-0.5 hover:shadow-md">
+      <div className={`p-2 sm:p-2.5 md:p-3.5 ${bg} ${color} rounded-xl sm:rounded-2xl shrink-0`}>
+        {React.cloneElement(icon, { className: "w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" })}
       </div>
       <div className="min-w-0 w-full">
-        <p className="text-[#330101]/40 text-[8px] sm:text-[9px] font-bold uppercase tracking-widest mb-0.5 truncate">
+        <p className="text-[#330101]/40 text-[7px] sm:text-[8px] md:text-[9px] font-bold uppercase tracking-widest mb-0.5 truncate">
           {label}
         </p>
-        <h3 className="text-base sm:text-2xl font-black text-[#330101] leading-none truncate">{value}</h3>
+        <h3 className="text-sm sm:text-lg md:text-2xl font-black text-[#330101] leading-none truncate">{value}</h3>
       </div>
     </div>
   );
@@ -514,7 +529,7 @@ function PaymentCard({ title, bill, onPay, utilityBillFile, onViewBill }) {
   const isPaid = bill?.status === "Paid" || bill?.status === "Pending Verification";
 
   return (
-    <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-4xl shadow-sm border border-[#F2DED4] flex flex-col justify-between h-full group hover:border-[#f7b094] transition-all">
+    <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-[2rem] shadow-sm border border-[#F2DED4] flex flex-col justify-between h-full group hover:border-[#f7b094] transition-all">
       <div>
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-3 sm:mb-5">
           <p className="text-[#330101]/50 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest leading-tight">{title}</p>

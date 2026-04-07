@@ -41,7 +41,7 @@ export const updateCaretakerProfile = async (caretakerContext, data) => {
             userId: user.ID,
             role: "caretaker",
             action: "UPDATE PROFILE",
-            description: `Caretaker updated: ${changes.join(", ")}`,
+            description: `You updated your profile: ${changes.join(", ")}.`,
             referenceId: user.ID,
             referenceType: "user"
         });

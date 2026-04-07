@@ -17,6 +17,7 @@ import "aos/dist/aos.css";
 
 // Api
 import { registerTenant, checkAvailability } from "../../api/tenantAPI/tenantAuth";
+import api from "../../api/config";
 
 const CreateAcc = () => {
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ const CreateAcc = () => {
   const [progress, setProgress] = useState(0);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [takenUnits, setTakenUnits] = useState([]);
+  const [availableUnits, setAvailableUnits] = useState([]);
   const [usernameError, setUsernameError] = useState("");
 
   const [showTerms, setShowTerms] = useState(false);
@@ -52,9 +54,13 @@ const CreateAcc = () => {
       easing: "ease-in-out",
     });
 
-    // Load taken units on mount
+    // Load taken units and available units on mount
     checkAvailability().then((res) => {
       if (res.takenUnits) setTakenUnits(res.takenUnits);
+    }).catch(() => {});
+
+    api.get("/config/units").then((res) => {
+      if (res.data.success) setAvailableUnits(res.data.units || []);
     }).catch(() => {});
   }, []);
 
@@ -310,34 +316,26 @@ const CreateAcc = () => {
                   onChange={handleChange}
                 >
                   <option value="" disabled>Select unit...</option>
-                  <optgroup label="1st Floor" className="text-[#db6747] font-bold bg-slate-50">
-                    {[101, 102, 103, 104, 105, 106, 107].map((n) => (
-                      <option key={n} value={n} disabled={takenUnits.includes(n)} className="text-slate-700">
-                        Unit {n}{takenUnits.includes(n) ? " (Occupied)" : ""}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="2nd Floor" className="text-[#db6747] font-bold bg-slate-50">
-                    {[201, 202, 203, 204, 205, 206].map((n) => (
-                      <option key={n} value={n} disabled={takenUnits.includes(n)} className="text-slate-700">
-                        Unit {n}{takenUnits.includes(n) ? " (Occupied)" : ""}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="3rd Floor" className="text-[#db6747] font-bold bg-slate-50">
-                    {[301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316].map((n) => (
-                      <option key={n} value={n} disabled={takenUnits.includes(n)} className="text-slate-700">
-                        Unit {n}{takenUnits.includes(n) ? " (Occupied)" : ""}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="4th Floor" className="text-[#db6747] font-bold bg-slate-50">
-                    {[401, 402, 403, 404, 405, 406, 407, 408].map((n) => (
-                      <option key={n} value={n} disabled={takenUnits.includes(n)} className="text-slate-700">
-                        Unit {n}{takenUnits.includes(n) ? " (Occupied)" : ""}
-                      </option>
-                    ))}
-                  </optgroup>
+                  {[
+                    { label: "Ground Floor", num: 1 },
+                    { label: "2nd Floor",    num: 2 },
+                    { label: "3rd Floor",    num: 3 },
+                    { label: "4th Floor",    num: 4 },
+                  ].map(({ label, num }) => {
+                    const floorUnits = availableUnits.filter((u) => u.floor === num);
+                    if (!floorUnits.length) return null;
+                    return (
+                      <optgroup key={num} label={label} className="text-[#db6747] font-bold bg-slate-50">
+                        {floorUnits.map((u) => (
+                          <option key={u.ID} value={u.unit_number}
+                            disabled={takenUnits.includes(String(u.unit_number)) || takenUnits.includes(u.unit_number)}
+                            className="text-slate-700">
+                            Unit {u.unit_number}{(takenUnits.includes(String(u.unit_number)) || takenUnits.includes(u.unit_number)) ? " (Occupied)" : ""}
+                          </option>
+                        ))}
+                      </optgroup>
+                    );
+                  })}
                 </Select>
 
                 <Select

@@ -59,7 +59,7 @@ export const createMaintenance = async (data, caretakerId) => {
         userId: caretakerId,
         role: "caretaker",
         action: "CREATE MAINTENANCE",
-        description: `Created maintenance: ${title}`,
+        description: `You created a maintenance request: "${title}".`,
         referenceId: request.ID,
         referenceType: "maintenance"
     });
@@ -78,7 +78,9 @@ export const updateMaintenance = async (maintenanceId, data, caretakerId) => {
     const { status, startDate, endDate } = data;
 
     const request = await Maintenance.findByPk(maintenanceId, {
-        include: [{ model: User, as: "user", attributes: ["contactNumber"] }],
+        include: [
+            { model: User, as: "user", attributes: ["contactNumber", "unitNumber"] },
+        ],
     });
 
     if (!request) {
@@ -154,7 +156,7 @@ export const updateMaintenance = async (maintenanceId, data, caretakerId) => {
         userId: caretakerId,
         role: "caretaker",
         action: "UPDATE MAINTENANCE",
-        description: `Updated maintenance ${request.ID} to ${request.status}`,
+        description: `You updated Unit ${request.user?.unitNumber ?? "—"}'s maintenance request "${request.title}" to ${request.status}.`,
         referenceId: request.ID,
         referenceType: "maintenance"
     });
@@ -211,7 +213,7 @@ export const deleteMaintenance = async (maintenanceId, caretakerId) => {
         userId: caretakerId,
         role: "caretaker",
         action: "DELETE MAINTENANCE",
-        description: `Deleted maintenance ${request.ID}: ${request.title}`,
+        description: `You deleted the maintenance request: "${request.title}".`,
         referenceId: request.ID,
         referenceType: "maintenance"
     });

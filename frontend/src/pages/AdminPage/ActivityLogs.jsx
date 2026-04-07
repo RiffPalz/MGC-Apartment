@@ -1,63 +1,111 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSocketEvent } from "../../hooks/useSocketEvent";import {
-    FaSearch, FaChevronLeft, FaChevronRight, FaFilter,
-    FaUserShield, FaUsers, FaTools, FaSyncAlt, FaHistory, FaClock
+import { useSocketEvent } from "../../hooks/useSocketEvent";
+import {
+    FaSearch, FaChevronLeft, FaChevronRight, FaSyncAlt,
+    FaHistory, FaClock, FaFilter, FaChevronDown,
+    FaUserShield, FaTools, FaMoneyCheckAlt, FaFileContract,
+    FaBullhorn, FaBuilding, FaUsers, FaCog, FaSignInAlt,
 } from "react-icons/fa";
-import { MdAdminPanelSettings } from "react-icons/md";
+import { MdOutlineAssignmentInd } from "react-icons/md";
 import toast from "../../utils/toast";
 import { fetchAllActivityLogs } from "../../api/adminAPI/ActivityLogsAPI";
 
 const PAGE_SIZE = 15;
 
-const fmt = (d) =>
-    d ? new Date(d).toLocaleString("en-US", {
-        year: "numeric", month: "short", day: "numeric",
-        hour: "2-digit", minute: "2-digit",
-    }) : "---";
+const CATEGORIES = [
+    { label: "All",           key: "All",          icon: <FaHistory size={11} /> },
+    { label: "Tenant",        key: "TENANT",        icon: <FaUsers size={11} /> },
+    { label: "Maintenance",   key: "MAINTENANCE",   icon: <FaTools size={11} /> },
+    { label: "Payment",       key: "PAYMENT",       icon: <FaMoneyCheckAlt size={11} /> },
+    { label: "Contract",      key: "CONTRACT",      icon: <FaFileContract size={11} /> },
+    { label: "Announcement",  key: "ANNOUNCEMENT",  icon: <FaBullhorn size={11} /> },
+    { label: "Unit",          key: "UNIT",          icon: <FaBuilding size={11} /> },
+    { label: "Staff",         key: "STAFF",         icon: <FaUserShield size={11} /> },
+    { label: "App Request",   key: "APP REQUEST",   icon: <MdOutlineAssignmentInd size={12} /> },
+    { label: "System Config", key: "SYSTEM CONFIG", icon: <FaCog size={11} /> },
+    { label: "Login",         key: "LOGIN",         icon: <FaSignInAlt size={11} /> },
+    { label: "Profile",       key: "PROFILE",       icon: <FaUserShield size={11} /> },
+];
 
-const ROLE_CFG = {
-    admin: { color: "bg-red-50 text-red-600 border-red-200", icon: <FaUserShield size={11} /> },
-    caretaker: { color: "bg-teal-50 text-teal-600 border-teal-200", icon: <MdAdminPanelSettings size={12} /> },
-    tenant: { color: "bg-blue-50 text-blue-600 border-blue-200", icon: <FaUsers size={11} /> },
+const ACTION_STYLES = {
+    CREATE:   { badge: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+    UPDATE:   { badge: "bg-blue-50 text-blue-700 border-blue-200",          dot: "bg-blue-500" },
+    EDIT:     { badge: "bg-blue-50 text-blue-700 border-blue-200",          dot: "bg-blue-500" },
+    RENEW:    { badge: "bg-indigo-50 text-indigo-700 border-indigo-200",    dot: "bg-indigo-500" },
+    COMPLETE: { badge: "bg-teal-50 text-teal-700 border-teal-200",          dot: "bg-teal-500" },
+    DELETE:   { badge: "bg-red-50 text-red-700 border-red-200",             dot: "bg-red-500" },
+    TERMINATE:{ badge: "bg-red-50 text-red-700 border-red-200",             dot: "bg-red-500" },
+    LOGIN:    { badge: "bg-purple-50 text-purple-700 border-purple-200",    dot: "bg-purple-500" },
+    APPROVE:  { badge: "bg-amber-50 text-amber-700 border-amber-200",       dot: "bg-amber-500" },
+    VERIFY:   { badge: "bg-teal-50 text-teal-700 border-teal-200",          dot: "bg-teal-500" },
+    DEFAULT:  { badge: "bg-slate-50 text-slate-600 border-slate-200",       dot: "bg-slate-400" },
 };
 
-const ACTION_COLOR = {
-    CREATE: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    UPDATE: "bg-blue-50 text-blue-700 border-blue-200",
-    DELETE: "bg-red-50 text-red-700 border-red-200",
-    LOGIN: "bg-purple-50 text-purple-700 border-purple-200",
-    APPROVE: "bg-amber-50 text-amber-700 border-amber-200",
-    DEFAULT: "bg-slate-50 text-slate-600 border-slate-200",
-};
-
-const getActionColor = (action = "") => {
+const getActionStyle = (action = "") => {
     const a = action.toUpperCase();
-    if (a.includes("CREATE") || a.includes("ADD")) return ACTION_COLOR.CREATE;
-    if (a.includes("UPDATE") || a.includes("EDIT")) return ACTION_COLOR.UPDATE;
-    if (a.includes("DELETE") || a.includes("REMOVE") || a.includes("TERMINATE")) return ACTION_COLOR.DELETE;
-    if (a.includes("LOGIN") || a.includes("VERIFY")) return ACTION_COLOR.LOGIN;
-    if (a.includes("APPROVE") || a.includes("DECLINE")) return ACTION_COLOR.APPROVE;
-    return ACTION_COLOR.DEFAULT;
+    for (const [key, style] of Object.entries(ACTION_STYLES)) {
+        if (a.startsWith(key)) return style;
+    }
+    return ACTION_STYLES.DEFAULT;
 };
+
+const matchesCategory = (action = "", key) => {
+    if (key === "All") return true;
+    const a = action.toUpperCase();
+    if (key === "STAFF") return a.includes("CARETAKER") || (a.includes("ADMIN") && !a.includes("LOGIN"));
+    if (key === "TENANT") return a.includes("TENANT") || a.includes("APPROVAL");
+    return a.includes(key);
+};
+
+const humanize = (desc = "") => {
+    const d = desc.trim();
+    if (!d) return "Activity recorded.";
+    if (/^You /i.test(d)) return d;
+    if (/^Created announcement:\s*(.+)/i.test(d)) return `You posted a new announcement: "${d.replace(/^Created announcement:\s*/i, "")}".`;
+    if (/^Updated announcement ID \d+/i.test(d)) return "You updated an announcement.";
+    if (/^Deleted announcement ID \d+/i.test(d)) return "You deleted an announcement.";
+    if (/^Created contract for unit (.+)/i.test(d)) { const m = d.match(/unit (.+)/i); return `You created a contract for Unit ${m[1]}.`; }
+    if (/^Terminated contract ID \d+/i.test(d)) return "You terminated a contract.";
+    if (/^Renewed contract ID \d+/i.test(d)) return "You renewed a contract.";
+    if (/^Edited contract ID \d+/i.test(d)) return "You edited a contract.";
+    if (/^Completed contract ID \d+/i.test(d)) return "You marked a contract as completed.";
+    if (/^Created unit (\S+)/i.test(d)) { const m = d.match(/unit (\S+)/i); return `You added Unit ${m[1]}.`; }
+    if (/^Deleted unit (\S+)/i.test(d)) { const m = d.match(/unit (\S+)/i); return `You deleted Unit ${m[1]}.`; }
+    if (/^Updated unit (\S+)/i.test(d)) { const m = d.match(/unit (\S+)/i); return `You updated Unit ${m[1]}.`; }
+    if (/^Admin (approved|declined) tenant:\s*(.+)/i.test(d)) { const m = d.match(/Admin (approved|declined) tenant:\s*(.+)/i); return `You ${m[1]} tenant account: ${m[2]}.`; }
+    if (/^Admin created (caretaker|admin):\s*(.+)/i.test(d)) { const m = d.match(/Admin created (\w+):\s*(.+)/i); return `You created a ${m[1]} account for ${m[2]}.`; }
+    if (/^Admin deleted (\w+):\s*(.+)/i.test(d)) { const m = d.match(/Admin deleted (\w+):\s*(.+)/i); return `You deleted ${m[1]} account: ${m[2]}.`; }
+    if (/^Admin updated:\s*(.+)/i.test(d)) return `You updated your profile: ${d.replace(/^Admin updated:\s*/i, "")}.`;
+    if (/^Created tenant:\s*(.+)/i.test(d)) { const m = d.match(/Created tenant:\s*(.+)/i); return `You created a tenant account for ${m[1]}.`; }
+    if (/^Admin created maintenance request:\s*(.+)/i.test(d)) { const m = d.match(/request:\s*(.+)/i); return `You created a maintenance request: "${m[1]}".`; }
+    if (/^Approved maintenance request ID \d+/i.test(d)) return "You approved a maintenance request.";
+    if (/^Updated maintenance request ID \d+ to (.+)/i.test(d)) { const m = d.match(/to (.+)/i); return `You updated a maintenance request to ${m[1]}.`; }
+    if (/^Admin deleted maintenance request ID \d+/i.test(d)) return "You deleted a maintenance request.";
+    if (/^Created .+ bill for contract \d+/i.test(d)) { const m = d.match(/Created (.+) bill/i); return `You created a ${m[1]} bill.`; }
+    if (/^Verified payment \d+/i.test(d)) return "You verified a payment receipt.";
+    if (/^Updated payment \d+/i.test(d)) return "You updated a payment record.";
+    if (/^Deleted payment \d+/i.test(d)) return "You deleted a payment record.";
+    return d;
+};
+
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+const fmtTime = (d) => d ? new Date(d).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "";
 
 export default function AdminActivityLogs() {
-    const [logs, setLogs] = useState([]);
+    const [allLogs, setAllLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
-    const [roleFilter, setRoleFilter] = useState("All");
+    const [category, setCategory] = useState("All");
+    const [showCatMenu, setShowCatMenu] = useState(false);
     const [page, setPage] = useState(1);
     const [lastRefresh, setLastRefresh] = useState(null);
 
     const load = useCallback(async () => {
         try {
             setLoading(true);
-            const data = await fetchAllActivityLogs({
-                role: roleFilter,
-                search,
-                limit: 500,
-            });
+            const data = await fetchAllActivityLogs({ role: "admin", limit: 500 });
             if (data.success) {
-                setLogs(data.logs || []);
+                setAllLogs(data.logs || []);
                 setLastRefresh(new Date());
             }
         } catch {
@@ -65,268 +113,194 @@ export default function AdminActivityLogs() {
         } finally {
             setLoading(false);
         }
-    }, [roleFilter, search]);
+    }, []);
 
     useEffect(() => { load(); }, [load]);
     useSocketEvent(["maintenance_updated", "payment_updated", "contract_updated", "tenants_updated", "announcements_updated", "applications_updated", "units_updated"], load);
 
-    // client-side search on top of server results
-    const filtered = logs.filter((l) => {
+    const filtered = allLogs.filter((l) => {
         const q = search.toLowerCase();
-        return (
-            l.description?.toLowerCase().includes(q) ||
-            l.action?.toLowerCase().includes(q) ||
-            String(l.user_id).includes(q)
-        );
+        const matchSearch = !q || l.description?.toLowerCase().includes(q) || l.action?.toLowerCase().includes(q);
+        return matchSearch && matchesCategory(l.action, category);
     });
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-    const adminCount = logs.filter((l) => l.role === "admin").length;
-    const caretakerCount = logs.filter((l) => l.role === "caretaker").length;
-    const tenantCount = logs.filter((l) => l.role === "tenant").length;
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const activeCat = CATEGORIES.find((c) => c.key === category) ?? CATEGORIES[0];
 
     return (
-        <div className="w-full h-full bg-[#f8fafc] p-4 md:p-6 text-slate-800 font-sans flex flex-col gap-4 sm:gap-5 min-h-screen overflow-x-hidden">
+        <div className="min-h-screen bg-[#f8fafc] px-3 sm:px-5 md:px-8 xl:px-12 py-5 md:py-8 font-sans">
 
-            {/* 4K Containment Wrapper */}
-            <div className="max-w-[1600px] w-full mx-auto flex flex-col gap-4 sm:gap-5 flex-1">
+            {/* Stats bar */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                <StatCard label="Total Logs" value={allLogs.length}                                                                                                                                                    color="text-slate-800" />
+                <StatCard label="Today"      value={allLogs.filter((l) => new Date(l.created_at).toDateString() === now.toDateString()).length}                                                                        color="text-[#db6747]" />
+                <StatCard label="This Week"  value={allLogs.filter((l) => new Date(l.created_at) >= weekAgo).length}                                                                                                  color="text-blue-600" className="col-span-2 lg:col-span-1" />
+                <StatCard label="This Month" value={allLogs.filter((l) => { const d = new Date(l.created_at); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).length}             color="text-emerald-600" className="hidden lg:block" />
+            </div>
 
-                {/* STAT CARDS */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                    <StatCard icon={<FaUserShield size={18} />} label="Admin Actions" value={adminCount} color="text-red-500" bg="bg-red-50" />
-                    <StatCard icon={<MdAdminPanelSettings size={20} />} label="Caretaker Actions" value={caretakerCount} color="text-teal-500" bg="bg-teal-50" />
-                    <StatCard icon={<FaUsers size={18} />} label="Tenant Actions" value={tenantCount} color="text-blue-500" bg="bg-blue-50" />
-                </div>
-
-                {/* TOOLBAR */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-                    <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
-                        {/* Search */}
-                        <div className="relative flex-1 max-w-md w-full">
-                            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
-                            <input
-                                type="text"
-                                placeholder="Search action or description..."
-                                value={search}
-                                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                                className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 hover:bg-white transition-all shadow-sm"
-                            />
-                        </div>
-
-                        {/* Filters & Actions */}
-                        <div className="flex flex-col sm:flex-row gap-3 sm:items-center w-full lg:w-auto">
-                            <div className="flex items-center gap-2">
-                                <FaFilter size={11} className="text-slate-400 hidden sm:block" />
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Role</span>
-                            </div>
-                            <div className="overflow-x-auto custom-scrollbar w-full sm:w-auto pb-1 sm:pb-0 -mb-1 sm:mb-0">
-                                <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
-                                    {["All", "Admin", "Caretaker", "Tenant"].map((f) => (
-                                        <button key={f} onClick={() => { setRoleFilter(f); setPage(1); }}
-                                            className={`px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all
-                                                ${roleFilter === f ? "bg-white text-[#db6747] shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>
-                                            {f}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="h-6 w-px bg-slate-200 hidden sm:block mx-1" />
-
-                            <div className="flex gap-2 items-center w-full sm:w-auto">
-                                <button onClick={() => { setPage(1); load(); }}
-                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm uppercase tracking-widest active:scale-95">
-                                    <FaSyncAlt size={11} className={loading ? "animate-spin" : ""} />
-                                    <span className="uppercase tracking-widest">Refresh</span>
-                                </button>
-                                {lastRefresh && (
-                                    <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
-                                        <FaClock size={10} /> {fmt(lastRefresh)}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* TABLE CONTAINER */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
-
-                    {/* Desktop Table View */}
-                    <div className="hidden lg:block overflow-x-auto flex-1 custom-scrollbar">
-                        <table className="w-full text-left whitespace-nowrap">
-                            <thead>
-                                <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500">
-                                    <th className="px-5 py-4 font-bold">#</th>
-                                    <th className="px-5 py-4 font-bold">Timestamp</th>
-                                    <th className="px-5 py-4 font-bold">Role</th>
-                                    <th className="px-5 py-4 font-bold">Action</th>
-                                    <th className="px-5 py-4 font-bold w-full">Description</th>
-                                    <th className="px-5 py-4 font-bold">Ref. Type</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {loading ? (
-                                    [...Array(6)].map((_, i) => (
-                                        <tr key={i} className="animate-pulse">
-                                            <td className="px-5 py-4"><div className="h-4 w-6 bg-slate-100 rounded" /></td>
-                                            <td className="px-5 py-4"><div className="h-4 w-28 bg-slate-100 rounded" /></td>
-                                            <td className="px-5 py-4"><div className="h-5 w-16 bg-slate-100 rounded-md" /></td>
-                                            <td className="px-5 py-4"><div className="h-5 w-20 bg-slate-100 rounded-md" /></td>
-                                            <td className="px-5 py-4"><div className="h-4 w-full max-w-xs bg-slate-100 rounded" /></td>
-                                            <td className="px-5 py-4"><div className="h-4 w-16 bg-slate-100 rounded" /></td>
-                                        </tr>
-                                    ))
-                                ) : paginated.length === 0 ? (
-                                    <tr><td colSpan={6} className="py-24 text-center">
-                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm border border-slate-100">
-                                            <FaHistory className="text-slate-300" size={20} />
-                                        </div>
-                                        <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">No activity logs found</p>
-                                    </td></tr>
-                                ) : paginated.map((log, idx) => (
-                                    <tr key={log.ID} className="hover:bg-slate-50/80 transition-colors">
-                                        <td className="px-5 py-4 whitespace-nowrap text-xs text-slate-400 font-bold">
-                                            {(page - 1) * PAGE_SIZE + idx + 1}
-                                        </td>
-                                        <td className="px-5 py-4 whitespace-nowrap text-xs font-semibold text-slate-600">{fmt(log.created_at)}</td>
-                                        <td className="px-5 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border shadow-sm ${ROLE_CFG[log.role]?.color}`}>
-                                                {ROLE_CFG[log.role]?.icon} {log.role}
-                                            </span>
-                                        </td>
-                                        <td className="px-5 py-4 whitespace-nowrap">
-                                            <span className={`text-[9px] font-bold px-2.5 py-1.5 rounded-md uppercase tracking-wider border shadow-sm ${getActionColor(log.action)}`}>
-                                                {log.action}
-                                            </span>
-                                        </td>
-                                        <td className="px-5 py-4 text-xs font-medium text-slate-700">
-                                            <p className="line-clamp-2 max-w-sm xl:max-w-2xl whitespace-normal leading-relaxed" title={log.description}>{log.description || "---"}</p>
-                                        </td>
-                                        <td className="px-5 py-4 whitespace-nowrap text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                            {log.reference_type || "---"}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+            {/* Toolbar */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-3 mb-5">
+                <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                        <input type="text" placeholder="Search action or description..."
+                            value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                            className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747]" />
                     </div>
 
-                    {/* Mobile Cards View */}
-                    <div className="lg:hidden flex-1 overflow-y-auto divide-y divide-slate-100 bg-slate-50/30">
-                        {loading ? (
-                            <div className="divide-y divide-slate-100 animate-pulse">
-                                {[...Array(5)].map((_, i) => (
-                                    <div key={i} className="p-5 space-y-3">
-                                        <div className="flex gap-2">
-                                            <div className="h-5 w-16 bg-slate-100 rounded-md" />
-                                            <div className="h-5 w-20 bg-slate-100 rounded-md" />
-                                        </div>
-                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                            <div className="h-4 w-full bg-slate-100 rounded mb-2" />
-                                            <div className="h-4 w-3/4 bg-slate-100 rounded" />
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <div className="h-4 w-24 bg-slate-100 rounded" />
-                                            <div className="h-4 w-20 bg-slate-100 rounded" />
-                                        </div>
-                                    </div>
+                    <div className="relative shrink-0">
+                        {showCatMenu && <div className="fixed inset-0 z-10" onClick={() => setShowCatMenu(false)} />}
+                        <button onClick={() => setShowCatMenu((p) => !p)}
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-[#db6747] transition-colors whitespace-nowrap">
+                            <FaFilter className="text-[#db6747] text-xs shrink-0" />
+                            <span className="font-bold">{activeCat.label}</span>
+                            <FaChevronDown className={`text-xs text-slate-400 transition-transform ${showCatMenu ? "rotate-180" : ""}`} />
+                        </button>
+                        {showCatMenu && (
+                            <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-20 w-52 overflow-hidden">
+                                {CATEGORIES.map((c) => (
+                                    <button key={c.key} onClick={() => { setCategory(c.key); setShowCatMenu(false); setPage(1); }}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2.5 ${
+                                            category === c.key ? "bg-orange-50 font-bold text-[#db6747]" : "hover:bg-slate-50 text-slate-600"
+                                        }`}>
+                                        <span className="flex items-center gap-2">{c.icon} {c.label}</span>
+                                        {category === c.key && <span className="ml-auto text-[#db6747] text-xs">✓</span>}
+                                    </button>
                                 ))}
                             </div>
-                        ) : paginated.length === 0 ? (
-                            <div className="py-24 text-center px-4">
-                                <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">No activity logs found</p>
-                            </div>
-                        ) : (
-                            paginated.map((log, idx) => (
-                                <div key={log.ID} className="p-5 space-y-4 hover:bg-white transition-colors border-l-4 border-transparent hover:border-l-[#db6747]">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <span className={`inline-flex items-center gap-1.5 text-[9px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border shadow-sm ${ROLE_CFG[log.role]?.color}`}>
-                                                {ROLE_CFG[log.role]?.icon} {log.role}
-                                            </span>
-                                            <span className={`text-[9px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border shadow-sm ${getActionColor(log.action)}`}>
-                                                {log.action}
-                                            </span>
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-400 shrink-0">#{(page - 1) * PAGE_SIZE + idx + 1}</span>
-                                    </div>
-
-                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-inner">
-                                        <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                                            {log.description || "---"}
-                                        </p>
-                                    </div>
-
-                                    <div className="flex flex-wrap items-center justify-between pt-1 gap-2">
-                                        <div className="flex flex-col">
-                                            <span className="text-[9px] text-slate-400 uppercase tracking-widest font-bold mb-0.5">Timestamp</span>
-                                            <span className="text-xs text-slate-600 font-semibold">{fmt(log.created_at)}</span>
-                                        </div>
-                                        <div className="flex flex-col text-right">
-                                            <span className="text-[9px] text-slate-400 uppercase tracking-widest font-bold mb-0.5">Reference</span>
-                                            <span className="text-xs text-slate-600 font-semibold uppercase tracking-wider">{log.reference_type || "---"}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
                         )}
                     </div>
 
-                    {/* PAGINATION */}
-                    {!loading && filtered.length > PAGE_SIZE && (
-                        <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-slate-200 bg-slate-50/50 gap-4 shrink-0">
-                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                Showing <span className="text-slate-700">{(page - 1) * PAGE_SIZE + 1}</span> to <span className="text-slate-700">{Math.min(page * PAGE_SIZE, filtered.length)}</span> of <span className="text-slate-700">{filtered.length}</span>
-                            </p>
-                            <div className="flex items-center gap-1">
-                                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                                    className="p-1.5 rounded-md text-slate-400 hover:bg-white hover:text-slate-700 border border-transparent hover:border-slate-200 disabled:opacity-30 transition-all active:scale-95">
-                                    <FaChevronLeft size={12} />
-                                </button>
-                                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                                    .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
-                                    .reduce((acc, p, idx, arr) => {
-                                        if (idx > 0 && p - arr[idx - 1] > 1) acc.push("...");
-                                        acc.push(p);
-                                        return acc;
-                                    }, [])
-                                    .map((p, idx) =>
-                                        p === "..." ? (
-                                            <span key={`e-${idx}`} className="px-2 text-slate-400 text-xs">…</span>
-                                        ) : (
-                                            <button key={p} onClick={() => setPage(p)}
-                                                className={`w-7 h-7 rounded-md text-xs font-bold transition-all
-                                                ${page === p ? "bg-[#db6747] text-white shadow-sm shadow-orange-200" : "text-slate-500 hover:bg-white hover:border hover:border-slate-200 border border-transparent"}`}>
-                                                {p}
-                                            </button>
-                                        )
-                                    )}
-                                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                                    className="p-1.5 rounded-md text-slate-400 hover:bg-white hover:text-slate-700 border border-transparent hover:border-slate-200 disabled:opacity-30 transition-all active:scale-95">
-                                    <FaChevronRight size={12} />
-                                </button>
-                            </div>
+                    <button onClick={() => { setPage(1); load(); }}
+                        className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-orange-50 hover:border-[#db6747] transition-colors shrink-0 uppercase tracking-widest">
+                        <FaSyncAlt className={`text-[#db6747] ${loading ? "animate-spin" : ""}`} size={13} />
+                        <span className="hidden sm:inline">Refresh</span>
+                    </button>
+
+                    {lastRefresh && (
+                        <div className="hidden md:flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest shrink-0 whitespace-nowrap">
+                            <FaClock size={9} />
+                            {lastRefresh.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                         </div>
                     )}
                 </div>
+            </div>
+
+            {/* Log list */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                {/* Desktop header */}
+                <div className="hidden sm:grid grid-cols-[40px_1fr_2fr_120px_100px] gap-4 px-5 py-3 bg-slate-50 border-b border-slate-200">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">#</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Action</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Time</span>
+                </div>
+
+                {loading ? (
+                    <div className="p-8 space-y-3">
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} className="animate-pulse flex gap-4">
+                                <div className="h-8 w-6 bg-slate-100 rounded" />
+                                <div className="h-8 w-32 bg-slate-100 rounded-lg" />
+                                <div className="h-8 flex-1 bg-slate-50 rounded-lg" />
+                                <div className="h-8 w-24 bg-slate-50 rounded-lg" />
+                            </div>
+                        ))}
+                    </div>
+                ) : filtered.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center mb-3 border border-slate-100">
+                            <FaHistory className="text-slate-300 text-2xl" />
+                        </div>
+                        <p className="text-sm font-bold text-slate-500">No activity logs found</p>
+                        <p className="text-xs text-slate-400 mt-1">Try adjusting your filters</p>
+                    </div>
+                ) : (
+                    <div className="divide-y divide-slate-100">
+                        {paginated.map((log, idx) => {
+                            const style = getActionStyle(log.action);
+                            return (
+                                <div key={log.ID} className="hover:bg-slate-50/60 transition-colors">
+                                    {/* Desktop row */}
+                                    <div className="hidden sm:grid grid-cols-[40px_1fr_2fr_120px_100px] gap-4 px-5 py-3.5 items-center">
+                                        <span className="text-xs text-slate-300 font-bold tabular-nums">{(page - 1) * PAGE_SIZE + idx + 1}</span>
+                                        <div>
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${style.badge}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                                                {log.action}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-slate-700 leading-snug">{humanize(log.description)}</p>
+                                        <p className="text-xs text-slate-500 font-medium">{fmtDate(log.created_at)}</p>
+                                        <p className="text-xs text-slate-400">{fmtTime(log.created_at)}</p>
+                                    </div>
+                                    {/* Mobile card */}
+                                    <div className="sm:hidden px-4 py-4">
+                                        <div className="flex items-start justify-between gap-3 mb-2">
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${style.badge}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                                                {log.action}
+                                            </span>
+                                            <div className="text-right shrink-0">
+                                                <p className="text-[10px] font-bold text-slate-500">{fmtDate(log.created_at)}</p>
+                                                <p className="text-[10px] text-slate-400">{fmtTime(log.created_at)}</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-slate-600 leading-snug">{humanize(log.description)}</p>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* Footer */}
+                {!loading && filtered.length > 0 && (
+                    <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4">
+                        <p className="text-xs text-slate-400">
+                            {filtered.length <= PAGE_SIZE
+                                ? `Showing ${filtered.length} ${filtered.length === 1 ? "entry" : "entries"}`
+                                : `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)} of ${filtered.length}`}
+                        </p>
+                        {filtered.length > PAGE_SIZE && (
+                            <div className="flex items-center gap-1">
+                                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:bg-white hover:text-slate-700 border border-transparent hover:border-slate-200 disabled:opacity-30 transition-all">
+                                    <FaChevronLeft size={11} />
+                                </button>
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                                    .reduce((acc, p, i, arr) => { if (i > 0 && p - arr[i - 1] > 1) acc.push("..."); acc.push(p); return acc; }, [])
+                                    .map((p, i) => p === "..."
+                                        ? <span key={`e-${i}`} className="px-1.5 text-slate-300 text-xs">…</span>
+                                        : <button key={p} onClick={() => setPage(p)}
+                                            className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${page === p ? "bg-[#db6747] text-white shadow-sm" : "text-slate-500 hover:bg-white hover:border hover:border-slate-200 border border-transparent"}`}>
+                                            {p}
+                                          </button>
+                                    )}
+                                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:bg-white hover:text-slate-700 border border-transparent hover:border-slate-200 disabled:opacity-30 transition-all">
+                                    <FaChevronRight size={11} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
 }
 
-/* ── Sub-components ── */
-
-function StatCard({ icon, label, value, color, bg }) {
+function StatCard({ label, value, color, className = "" }) {
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className={`p-3.5 sm:p-4 ${bg} ${color} rounded-xl shrink-0`}>{icon}</div>
-            <div className="min-w-0">
-                <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 truncate">{label}</p>
-                <p className="text-2xl font-black text-slate-800 leading-none truncate">{value}</p>
-            </div>
+        <div className={`bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-3 ${className}`}>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+            <p className={`text-2xl font-black ${color}`}>{value}</p>
         </div>
     );
 }

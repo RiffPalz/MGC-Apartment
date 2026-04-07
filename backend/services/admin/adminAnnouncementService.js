@@ -52,7 +52,7 @@ export const createAnnouncement = async ({ announcementTitle, announcementMessag
     userId: adminId,
     role: "admin",
     action: "CREATE ANNOUNCEMENT",
-    description: `Created announcement: ${announcementTitle}`,
+    description: `You posted a new announcement: "${announcementTitle}".`,
     referenceId: announcement.ID,
     referenceType: "announcement"
   });
@@ -78,7 +78,7 @@ export const updateAnnouncement = async (announcementId, updates, adminId) => {
     userId: adminId,
     role: "admin",
     action: "UPDATE ANNOUNCEMENT",
-    description: `Updated announcement ID ${announcement.ID}`,
+    description: `You updated the announcement: "${announcement.announcementTitle}".`,
     referenceId: announcement.ID,
     referenceType: "announcement"
   });
@@ -96,7 +96,7 @@ export const deleteAnnouncement = async (announcementId, adminId) => {
     userId: adminId,
     role: "admin",
     action: "DELETE ANNOUNCEMENT",
-    description: `Deleted announcement ID ${announcement.ID}`,
+    description: `You deleted the announcement: "${announcement.announcementTitle}".`,
     referenceId: announcement.ID,
     referenceType: "announcement"
   });

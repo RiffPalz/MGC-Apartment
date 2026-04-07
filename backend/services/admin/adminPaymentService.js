@@ -12,12 +12,17 @@ import { sms } from "../../utils/smsTemplates.js";
 export const createPayment = async ({ contract_id, category, billing_month, amount, due_date, utility_bill_file }, adminId) => {
   const contract = await Contract.findOne({
     where: { ID: contract_id },
-    include: [{ model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } }]
+    include: [
+      { model: Unit, as: "unit", attributes: ["unit_number"] },
+      { model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } }
+    ]
   });
   if (!contract) throw new Error("Contract not found");
   if (!contract.tenants?.length) throw new Error("No tenant associated with this contract");
 
   const tenant = contract.tenants[0];
+  const unitNumber = contract.unit?.unit_number ?? "—";
+  const billingLabel = new Date(billing_month).toLocaleDateString("en-US", { year: "numeric", month: "long" });
 
   const today = new Date().setHours(0, 0, 0, 0);
   const dueDate = new Date(due_date).setHours(0, 0, 0, 0);
@@ -47,7 +52,7 @@ export const createPayment = async ({ contract_id, category, billing_month, amou
     userId: adminId,
     role: "admin",
     action: "CREATE PAYMENT",
-    description: `Created ${category} bill for contract ${contract_id}`,
+    description: `You created a ${category} bill for Unit ${unitNumber} for the month of ${billingLabel}.`,
     referenceId: payment.ID,
     referenceType: "payment"
   });
@@ -88,7 +93,10 @@ export const verifyPayment = async (paymentId, adminId) => {
     include: [{
       model: Contract,
       as: "contract",
-      include: [{ model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } }]
+      include: [
+        { model: Unit, as: "unit", attributes: ["unit_number"] },
+        { model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } }
+      ]
     }]
   });
 
@@ -96,10 +104,10 @@ export const verifyPayment = async (paymentId, adminId) => {
   if (payment.status !== "Pending Verification") throw new Error("Payment is not awaiting verification");
 
   const tenant = payment.contract.tenants[0];
+  const unitNumber = payment.contract.unit?.unit_number ?? "—";
   payment.status = "Paid";
   await payment.save();
 
-  // Notify tenant and caretaker
   await createNotification({
     userId: tenant.ID,
     role: "tenant",
@@ -119,15 +127,13 @@ export const verifyPayment = async (paymentId, adminId) => {
     referenceType: "payment"
   });
 
-  // SMS → tenant
   sendSMS(tenant.contactNumber, sms.paymentVerified(payment.category));
 
-  // Log admin action
   await createActivityLog({
     userId: adminId,
     role: "admin",
     action: "VERIFY PAYMENT",
-    description: `Verified payment ${payment.ID} for contract ${payment.contract_id}`,
+    description: `You verified Unit ${unitNumber}'s ${payment.category} payment receipt.`,
     referenceId: payment.ID,
     referenceType: "payment"
   });
@@ -173,17 +179,20 @@ export const getPaymentDashboard = async () => {
 
 /* UPDATE PAYMENT */
 export const updatePayment = async (paymentId, data, adminId) => {
-  const payment = await Payment.findByPk(paymentId);
+  const payment = await Payment.findByPk(paymentId, {
+    include: [{ model: Contract, as: "contract", include: [{ model: Unit, as: "unit", attributes: ["unit_number"] }] }]
+  });
   if (!payment) throw new Error("Payment not found");
 
   const allowed = ["category", "billing_month", "amount", "due_date", "payment_date", "paymentType", "referenceNumber", "status", "utility_bill_file"];
   allowed.forEach((key) => { if (data[key] !== undefined) payment[key] = data[key]; });
   await payment.save();
 
+  const unitNumber = payment.contract?.unit?.unit_number ?? "—";
   await createActivityLog({
     userId: adminId, role: "admin",
     action: "UPDATE PAYMENT",
-    description: `Updated payment ${payment.ID}`,
+    description: `You updated Unit ${unitNumber}'s ${payment.category} payment record.`,
     referenceId: payment.ID, referenceType: "payment",
   });
 
@@ -192,15 +201,19 @@ export const updatePayment = async (paymentId, data, adminId) => {
 
 /* DELETE PAYMENT */
 export const deletePayment = async (paymentId, adminId) => {
-  const payment = await Payment.findByPk(paymentId);
+  const payment = await Payment.findByPk(paymentId, {
+    include: [{ model: Contract, as: "contract", include: [{ model: Unit, as: "unit", attributes: ["unit_number"] }] }]
+  });
   if (!payment) throw new Error("Payment not found");
 
+  const unitNumber = payment.contract?.unit?.unit_number ?? "—";
+  const category = payment.category;
   await payment.destroy();
 
   await createActivityLog({
     userId: adminId, role: "admin",
     action: "DELETE PAYMENT",
-    description: `Deleted payment ${paymentId}`,
+    description: `You deleted Unit ${unitNumber}'s ${category} payment record.`,
     referenceId: paymentId, referenceType: "payment",
   });
 };

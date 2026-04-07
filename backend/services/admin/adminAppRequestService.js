@@ -1,6 +1,7 @@
 import ApplicationRequest from "../../models/applicationRequest.js";
 import { sequelize } from "../../config/database.js";
 import { Op } from "sequelize";
+import { createActivityLog } from "../../services/activityLogService.js";
 
 /* GET ALL APPLICATION REQUESTS */
 export const getAllApplicationRequests = async () => {
@@ -44,18 +45,30 @@ export const getTodayUnreadApplicationRequests = async () => {
 };
 
 /* MARK APPLICATION REQUEST AS READ */
-export const markApplicationRequestRead = async (id) => {
+export const markApplicationRequestRead = async (id, adminId) => {
   const app = await ApplicationRequest.findByPk(id);
   if (!app) throw new Error("Application request not found");
   app.is_read = true;
   await app.save();
+
+  if (adminId) {
+    await createActivityLog({
+      userId: adminId,
+      role: "admin",
+      action: "MARK APP REQUEST READ",
+      description: `You marked an application request as read.`,
+      referenceId: app.id,
+      referenceType: "application_request",
+    });
+  }
+
   return app;
 };
 
 
 
 /* DELETE APPLICATION REQUEST */
-export const deleteApplicationRequest = async (applicationId) => {
+export const deleteApplicationRequest = async (applicationId, adminId) => {
 
   const application = await ApplicationRequest.findByPk(applicationId);
 
@@ -64,6 +77,17 @@ export const deleteApplicationRequest = async (applicationId) => {
   }
 
   await application.destroy();
+
+  if (adminId) {
+    await createActivityLog({
+      userId: adminId,
+      role: "admin",
+      action: "DELETE APP REQUEST",
+      description: `You deleted an application request.`,
+      referenceId: applicationId,
+      referenceType: "application_request",
+    });
+  }
 
   return {
     message: "Application request deleted successfully"

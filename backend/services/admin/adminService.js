@@ -60,7 +60,7 @@ export const updateAdminProfile = async (adminContext, data) => {
             userId: admin.ID,
             role: "admin",
             action: "UPDATE PROFILE",
-            description: `Admin updated: ${changes.join(", ")}`,
+            description: `You updated your profile: ${changes.join(", ")}.`,
             referenceId: admin.ID,
             referenceType: "user"
         });
@@ -98,7 +98,7 @@ export const updateTenantApprovalService = async (adminUser, userId, status) => 
         userId: adminUser.ID,
         role: "admin",
         action: "UPDATE TENANT STATUS",
-        description: `Admin ${status.toLowerCase()} tenant: ${tenant.fullName}`,
+        description: `You ${status.toLowerCase()} tenant account: ${tenant.fullName}.`,
         referenceId: tenant.ID,
         referenceType: "user"
     });
@@ -154,7 +154,7 @@ export const createCaretakerService = async (adminUser, data) => {
         userId: adminUser.ID,
         role: "admin",
         action: "CREATE CARETAKER",
-        description: `Admin created caretaker: ${caretaker.fullName}`,
+        description: `You created a caretaker account for ${caretaker.fullName}.`,
         referenceId: caretaker.ID,
         referenceType: "user"
     });
@@ -202,8 +202,8 @@ export const createAdminService = async (adminUser, data) => {
     await createActivityLog({
         userId: adminUser.ID,
         role: "admin",
-        action: "CREATE_ADMIN",
-        description: `Admin created admin: ${newAdmin.fullName}`,
+        action: "CREATE ADMIN",
+        description: `You created a new admin account for ${newAdmin.fullName}.`,
         referenceId: newAdmin.ID,
         referenceType: "user"
     });
@@ -240,7 +240,7 @@ export const deleteUserService = async (adminUser, userId) => {
         userId: adminUser.ID,
         role: "admin",
         action: "DELETE USER",
-        description: `Admin deleted ${deletedRole}: ${deletedName}`,
+        description: `You deleted ${deletedRole} account: ${deletedName}.`,
         referenceId: userId,
         referenceType: "user"
     });

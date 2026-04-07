@@ -57,7 +57,7 @@ export const createUnit = async (data, adminId) => {
   await createActivityLog({
     userId: adminId, role: "admin",
     action: "CREATE UNIT",
-    description: `Created unit ${unit.unit_number}`,
+    description: `You added Unit ${unit.unit_number}.`,
     referenceId: unit.ID, referenceType: "unit",
   });
 
@@ -74,8 +74,8 @@ export const deleteUnit = async (unitId, adminId) => {
 
   await createActivityLog({
     userId: adminId, role: "admin",
-    action: "DELETE_UNIT",
-    description: `Deleted unit ${unitNumber}`,
+    action: "DELETE UNIT",
+    description: `You deleted Unit ${unitNumber}.`,
     referenceId: unitId, referenceType: "unit",
   });
 };
@@ -92,7 +92,7 @@ export const updateUnit = async (unitId, data, adminId) => {
   await createActivityLog({
     userId: adminId, role: "admin",
     action: "UPDATE UNIT",
-    description: `Updated unit ${unit.unit_number}`,
+    description: `You updated Unit ${unit.unit_number}.`,
     referenceId: unit.ID, referenceType: "unit",
   });
 

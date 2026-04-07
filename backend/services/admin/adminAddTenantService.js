@@ -64,7 +64,7 @@ export const createTenant = async (data, adminId) => {
     userId: adminId,
     role: "admin",
     action: "CREATE TENANT",
-    description: `Created tenant: ${tenant.fullName}`,
+    description: `You created a tenant account for ${tenant.fullName} (Unit ${tenant.unitNumber ?? "—"}).`,
     referenceId: tenant.ID,
     referenceType: "user"
   });

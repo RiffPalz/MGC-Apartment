@@ -50,7 +50,19 @@ export default function TenantHeader({ setOpen }) {
   const [notifsLoading, setNotifsLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const lastFetchRef = useRef(0);
+  const notifRef = useRef(null);
+  const menuRef = useRef(null);
   const MIN_NOTIFICATION_REFRESH_MS = 10000;
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifs(false);
+      if (menuRef.current && !menuRef.current.contains(e.target)) setShowMenu(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const title = PAGE_TITLES[location.pathname] ?? "Tenant Portal";
   const displayName = user?.fullName || user?.userName || "Tenant";
@@ -141,7 +153,7 @@ export default function TenantHeader({ setOpen }) {
               {title}
             </h2>
             <p className="text-[10px] font-bold text-[#D96648] mt-1 hidden sm:block uppercase tracking-widest opacity-70">
-              Welcome back, {`UNIT ${user.unitNumber}`}
+              Welcome back, {user?.unitNumber ? `UNIT ${user.unitNumber}` : "Tenant"}
             </p>
           </div>
         </div>
@@ -149,7 +161,7 @@ export default function TenantHeader({ setOpen }) {
         {/* RIGHT SECTION (Original Tenant Style - Screenshot 2) */}
         <div className="flex items-center gap-3 sm:gap-5 shrink-0">
           {/* NOTIFICATIONS DROPDOWN (Now Uses Admin Style from Screenshot 1) */}
-          <div className="relative">
+          <div className="relative" ref={notifRef}>
             <button
               onClick={() => {
                 setShowNotifs((p) => !p);
@@ -172,14 +184,6 @@ export default function TenantHeader({ setOpen }) {
                 </span>
               )}
             </button>
-
-            {/* Mobile Dropdown Backdrop */}
-            {showNotifs && (
-              <div
-                className="fixed inset-0 z-40 sm:hidden"
-                onClick={() => setShowNotifs(false)}
-              />
-            )}
 
             {showNotifs && (
               <div className="fixed top-[72px] left-4 right-4 sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-3 sm:w-[380px] bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden sm:origin-top-right animate-in fade-in zoom-in-95 duration-200 flex flex-col">
@@ -255,7 +259,7 @@ export default function TenantHeader({ setOpen }) {
           <div className="h-8 w-px bg-[#F2DED4] hidden sm:block" />
 
           {/* User Profile Chip (Original Tenant Style - Screenshot 2) */}
-          <div className="relative">
+          <div className="relative" ref={menuRef}>
             <button
               onClick={() => {
                 setShowMenu((p) => !p);
@@ -281,11 +285,6 @@ export default function TenantHeader({ setOpen }) {
             </button>
 
             {showMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowMenu(false)}
-                />
                 <div className="absolute right-0 mt-3 w-48 bg-white rounded-2xl shadow-xl border border-[#F2DED4] py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
                   <button
                     onClick={() => {
@@ -307,7 +306,6 @@ export default function TenantHeader({ setOpen }) {
                     <FaSignOutAlt size={14} /> Log Out
                   </button>
                 </div>
-              </>
             )}
           </div>
         </div>
