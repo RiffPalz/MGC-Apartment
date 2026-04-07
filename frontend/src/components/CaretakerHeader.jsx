@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { fetchCaretakerNotifications, markNotificationRead, markAllNotificationsRead } from "../api/caretakerAPI/NotificationAPI";
 import { clearAuth } from "../api/authStorage";
 import GeneralConfirmationModal from "./GeneralConfirmationModal";
+import { useSocket } from "../context/SocketContext";
 
 const PAGE_TITLES = {
   "/caretaker/dashboard": "Dashboard",
@@ -31,6 +32,7 @@ export default function CaretakerHeader({ open, setOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const socket = useSocket();
 
   const [showMenu, setShowMenu] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
@@ -43,6 +45,7 @@ export default function CaretakerHeader({ open, setOpen }) {
   const initial = displayName[0]?.toUpperCase() ?? "C";
   const unread = notifications.filter((n) => !n.is_read).length;
 
+  // Initial load
   const loadNotifications = useCallback(async () => {
     try {
       setNotifsLoading(true);
@@ -54,6 +57,17 @@ export default function CaretakerHeader({ open, setOpen }) {
 
   useEffect(() => { loadNotifications(); }, [loadNotifications]);
 
+  // Real-time listener
+  useEffect(() => {
+    if (!socket) return;
+    const handleNewNotification = (newNotif) => {
+      setNotifications((prev) => [newNotif, ...prev]);
+    };
+    socket.on("new_notification", handleNewNotification);
+    return () => socket.off("new_notification", handleNewNotification);
+  }, [socket]);
+
+  // Actions
   const markRead = async (id) => {
     try {
       await markNotificationRead(id);
@@ -74,7 +88,7 @@ export default function CaretakerHeader({ open, setOpen }) {
     <>
       <header className="h-16 bg-white/90 backdrop-blur-lg border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 shrink-0 shadow-sm">
 
-        {/* LEFT */}
+        {/* Left Section */}
         <div className="flex items-center gap-3 min-w-0">
           <button onClick={() => setOpen?.(!open)} className="p-2.5 text-slate-500 hover:text-[#db6747] hover:bg-orange-50 rounded-xl lg:hidden shrink-0 transition-colors active:scale-95">
             <FaBars size={18} />
@@ -89,23 +103,22 @@ export default function CaretakerHeader({ open, setOpen }) {
           </div>
         </div>
 
-        {/* RIGHT */}
+        {/* Right Section */}
         <div className="flex items-center gap-3 sm:gap-4 shrink-0">
 
-          {/* Notifications */}
+          {/* Notifications Dropdown */}
           <div className="relative">
             <button onClick={() => { setShowNotifs((p) => !p); setShowMenu(false); if (!showNotifs) loadNotifications(); }}
               className={`relative p-2.5 rounded-xl transition-all active:scale-95 ${showNotifs ? "bg-orange-50 text-[#db6747]" : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
                 }`}>
               <FaBell size={18} className={unread > 0 || showNotifs ? "text-[#db6747]" : ""} />
               {unread > 0 && (
-                <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none border-2 border-white shadow-sm animate-pulse">
+                <span className="absolute top-1.5 right-1.5 min-w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none border-2 border-white shadow-sm animate-pulse">
                   {unread > 9 ? "9+" : unread}
                 </span>
               )}
             </button>
 
-            {/* Mobile Backdrop */}
             {showNotifs && <div className="fixed inset-0 z-40 sm:hidden" onClick={() => setShowNotifs(false)} />}
 
             {showNotifs && (
@@ -155,7 +168,7 @@ export default function CaretakerHeader({ open, setOpen }) {
 
           <div className="h-8 w-px bg-slate-200 hidden sm:block" />
 
-          {/* Profile dropdown */}
+          {/* Profile Dropdown */}
           <div className="relative">
             <button onClick={() => { setShowMenu((p) => !p); setShowNotifs(false); }} className="flex items-center gap-3 group text-left transition-all">
               <div className="text-right hidden sm:block">

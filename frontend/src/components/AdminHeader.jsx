@@ -1,13 +1,24 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  FaBars, FaRegBell, FaBell, FaChevronDown,
-  FaCog, FaSignOutAlt, FaUserCircle, FaCheck,
+  FaBars,
+  FaBell,
+  FaChevronDown,
+  FaCog,
+  FaSignOutAlt,
+  FaUserCircle,
+  FaCheck,
 } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
-import { fetchAdminNotifications, markNotificationRead, markAllNotificationsRead } from "../api/adminAPI/NotificationAPI";
+import {
+  fetchAdminNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from "../api/adminAPI/NotificationAPI";
 import GeneralConfirmationModal from "./GeneralConfirmationModal";
+import { useSocket } from "../context/SocketContext";
 
+// Page title mapping
 const PAGE_TITLES = {
   "/admin": "Dashboard",
   "/admin/dashboard": "Dashboard",
@@ -24,6 +35,7 @@ const PAGE_TITLES = {
   "/admin/profile": "My Profile",
 };
 
+// Format time (e.g., 2m ago, 1h ago)
 const fmtTime = (d) => {
   if (!d) return "";
   const diff = Date.now() - new Date(d).getTime();
@@ -39,6 +51,7 @@ export default function AdminHeader({ open, setOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const socket = useSocket();
 
   const [showMenu, setShowMenu] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
@@ -51,33 +64,53 @@ export default function AdminHeader({ open, setOpen }) {
   const initial = displayName[0]?.toUpperCase() ?? "A";
   const unread = notifications.filter((n) => !n.is_read).length;
 
+  // Fetch notifications
   const loadNotifications = useCallback(async () => {
     try {
       setNotifsLoading(true);
       const data = await fetchAdminNotifications();
       if (data.success) setNotifications(data.notifications || []);
-    } catch { /* silent */ }
-    finally { setNotifsLoading(false); }
+    } catch {
+    } finally {
+      setNotifsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     loadNotifications();
   }, [loadNotifications]);
 
+  // Listen for real-time notifications
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotification = (newNotif) => {
+      setNotifications((prev) => [newNotif, ...prev]);
+    };
+
+    socket.on("new_notification", handleNewNotification);
+    return () => socket.off("new_notification", handleNewNotification);
+  }, [socket]);
+
+  // Mark one notification as read
   const markRead = async (id) => {
     try {
       await markNotificationRead(id);
-      setNotifications((prev) => prev.map((n) => n.ID === id ? { ...n, is_read: true } : n));
-    } catch { /* silent */ }
+      setNotifications((prev) =>
+        prev.map((n) => (n.ID === id ? { ...n, is_read: true } : n)),
+      );
+    } catch {}
   };
 
+  // Mark all as read
   const markAllRead = async () => {
     try {
       await markAllNotificationsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    } catch { /* silent */ }
+    } catch {}
   };
 
+  // Logout handler
   const handleLogout = async () => {
     await logout();
     navigate("/login");
@@ -85,159 +118,87 @@ export default function AdminHeader({ open, setOpen }) {
 
   return (
     <>
-      <header className="h-16 bg-white/90 backdrop-blur-lg border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 shrink-0 shadow-sm">
-
-        {/* LEFT */}
-        <div className="flex items-center gap-3 min-w-0">
-          <button onClick={() => setOpen?.(!open)}
-            className="p-2.5 text-slate-500 hover:text-[#db6747] hover:bg-orange-50 rounded-xl lg:hidden shrink-0 transition-colors active:scale-95">
-            <FaBars size={18} />
+      {/* Header */}
+      <header className="h-16 bg-white/90 backdrop-blur-lg border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 shadow-sm">
+        {/* Left side */}
+        <div className="flex items-center gap-3">
+          <button onClick={() => setOpen?.(!open)}>
+            <FaBars />
           </button>
-          <div className="min-w-0">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-widest leading-none truncate font-OswaldRegular">
-              {title}
-            </h2>
-            <p className="text-[10px] font-bold text-slate-400 mt-1 hidden sm:block uppercase tracking-widest">
-              Welcome back, {displayName}
-            </p>
+
+          <div>
+            <h2>{title}</h2>
+            <p>Welcome back, {displayName}</p>
           </div>
         </div>
 
-        {/* RIGHT */}
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-
-          {/* ── NOTIFICATIONS ── */}
-          <div className="relative">
-            <button
-              onClick={() => { setShowNotifs((p) => !p); setShowMenu(false); if (!showNotifs) loadNotifications(); }}
-              className={`relative p-2.5 rounded-xl transition-all active:scale-95 ${showNotifs ? "bg-orange-50 text-[#db6747]" : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-                }`}
-            >
-              <FaBell size={18} className={unread > 0 || showNotifs ? "text-[#db6747]" : ""} />
-              {unread > 0 && (
-                <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none border-2 border-white shadow-sm animate-pulse">
-                  {unread > 9 ? "9+" : unread}
-                </span>
-              )}
+        {/* Right side */}
+        <div className="flex items-center gap-3">
+          {/* Notifications */}
+          <div>
+            <button onClick={() => setShowNotifs(!showNotifs)}>
+              <FaBell />
+              {unread > 0 && <span>{unread}</span>}
             </button>
 
-            {/* Mobile Backdrop */}
-            {showNotifs && <div className="fixed inset-0 z-40 sm:hidden" onClick={() => setShowNotifs(false)} />}
-
             {showNotifs && (
-              <div className="fixed top-[72px] left-4 right-4 sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-3 sm:w-[380px] bg-white rounded-2xl shadow-2xl sm:shadow-xl border border-slate-200 z-50 overflow-hidden sm:origin-top-right animate-in fade-in zoom-in-95 duration-200 flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/80 shrink-0">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
-                      <FaBell className="text-[#db6747] text-sm" />
-                    </div>
-                    <span className="text-sm font-black text-slate-800">Notifications</span>
-                  </div>
+              <div>
+                <div>
+                  <span>Notifications</span>
                   {unread > 0 && (
-                    <button onClick={markAllRead}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-slate-500 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 rounded-lg transition-all uppercase tracking-widest">
-                      <FaCheck size={10} className="text-blue-500" /> All Read
-                    </button>
+                    <button onClick={markAllRead}>All Read</button>
                   )}
                 </div>
 
-                {/* List */}
-                <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto divide-y divide-slate-100 custom-scrollbar">
-                  {notifsLoading ? (
-                    <div className="py-10 text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#db6747] mx-auto" />
+                {notifsLoading ? (
+                  <p>Loading...</p>
+                ) : notifications.length === 0 ? (
+                  <p>No notifications</p>
+                ) : (
+                  notifications.map((n) => (
+                    <div key={n.ID} onClick={() => markRead(n.ID)}>
+                      <p>{n.title}</p>
+                      <span>{fmtTime(n.created_at)}</span>
+                      <p>{n.message}</p>
                     </div>
-                  ) : notifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-3">
-                        <FaCheck className="text-emerald-400 text-xl" />
-                      </div>
-                      <p className="text-sm font-bold text-slate-800">All caught up!</p>
-                      <p className="text-xs text-slate-500 mt-1">No new notifications.</p>
-                    </div>
-                  ) : notifications.slice(0, 20).map((n) => (
-                    <div
-                      key={n.ID}
-                      onClick={() => !n.is_read && markRead(n.ID)}
-                      className={`flex gap-3 px-5 py-4 cursor-pointer transition-colors
-                      ${n.is_read ? "bg-white hover:bg-slate-50" : "bg-blue-50/30 hover:bg-blue-50/50"}`}
-                    >
-                      <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.is_read ? "bg-slate-200" : "bg-[#db6747]"}`} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex justify-between items-start gap-2 mb-1">
-                          <p className={`text-[13px] font-bold truncate ${n.is_read ? "text-slate-600" : "text-slate-900"}`}>
-                            {n.title}
-                          </p>
-                          <span className="text-[10px] font-semibold text-slate-400 shrink-0">
-                            {fmtTime(n.created_at)}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{n.message}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                  ))
+                )}
               </div>
             )}
           </div>
 
-          <div className="h-8 w-px bg-slate-200 hidden sm:block" />
-
-          {/* ── PROFILE DROPDOWN ── */}
-          <div className="relative">
-            <button onClick={() => { setShowMenu((p) => !p); setShowNotifs(false); }}
-              className="flex items-center gap-3 group text-left transition-all">
-              <div className="text-right hidden sm:block">
-                <p className="text-[10px] font-bold text-[#db6747] uppercase tracking-widest leading-none mb-1">
-                  {user?.role ?? "Admin"}
-                </p>
-                <p className="text-sm font-bold text-slate-800 leading-none truncate max-w-[140px] group-hover:text-[#db6747] transition-colors">
-                  {displayName}
-                </p>
-              </div>
-              {user?.profilePicture ? (
-                <img src={user.profilePicture} alt="Profile"
-                  className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0 group-hover:border-[#db6747] transition-all" />
-              ) : (
-                <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-[#db6747] font-black text-sm shadow-sm group-hover:bg-[#db6747] group-hover:text-white transition-all shrink-0">
-                  {initial}
-                </div>
-              )}
-              <FaChevronDown size={10} className={`text-slate-400 transition-transform hidden sm:block ${showMenu ? "rotate-180" : ""}`} />
+          {/* Profile */}
+          <div>
+            <button onClick={() => setShowMenu(!showMenu)}>
+              <span>{displayName}</span>
+              <FaChevronDown />
             </button>
 
             {showMenu && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 mt-3 w-48 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
-                  <button onClick={() => { setShowMenu(false); navigate("/admin/profile"); }}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-[#db6747] transition-colors">
-                    <FaUserCircle size={14} /> My Profile
-                  </button>
-                  <button onClick={() => { setShowMenu(false); navigate("/admin/settings"); }}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-[#db6747] transition-colors">
-                    <FaCog size={14} /> Settings
-                  </button>
-                  <div className="h-px bg-slate-100 my-1" />
-                  <button onClick={() => { setShowMenu(false); setShowLogoutConfirm(true); }}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 text-[13px] font-bold text-red-500 hover:bg-red-50 transition-colors">
-                    <FaSignOutAlt size={14} /> Log Out
-                  </button>
-                </div>
-              </>
+              <div>
+                <button onClick={() => navigate("/admin/profile")}>
+                  <FaUserCircle /> Profile
+                </button>
+                <button onClick={() => navigate("/admin/settings")}>
+                  <FaCog /> Settings
+                </button>
+                <button onClick={() => setShowLogoutConfirm(true)}>
+                  <FaSignOutAlt /> Logout
+                </button>
+              </div>
             )}
           </div>
         </div>
       </header>
 
+      {/* Logout modal */}
       <GeneralConfirmationModal
         isOpen={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
         onConfirm={handleLogout}
         variant="logout"
         title="Log Out"
-        message="Are you sure you want to log out of your session?"
+        message="Are you sure you want to log out?"
         confirmText="Log Out"
       />
     </>
