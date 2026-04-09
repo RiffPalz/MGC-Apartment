@@ -195,7 +195,7 @@ export default function CaretakerAnnouncement() {
       </div>
 
       {/* SCREEN UI */}
-      <div className="w-full h-full bg-[#f8fafc] p-4 md:p-6 text-slate-800 font-sans flex flex-col gap-4 sm:gap-5 no-print min-h-screen overflow-x-hidden">
+      <div className="w-full text-slate-800 font-sans flex flex-col gap-4 sm:gap-5 no-print overflow-x-hidden">
         <div className="max-w-[1600px] w-full mx-auto flex flex-col gap-4 sm:gap-5 flex-1">
 
           {/* STAT CARDS */}

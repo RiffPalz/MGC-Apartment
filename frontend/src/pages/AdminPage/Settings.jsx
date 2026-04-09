@@ -7,22 +7,8 @@ import {
 import { MdAdminPanelSettings } from "react-icons/md";
 import toast from "../../utils/toast";
 import api from "../../api/config";
+import { fetchSystemInfo, updateSystemInfo } from "../../api/adminAPI/SystemInfoAPI";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
-
-const SYSINFO_KEY = "mgc_system_info";
-const SYSINFO_DEFAULTS = {
-  systemName: "MGC Building Management System",
-  version: "1.0.0",
-  contactEmail: "mgcbuilding762@gmail.com",
-  address: "762 F. Gomez St., Barangay Ibaba, Santa Rosa, Laguna",
-};
-
-const loadSysInfo = () => {
-  try {
-    const stored = localStorage.getItem(SYSINFO_KEY);
-    return stored ? { ...SYSINFO_DEFAULTS, ...JSON.parse(stored) } : { ...SYSINFO_DEFAULTS };
-  } catch { return { ...SYSINFO_DEFAULTS }; }
-};
 
 const fmt = (d) =>
   d ? new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "---";
@@ -56,29 +42,44 @@ export default function AdminSettings() {
   const [formError, setFormError] = useState("");
 
   // System Info state
-  const [sysInfo, setSysInfo] = useState(loadSysInfo);
+  const [sysInfo, setSysInfo] = useState(null);
   const [sysEdit, setSysEdit] = useState(false);
-  const [sysDraft, setSysDraft] = useState({ ...SYSINFO_DEFAULTS });
+  const [sysDraft, setSysDraft] = useState({});
 
   const openSysEdit = () => { setSysDraft({ ...sysInfo }); setSysEdit(true); };
   const cancelSysEdit = () => setSysEdit(false);
 
+  const loadSysInfo = useCallback(async () => {
+    try {
+      const res = await fetchSystemInfo();
+      if (res.success) setSysInfo(res.systemInfo);
+    } catch {
+      toast.error("Failed to load system info.");
+    }
+  }, []);
+
   // Intercept System Info Save
   const handlePreSaveSysInfo = () => {
-    if (!sysDraft.systemName.trim() || !sysDraft.contactEmail.trim() || !sysDraft.address.trim()) {
+    if (!sysDraft.systemName?.trim() || !sysDraft.contactEmail?.trim() || !sysDraft.address?.trim()) {
       toast.error("All fields are required.");
       return;
     }
     setConfirmSysEdit(true);
   };
 
-  const executeSaveSysInfo = () => {
-    const updated = { ...sysDraft };
-    setSysInfo(updated);
-    localStorage.setItem(SYSINFO_KEY, JSON.stringify(updated));
-    setSysEdit(false);
-    setConfirmSysEdit(false);
-    toast.success("System info updated.");
+  const executeSaveSysInfo = async () => {
+    try {
+      const res = await updateSystemInfo(sysDraft);
+      if (res.success) {
+        setSysInfo(res.systemInfo);
+        setSysEdit(false);
+        setConfirmSysEdit(false);
+        toast.success("System info updated.");
+      }
+    } catch {
+      toast.error("Failed to update system info.");
+      setConfirmSysEdit(false);
+    }
   };
 
   const load = useCallback(async () => {
@@ -93,7 +94,7 @@ export default function AdminSettings() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); loadSysInfo(); }, [load, loadSysInfo]);
 
   const openAdd = (role) => {
     setAddModal(role);
@@ -431,7 +432,9 @@ export default function AdminSettings() {
 
               {/* Fields */}
               <div className="divide-y divide-slate-100">
-                {SYSINFO_FIELDS.map(({ key, label, icon, color }) => (
+                {!sysInfo ? (
+                  <div className="p-8 text-center text-xs text-slate-400">Loading...</div>
+                ) : SYSINFO_FIELDS.map(({ key, label, icon, color }) => (
                   <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 px-6 py-5 hover:bg-slate-50/60 transition-colors">
                     <div className="flex items-center gap-3 sm:w-48 shrink-0">
                       <div className={`p-2.5 rounded-xl ${color}`}>{icon}</div>

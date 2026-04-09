@@ -11,6 +11,7 @@ import {
   fetchApplicationRequests,
   fetchApplicationStats,
   deleteApplicationRequest,
+  markApplicationRequestRead,
 } from "../../api/adminAPI/AppRequestAPI";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
@@ -64,10 +65,16 @@ export default function AdminApplicationRequest() {
 
   const handlePreMarkAllAsRead = () => setConfirmMarkRead(true);
 
-  // UI-only handler for Mark All as Read (hook up backend call here later)
-  const doMarkAllAsRead = () => {
+  const doMarkAllAsRead = async () => {
     setConfirmMarkRead(false);
-    toast.success("All applications marked as read.");
+    try {
+      const unread = applications.filter((a) => !a.is_read);
+      await Promise.all(unread.map((a) => markApplicationRequestRead(a.ID)));
+      toast.success("All applications marked as read.");
+      load();
+    } catch {
+      toast.error("Failed to mark applications as read.");
+    }
   };
 
   return (

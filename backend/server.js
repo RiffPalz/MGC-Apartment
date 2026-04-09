@@ -31,6 +31,7 @@ import caretakerPaymentRoutes from "./routes/caretaker/caretakerPaymentRoutes.js
 import caretakerAnnouncementRoutes from "./routes/caretaker/caretakerAnnouncementRoutes.js";
 
 import { configRouter } from "./routes/configRoutes.js";
+import systemInfoRoutes from "./routes/systemInfoRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import userMaintenanceRoutes from "./routes/userMaintenanceRoutes.js";
 import userContractRoutes from "./routes/userContractRoutes.js";
@@ -149,6 +150,7 @@ app.use("/api/caretaker/payments", caretakerPaymentRoutes);
 app.use("/api/caretaker/announcements", caretakerAnnouncementRoutes);
 
 app.use("/api/config", configRouter);
+app.use("/api/system-info", systemInfoRoutes);
 
 app.use("/api/users", userRoutes);
 app.use("/api/users/maintenance", userMaintenanceRoutes);

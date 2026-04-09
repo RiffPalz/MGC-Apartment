@@ -251,7 +251,7 @@ export const getAdminDashboardData = async () => {
     // Find unit numbers that have approved tenants registered but no active contract
     const tenantsWithUnit = await User.findAll({
         where: { role: "tenant", status: "Approved", unitNumber: { [Op.ne]: null } },
-        attributes: ["ID", "unitNumber"],
+        attributes: ["ID", "unitNumber", "numberOfTenants"],
         include: [{
             model: Contract,
             as: "contracts",
@@ -265,6 +265,12 @@ export const getAdminDashboardData = async () => {
             .filter((u) => !u.contracts || u.contracts.length === 0)
             .map((u) => u.unitNumber)
     );
+
+    // Map unit_number → numberOfTenants for "Ready" units
+    const unitTenantCountMap = {};
+    tenantsWithUnit
+        .filter((u) => !u.contracts || u.contracts.length === 0)
+        .forEach((u) => { unitTenantCountMap[u.unitNumber] = u.numberOfTenants; });
 
     const contracts = await Contract.findAll({
         include: [
@@ -286,6 +292,7 @@ export const getAdminDashboardData = async () => {
                 unit_number: u.unit_number,
                 floor: u.floor,
                 max_capacity: u.max_capacity,
+                numberOfTenants: unitTenantCountMap[u.unit_number] ?? null,
                 status,
                 contract: u.contracts[0] || null,
             };
