@@ -91,6 +91,23 @@ export const updateTenantApprovalService = async (adminUser, userId, status) => 
         throw new Error("Invalid status");
     }
 
+    if (status === "Declined") {
+        // Send SMS before deleting so we still have the data
+        sendSMS(tenant.contactNumber, sms.accountDeclined(tenant.fullName));
+
+        await createActivityLog({
+            userId: adminUser.ID,
+            role: "admin",
+            action: "DECLINE TENANT",
+            description: `You declined and removed tenant account: ${tenant.fullName}.`,
+            referenceId: tenant.ID,
+            referenceType: "user"
+        });
+
+        await tenant.destroy();
+        return null;
+    }
+
     tenant.status = status;
     await tenant.save();
 
@@ -113,12 +130,8 @@ export const updateTenantApprovalService = async (adminUser, userId, status) => 
         referenceType: "user"
     });
 
-    // SMS → tenant based on approval result
-    if (status === "Approved") {
-        sendSMS(tenant.contactNumber, sms.accountApproved(tenant.fullName));
-    } else {
-        sendSMS(tenant.contactNumber, sms.accountDeclined(tenant.fullName));
-    }
+    // SMS → tenant on approval
+    sendSMS(tenant.contactNumber, sms.accountApproved(tenant.fullName));
 
     return tenant;
 };

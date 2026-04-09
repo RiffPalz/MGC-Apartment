@@ -12,6 +12,12 @@ export const fetchApplicationStats = async () => {
   return res.data;
 };
 
+/** Mark a single application request as read */
+export const markApplicationRequestRead = async (id) => {
+  const res = await api.patch(`/admin/applications/${id}/read`);
+  return res.data;
+};
+
 /** Delete an application request */
 export const deleteApplicationRequest = async (id) => {
   const res = await api.delete(`/admin/applications/${id}`);

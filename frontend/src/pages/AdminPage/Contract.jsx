@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSocketEvent } from "../../hooks/useSocketEvent";import { FaSearch, FaPrint, FaFileContract, FaCheckCircle, FaTimesCircle, FaClock, FaPlus, FaEye, FaEdit, FaSync, FaDownload, FaFilePdf, FaTrashAlt } from "react-icons/fa";
+import { useSocketEvent } from "../../hooks/useSocketEvent"; import { FaSearch, FaPrint, FaFileContract, FaCheckCircle, FaTimesCircle, FaClock, FaPlus, FaEye, FaEdit, FaSync, FaDownload, FaFilePdf, FaTrashAlt } from "react-icons/fa";
 import toast from "../../utils/toast";
 import logo from "../../assets/images/logo.png";
 import {
@@ -221,7 +221,8 @@ export default function AdminContract() {
   };
 
   // ── GENERATE PDF ──
-  const handleGeneratePdf = (contract) => {    setGenerateConfirmTarget(contract);
+  const handleGeneratePdf = (contract) => {
+    setGenerateConfirmTarget(contract);
   };
 
   const doGeneratePdf = async () => {
@@ -645,10 +646,10 @@ export default function AdminContract() {
                   <button
                     onClick={() => handleGeneratePdf(viewModal)}
                     disabled={generatingPdf === viewModal.ID}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold border border-purple-100 bg-purple-50 text-purple-600 hover:bg-purple-100 transition-all disabled:opacity-50 shadow-sm active:scale-95 w-full sm:w-auto"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold border border-[#db6747]/20 bg-[#db6747] text-white hover:bg-[#c45a3a] transition-all disabled:opacity-50 shadow-sm active:scale-95 w-full sm:w-auto"
                   >
                     {generatingPdf === viewModal.ID
-                      ? <><div className="w-3 h-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" /> Generating...</>
+                      ? <><div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Generating...</>
                       : <><FaFilePdf size={12} /> Generate PDF</>}
                   </button>
                 </div>
@@ -693,7 +694,7 @@ export default function AdminContract() {
                     className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 hover:bg-white transition-colors shadow-sm">
                     <option value="">Select unit...</option>
                     {occupiedUnits.map((u) => (
-                      <option key={u.ID} value={u.ID}>Unit {u.unit_number} (max {u.max_capacity})</option>
+                      <option key={u.ID} value={u.ID}>Unit {u.unit_number} ({u.numberOfTenants ?? u.max_capacity} {(u.numberOfTenants ?? u.max_capacity) === 1 ? "person" : "persons"})</option>
                     ))}
                   </select>
                 </div>
@@ -702,8 +703,26 @@ export default function AdminContract() {
                     Rent Amount (₱)
                     {createForm.rent_amount && <span className="ml-2 text-[9px] text-slate-400 normal-case tracking-normal font-normal">from previous contract</span>}
                   </label>
-                  <input required type="number" min="1" max="99999" value={createForm.rent_amount}
-                    onChange={(e) => { if (e.target.value.length <= 5) setCreateForm((f) => ({ ...f, rent_amount: e.target.value })); }}
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    max="99999"
+                    value={createForm.rent_amount}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^\d{0,5}(\.\d{0,2})?$/.test(val) || val === "") {
+                        setCreateForm((f) => ({ ...f, rent_amount: val }));
+                      }
+                    }}
+
+                    onBlur={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val)) {
+                        setCreateForm((f) => ({ ...f, rent_amount: val.toFixed(2) }));
+                      }
+                    }}
                     className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 hover:bg-white transition-colors shadow-sm"
                     placeholder="e.g. 2500" />
                 </div>
@@ -763,8 +782,21 @@ export default function AdminContract() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Rent Amount (₱)</label>
-                  <input type="number" min="1" value={editForm.rent_amount}
-                    onChange={(e) => setEditForm((f) => ({ ...f, rent_amount: e.target.value }))}
+                  <input type="number" min="1" step="0.01" max="99999" value={editForm.rent_amount}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Allow only up to 5 digits before decimal
+                      if (/^\d{0,5}(\.\d{0,2})?$/.test(val) || val === "") {
+                        setEditForm((f) => ({ ...f, rent_amount: val }));
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val)) {
+                        setEditForm((f) => ({ ...f, rent_amount: val.toFixed(2) }));
+                      }
+                    }}
+
                     className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 hover:bg-white transition-colors shadow-sm" />
                 </div>
                 <div className="hidden sm:block" />
@@ -840,7 +872,7 @@ export default function AdminContract() {
                 <button type="button" onClick={() => setCancelRenewOpen(true)}
                   className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors active:scale-95">Cancel</button>
                 <button type="submit" disabled={submitting}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-600 transition-colors shadow-md disabled:opacity-60 active:scale-95 uppercase tracking-wider">
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#db6747] text-white text-sm font-bold hover:bg-[#c45a3a] transition-colors shadow-md disabled:opacity-60 active:scale-95 uppercase tracking-wider">
                   {submitting
                     ? <><div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Renewing...</>
                     : <><FaSync size={12} /> Renew & Regenerate PDF</>}

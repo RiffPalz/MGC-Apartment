@@ -20,7 +20,7 @@ const CATEGORIES = [
   "Electrical Maintenance",
   "Water Interruptions",
   "Floor Renovation",
-  "Others",
+  "Other",
 ];
 
 function MaintenanceCards() {
@@ -67,6 +67,8 @@ function MaintenanceCards() {
         return { bg: "#DCFCE7", text: "#16A34A", label: "Done", icon: <FaCheckCircle /> };
       case "In Progress":
         return { bg: "#EEF2FF", text: "#4F46E5", label: "In Progress", icon: <FaClock /> };
+      case "Approved":
+        return { bg: "#ECFDF5", text: "#059669", label: "Approved", icon: <FaCheckCircle /> };
       default:
         return { bg: "#FEF3C7", text: "#D97706", label: "Pending", icon: <FaClock /> };
     }

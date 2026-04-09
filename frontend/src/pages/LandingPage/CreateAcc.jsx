@@ -290,6 +290,7 @@ const CreateAcc = () => {
                 placeholder="Juan Dela Cruz"
                 value={form.fullName}
                 onChange={handleChange}
+                required
               />
               <Input
                 icon={<MdEmail />}
@@ -298,6 +299,7 @@ const CreateAcc = () => {
                 placeholder="email@example.com"
                 value={form.email}
                 onChange={handleChange}
+                required
               />
               <Input
                 icon={<FaPhoneAlt />}
@@ -306,6 +308,7 @@ const CreateAcc = () => {
                 placeholder="09XX-XXX-XXXX"
                 value={form.phone}
                 onChange={handleChange}
+                required
               />
 
               <div className="grid grid-cols-2 gap-4">
@@ -314,6 +317,7 @@ const CreateAcc = () => {
                   name="unit"
                   value={form.unit}
                   onChange={handleChange}
+                  required
                 >
                   <option value="" disabled>Select unit...</option>
                   {[
@@ -343,6 +347,7 @@ const CreateAcc = () => {
                   name="tenants"
                   value={form.tenants}
                   onChange={handleChange}
+                  required
                 >
                   <option value="1">1 Person</option>
                   <option value="2">2 Persons</option>
@@ -385,6 +390,7 @@ const CreateAcc = () => {
                 onChange={handleChange}
                 show={showPassword}
                 toggle={() => setShowPassword(!showPassword)}
+                required
               />
               <p className="text-[9px] text-slate-400 -mt-4 leading-relaxed font-semibold">
                 Min. 8 chars · uppercase · lowercase · number · special character (!@#$%...)
@@ -483,10 +489,10 @@ const CreateAcc = () => {
 
 /* ===== Reusable Styled Components ===== */
 
-const Input = ({ icon, label, name, className, ...props }) => (
+const Input = ({ icon, label, name, className, required, ...props }) => (
   <div className="w-full">
     <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 mb-2 uppercase font-LemonMilkRegular">
-      {label}
+      {label}{required && <span className="text-red-500 ml-0.5">*</span>}
     </label>
     <div className="flex items-center border-b-2 border-slate-200 focus-within:border-[#db6747] transition-all py-2.5 group">
       <span className="text-slate-300 group-focus-within:text-[#db6747] mr-3 transition-colors">
@@ -501,25 +507,30 @@ const Input = ({ icon, label, name, className, ...props }) => (
   </div>
 );
 
-const Select = ({ label, children, name, ...props }) => (
+const Select = ({ label, children, name, required, ...props }) => (
   <div className="w-full">
     <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 mb-2 uppercase font-LemonMilkRegular">
-      {label}
+      {label}{required && <span className="text-red-500 ml-0.5">*</span>}
     </label>
-    <select
-      {...props}
-      name={name}
-      className="w-full bg-transparent border-b-2 border-slate-200 focus:border-[#db6747] py-2.5 text-sm text-slate-800 outline-none appearance-none cursor-pointer font-semibold"
-    >
-      {children}
-    </select>
+    <div className="relative">
+      <select
+        {...props}
+        name={name}
+        className="w-full bg-transparent border-b-2 border-slate-200 focus:border-[#db6747] py-2.5 text-sm text-slate-800 outline-none appearance-none cursor-pointer font-semibold pr-6"
+      >
+        {children}
+      </select>
+      <span className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-slate-400">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </span>
+    </div>
   </div>
 );
 
-const Password = ({ label, name, show, toggle, ...props }) => (
+const Password = ({ label, name, show, toggle, required, ...props }) => (
   <div className="w-full">
     <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 mb-2 uppercase font-LemonMilkRegular">
-      {label}
+      {label}{required && <span className="text-red-500 ml-0.5">*</span>}
     </label>
     <div className="flex items-center border-b-2 border-slate-200 focus-within:border-[#db6747] transition-all py-2.5 group">
       <RiLockPasswordFill className="text-slate-300 group-focus-within:text-[#db6747] mr-3 transition-colors" />

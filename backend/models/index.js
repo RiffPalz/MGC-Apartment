@@ -5,6 +5,7 @@ import Contract from "./contract.js";
 import ContractTenant from "./contractTenant.js";
 import Payment from "./payment.js";
 import SystemConfig from "./systemConfig.js";
+import SystemInfo from "./systemInfo.js";
 
 /* User ↔ Maintenance */
 User.hasMany(Maintenance, {
@@ -60,4 +61,5 @@ export {
   ContractTenant,
   Payment,
   SystemConfig,
+  SystemInfo,
 };

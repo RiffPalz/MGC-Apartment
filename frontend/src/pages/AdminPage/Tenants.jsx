@@ -8,6 +8,7 @@ import {
 } from "react-icons/fa";
 import toast from "../../utils/toast";
 import { fetchTenantsOverview, deleteTenant, createTenant } from "../../api/adminAPI/TenantOverviewAPI";
+import { fetchAllUnits } from "../../api/adminAPI/unitsAPI";
 import logo from "../../assets/images/logo.png";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
@@ -36,6 +37,7 @@ export default function AdminTenants() {
 
   const [showPass, setShowPass] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [availableUnits, setAvailableUnits] = useState([]);
   const [createForm, setCreateForm] = useState({
     fullName: "", emailAddress: "", contactNumber: "",
     unitNumber: "", numberOfTenants: "1", userName: "", password: "",
@@ -58,8 +60,18 @@ export default function AdminTenants() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  const loadUnits = async () => {
+    try {
+      const res = await fetchAllUnits();
+      setAvailableUnits(res.units || []);
+    } catch {
+      // silently fail
+    }
+  };
+
+  useEffect(() => { load(); loadUnits(); }, []);
   useSocketEvent("tenants_updated", load);
+  useSocketEvent("units_updated", loadUnits);
 
   const rows = tenants.map((t) => {
     const contract = t.contracts?.[0] ?? null;
@@ -511,7 +523,7 @@ export default function AdminTenants() {
                 <div className="space-y-5">
                   <p className="text-[10px] font-bold text-[#db6747] uppercase tracking-widest border-l-4 border-[#db6747] pl-3">Property Details</p>
 
-                  <FormField label="Full Name">
+                  <FormField label="Full Name" required>
                     <div className="relative">
                       <FaIdBadge className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-300" />
                       <input required type="text" value={createForm.fullName}
@@ -524,7 +536,7 @@ export default function AdminTenants() {
                     </div>
                   </FormField>
 
-                  <FormField label="Email Address">
+                  <FormField label="Email Address" required>
                     <div className="relative">
                       <FaEnvelope className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-300" />
                       <input required type="email" value={createForm.emailAddress}
@@ -534,7 +546,7 @@ export default function AdminTenants() {
                     </div>
                   </FormField>
 
-                  <FormField label="Contact Number">
+                  <FormField label="Contact Number" required>
                     <div className="relative">
                       <FaPhone className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-300" />
                       <input type="text" value={createForm.contactNumber}
@@ -551,24 +563,40 @@ export default function AdminTenants() {
                   </FormField>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <FormField label="Unit">
+                    <FormField label="Unit" required>
+                      <div className="relative">
                       <select required value={createForm.unitNumber}
                         onChange={e => setCreateForm(f => ({ ...f, unitNumber: e.target.value, userName: e.target.value ? `unit${e.target.value}_mgc` : "" }))}
-                        className="w-full bg-transparent border-b border-slate-200 focus:border-[#db6747] py-2 text-sm text-slate-700 outline-none appearance-none cursor-pointer">
+                        className="w-full bg-transparent border-b border-slate-200 focus:border-[#db6747] py-2 text-sm text-slate-700 outline-none appearance-none cursor-pointer pr-5">
                         <option value="">Select...</option>
-                        <optgroup label="1st Floor">{[101, 102, 103, 104, 105, 106, 107].map(n => <option key={n} value={n}>Unit {n}</option>)}</optgroup>
-                        <optgroup label="2nd Floor">{[201, 202, 203, 204, 205, 206].map(n => <option key={n} value={n}>Unit {n}</option>)}</optgroup>
-                        <optgroup label="3rd Floor">{[301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316].map(n => <option key={n} value={n}>Unit {n}</option>)}</optgroup>
-                        <optgroup label="4th Floor">{[401, 402, 403, 404, 405, 406, 407, 408].map(n => <option key={n} value={n}>Unit {n}</option>)}</optgroup>
+                        {[1, 2, 3, 4].map(floorNum => {
+                          const floorUnits = availableUnits.filter(u => u.floorNum === floorNum && u.isActive && !u.occupied);
+                          if (!floorUnits.length) return null;
+                          const floorLabels = { 1: "1st Floor", 2: "2nd Floor", 3: "3rd Floor", 4: "4th Floor" };
+                          return (
+                            <optgroup key={floorNum} label={floorLabels[floorNum] ?? `Floor ${floorNum}`}>
+                              {floorUnits.map(u => <option key={u.id} value={u.unitNumber}>Unit {u.unitNumber}</option>)}
+                            </optgroup>
+                          );
+                        })}
                       </select>
+                      <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      </span>
+                      </div>
                     </FormField>
-                    <FormField label="No. of Tenants">
+                    <FormField label="No. of Tenants" required>
+                      <div className="relative">
                       <select value={createForm.numberOfTenants}
                         onChange={e => setCreateForm(f => ({ ...f, numberOfTenants: e.target.value }))}
-                        className="w-full bg-transparent border-b border-slate-200 focus:border-[#db6747] py-2 text-sm text-slate-700 outline-none appearance-none cursor-pointer">
+                        className="w-full bg-transparent border-b border-slate-200 focus:border-[#db6747] py-2 text-sm text-slate-700 outline-none appearance-none cursor-pointer pr-5">
                         <option value="1">1 Person</option>
                         <option value="2">2 Persons</option>
                       </select>
+                      <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      </span>
+                      </div>
                     </FormField>
                   </div>
                 </div>
@@ -583,7 +611,7 @@ export default function AdminTenants() {
                     <p className="text-[9px] text-[#db6747] mt-1.5 uppercase tracking-wider font-bold">Locked to unit number</p>
                   </FormField>
 
-                  <FormField label="Password">
+                  <FormField label="Password" required>
                     <div className="flex items-center border-b border-slate-200 focus-within:border-[#db6747] transition-colors py-2">
                       <input required minLength={6} type={showPass ? "text" : "password"} value={createForm.password}
                         onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))}
@@ -657,10 +685,12 @@ function StatCard({ icon, label, value, color, bg }) {
   );
 }
 
-function FormField({ label, children }) {
+function FormField({ label, children, required }) {
   return (
     <div>
-      <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 mb-1.5 uppercase">{label}</label>
+      <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 mb-1.5 uppercase">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
       {children}
     </div>
   );

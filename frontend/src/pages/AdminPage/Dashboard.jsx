@@ -16,6 +16,7 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import api from "../../api/config";
+import { markApplicationRequestRead } from "../../api/adminAPI/AppRequestAPI";
 import { useSocketEvent } from "../../hooks/useSocketEvent";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -395,9 +396,17 @@ export default function AdminDashboard() {
                     <FaEnvelope size={9} /> {a.emailAddress}
                   </p>
                 </div>
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-100 uppercase tracking-wider shrink-0">
-                  New
-                </span>
+                <button
+                  onClick={async () => {
+                    try {
+                      await markApplicationRequestRead(a.ID);
+                      loadDashboard();
+                    } catch { /* silently fail */ }
+                  }}
+                  className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-100 uppercase tracking-wider shrink-0 hover:bg-purple-100 transition-colors active:scale-95"
+                >
+                  Mark as Read
+                </button>
               </div>
             ))}
           </div>
