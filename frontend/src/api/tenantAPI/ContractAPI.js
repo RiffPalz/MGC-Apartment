@@ -9,7 +9,6 @@ export const fetchUserContracts = async () => {
   if (contractsCache && now - contractsCacheTime < CONTRACTS_CACHE_TTL) {
     return contractsCache;
   }
-
   try {
     const response = await api.get("/users/contracts");
     contractsCache = response.data;
@@ -21,6 +20,17 @@ export const fetchUserContracts = async () => {
   }
 };
 
-/** Get proxied PDF URL for viewing/downloading (avoids CORS) */
 export const getContractPdfProxyUrl = (id) =>
   `${import.meta.env.VITE_BACKEND_URL}/users/contracts/${id}/pdf`;
+
+/** Submit a termination request */
+export const submitTerminationRequest = async (data) => {
+  const res = await api.post("/users/contracts/termination-request", data);
+  return res.data;
+};
+
+/** Get own termination request status */
+export const getMyTerminationRequest = async () => {
+  const res = await api.get("/users/contracts/termination-request/mine");
+  return res.data;
+};

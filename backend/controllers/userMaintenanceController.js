@@ -2,6 +2,7 @@ import {
   createMaintenance,
   getTenantMaintenance,
   followUpMaintenance,
+  editMaintenance,
 } from "../services/userMaintenanceService.js";
 import { emitEvent } from "../utils/emitEvent.js";
 
@@ -49,6 +50,38 @@ export const followUpMaintenanceRequest = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: result.message
+    });
+
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Edit maintenance request
+export const editMaintenanceRequest = async (req, res) => {
+  try {
+    const result = await editMaintenance(req.auth.id, req.params.id, req.body);
+
+    emitEvent(req, "maintenance_updated");
+
+    const io = req.app.get("io");
+    const payload = {
+      title: "Maintenance Request Edited",
+      message: "A tenant edited a maintenance request.",
+      type: "maintenance",
+      is_read: false,
+      created_at: new Date().toISOString()
+    };
+
+    io.to("admin").emit("new_notification", payload);
+    io.to("caretaker").emit("new_notification", payload);
+
+    return res.status(200).json({
+      success: true,
+      request: result
     });
 
   } catch (error) {

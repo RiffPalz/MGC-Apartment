@@ -21,6 +21,30 @@ export const startSystemCron = () => {
 
     const day = today.getDate();
 
+    /* ── Post-termination cleanup: deactivate tenants after 3 days ── */
+    const threeDaysAgo = new Date(today);
+    threeDaysAgo.setDate(today.getDate() - 3);
+
+    const expiredTerminations = await Contract.findAll({
+      where: {
+        status: "Terminated",
+        termination_date: { [Op.lte]: threeDaysAgo.toISOString().split("T")[0] },
+      },
+      include: [
+        { model: Unit, as: "unit", attributes: ["ID", "unit_number"] },
+        { model: User, as: "tenants", attributes: ["ID", "fullName", "contactNumber", "status"], through: { attributes: [] } },
+      ],
+    });
+
+    for (const contract of expiredTerminations) {
+      for (const tenant of contract.tenants) {
+        if (tenant.status !== "Declined") {
+          await User.update({ status: "Declined" }, { where: { ID: tenant.ID } });
+          console.log(`[Cron] Deactivated tenant ${tenant.ID} (${tenant.fullName}) after 3-day grace period.`);
+        }
+      }
+    }
+
     /* ── Contract expiration: auto-complete ── */
     await Contract.update(
       { status: "Completed" },

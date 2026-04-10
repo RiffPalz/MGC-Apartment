@@ -16,9 +16,13 @@ import {
   FaHourglassHalf,
   FaChevronLeft,
   FaChevronRight,
+  FaTimesCircle,
+  FaClock,
 } from "react-icons/fa";
-import { fetchUserContracts } from "../../api/tenantAPI/ContractAPI";
+import { fetchUserContracts, submitTerminationRequest, getMyTerminationRequest } from "../../api/tenantAPI/ContractAPI";
 import { fetchTenantProfile } from "../../api/tenantAPI/tenantAuth";
+import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
+import { toast } from "react-hot-toast";
 
 // Use the bundled worker from pdfjs-dist
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -34,19 +38,33 @@ export default function ContractCards() {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
 
+  // Termination request state
+  const [terminationRequest, setTerminationRequest] = useState(null);
+  const [termModal, setTermModal] = useState(false);
+  const [termForm, setTermForm] = useState({ lessee_name: "", lessee_address: "", vacate_date: "" });
+  const [termSubmitting, setTermSubmitting] = useState(false);
+  const [termError, setTermError] = useState("");
+  const [termConfirm, setTermConfirm] = useState(false);
+
   useEffect(() => {
     const load = async () => {
       try {
-        const [contractRes, profileRes] = await Promise.all([
+        const [contractRes, profileRes, termRes] = await Promise.all([
           fetchUserContracts(),
           fetchTenantProfile(),
+          getMyTerminationRequest(),
         ]);
         if (contractRes.success && contractRes.contracts.length > 0) {
           const active = contractRes.contracts.find((c) => c.status === "Active")
+            || contractRes.contracts.find((c) => c.status === "Terminated")
             || contractRes.contracts[0];
           setContract(active);
         }
-        if (profileRes.user) setProfile(profileRes.user);
+        if (profileRes.user) {
+          setProfile(profileRes.user);
+          setTermForm((f) => ({ ...f, lessee_name: profileRes.user.fullName || "" }));
+        }
+        if (termRes.request) setTerminationRequest(termRes.request);
       } catch (e) {
         console.error(e);
       } finally {
@@ -56,25 +74,60 @@ export default function ContractCards() {
     load();
   }, []);
 
+  const isTerminated = contract?.status === "Terminated";
+  const isTerminationApproved = terminationRequest?.status === "Approved";
+  const activePdfFile = isTerminated
+    ? (contract?.termination_pdf || contract?.contract_file)
+    : isTerminationApproved
+      ? (terminationRequest?.request_pdf || contract?.contract_file)
+      : contract?.contract_file;
+
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = async () => {
-    if (!contract?.contract_file) return;
+    if (!activePdfFile) return;
     try {
       setDownloading(true);
-      const res = await fetch(contract.contract_file);
+      const res = await fetch(activePdfFile);
       const blob = await res.blob();
       const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
       const a = document.createElement("a");
       a.href = url;
-      a.download = `MGC_Contract_Unit${profile?.unitNumber ?? ""}.pdf`;
+      a.download = isTerminated
+        ? `MGC_Termination_Unit${profile?.unitNumber ?? ""}.pdf`
+        : `MGC_Contract_Unit${profile?.unitNumber ?? ""}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      // fallback: open in new tab
-      window.open(contract.contract_file, "_blank");
+      window.open(activePdfFile, "_blank");
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const handleTermSubmit = async () => {
+    setTermError("");
+    if (!termForm.lessee_name.trim() || !termForm.lessee_address.trim() || !termForm.vacate_date) {
+      setTermError("All fields are required.");
+      return;
+    }
+    setTermConfirm(true);
+  };
+
+  const doTermSubmit = async () => {
+    setTermConfirm(false);
+    setTermSubmitting(true);
+    setTermError("");
+    try {
+      const res = await submitTerminationRequest(termForm);
+      setTerminationRequest(res.request);
+      setTermModal(false);
+      toast.success("Termination request submitted successfully.");
+    } catch (e) {
+      setTermError(e?.response?.data?.message || "Submission failed. Please try again.");
+      toast.error(e?.response?.data?.message || "Submission failed. Please try again.");
+    } finally {
+      setTermSubmitting(false);
     }
   };
 
@@ -129,10 +182,10 @@ export default function ContractCards() {
 
         {/* STAT TILES */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <StatTile icon={<FaCalendarAlt />} label="Start Date"  value={fmt(contract.start_date)}  color="text-indigo-500" bg="bg-indigo-50" />
-          <StatTile icon={<FaCalendarAlt />} label="End Date"    value={fmt(contract.end_date)}    color="text-[#D96648]"  bg="bg-[#FDF2ED]" />
+          <StatTile icon={<FaCalendarAlt />} label="Start Date"  value={isTerminated ? "---" : fmt(contract.start_date)}  color="text-indigo-500" bg="bg-indigo-50" />
+          <StatTile icon={<FaCalendarAlt />} label="End Date"    value={isTerminated ? "---" : fmt(contract.end_date)}    color="text-[#D96648]"  bg="bg-[#FDF2ED]" />
           <StatTile icon={<FaMoneyBillWave />} label="Monthly Rent"
-            value={`₱${parseFloat(contract.rent_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+            value={isTerminated ? "---" : `₱${parseFloat(contract.rent_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
             color="text-emerald-600" bg="bg-emerald-50"
           />
           <div className="bg-[#5c1f10] p-4 sm:p-5 rounded-3xl shadow-sm flex items-center gap-3 sm:gap-4">
@@ -167,21 +220,45 @@ export default function ContractCards() {
 
             {/* View PDF */}
             <button
-              onClick={() => contract.contract_file && setPdfModal(true)}
-              disabled={!contract.contract_file}
+              onClick={() => activePdfFile && setPdfModal(true)}
+              disabled={!activePdfFile}
               className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl font-bold text-xs uppercase tracking-widest bg-[#5c1f10] text-[#FFEDE1] hover:bg-[#7a2e1a] active:scale-[0.98] transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <FaEye size={16} /> View Full Agreement
+              <FaEye size={16} />
+              {isTerminated
+                ? "View Termination Contract"
+                : isTerminationApproved
+                  ? "View Termination Letter"
+                  : "View Full Agreement"}
             </button>
 
             {/* Download PDF */}
-            <button
-              onClick={handleDownload}
-              disabled={!contract.contract_file || downloading}
-              className={`w-full flex items-center justify-center gap-3 py-5 rounded-2xl font-bold text-xs uppercase tracking-widest border border-[#F2DED4] bg-white text-[#330101] hover:bg-[#FFF9F6] active:scale-[0.98] transition-all ${!contract.contract_file ? "opacity-40 cursor-not-allowed" : ""}`}
-            >
-              <FaFileDownload size={16} /> {downloading ? "Downloading..." : "Download Digital Copy"}
-            </button>
+
+            {/* Request Termination — only for active contracts with no pending/approved request */}
+            {!isTerminated && (() => {
+              const reqStatus = terminationRequest?.status;
+              if (!reqStatus) {
+                return (
+                  <button
+                    onClick={() => setTermModal(true)}
+                    className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl font-bold text-xs uppercase tracking-widest border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 active:scale-[0.98] transition-all"
+                  >
+                    <FaTimesCircle size={15} /> Request Termination
+                  </button>
+                );
+              }
+              const statusConfig = {
+                Pending:  { bg: "bg-amber-50",  border: "border-amber-200",  text: "text-amber-600",  icon: <FaClock size={14} />,        label: "Termination Pending" },
+                Approved: { bg: "bg-green-50",  border: "border-green-200",  text: "text-green-600",  icon: <FaCheckCircle size={14} />,  label: "Termination Approved" },
+                Rejected: { bg: "bg-red-50",    border: "border-red-200",    text: "text-red-600",    icon: <FaTimesCircle size={14} />,  label: "Termination Rejected" },
+              };
+              const cfg = statusConfig[reqStatus] || statusConfig.Pending;
+              return (
+                <div className={`w-full flex items-center justify-center gap-3 py-5 rounded-2xl font-bold text-xs uppercase tracking-widest border ${cfg.border} ${cfg.bg} ${cfg.text}`}>
+                  {cfg.icon} {cfg.label}
+                </div>
+              );
+            })()}
 
             {/* Secure badge */}
             <div className="bg-white border border-[#F2DED4] rounded-4xl p-6 flex-1 flex flex-col items-center justify-center text-center gap-3">
@@ -223,12 +300,106 @@ export default function ContractCards() {
         </div>
       </div>
 
+      {/* TERMINATION REQUEST MODAL */}
+      {termModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="bg-[#5c1f10] px-6 py-4 flex items-center justify-between">
+              <span className="text-white font-black text-xs uppercase tracking-widest">Request Termination</span>
+              <button onClick={() => { setTermModal(false); setTermError(""); }} className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all">
+                <FaTimes size={14} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-[#330101]/50 leading-relaxed">
+                Fill in the details below. A formal termination request letter will be generated and submitted to management for review.
+              </p>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#330101]/40">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="w-full bg-[#FFF9F6] border border-[#F2DED4] rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#f7b094] outline-none transition"
+                  value={termForm.lessee_name}
+                  onChange={(e) => setTermForm((f) => ({ ...f, lessee_name: e.target.value }))}
+                  placeholder="Your full legal name"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#330101]/40">
+                  Current Address <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  className="w-full bg-[#FFF9F6] border border-[#F2DED4] rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#f7b094] outline-none transition resize-none"
+                  value={termForm.lessee_address}
+                  onChange={(e) => setTermForm((f) => ({ ...f, lessee_address: e.target.value }))}
+                  placeholder="Your current address"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#330101]/40">
+                  Intended Vacate Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  className="w-full bg-[#FFF9F6] border border-[#F2DED4] rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#f7b094] outline-none transition"
+                  value={termForm.vacate_date}
+                  onChange={(e) => setTermForm((f) => ({ ...f, vacate_date: e.target.value }))}
+                />
+              </div>
+
+              {termError && (
+                <p className="text-xs text-red-500 font-bold">{termError}</p>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => { setTermModal(false); setTermError(""); }}
+                  className="flex-1 py-3.5 rounded-2xl border border-[#F2DED4] text-xs font-bold uppercase tracking-widest text-[#330101]/60 hover:bg-[#FFF9F6] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleTermSubmit}
+                  disabled={termSubmitting}
+                  className="flex-1 py-3.5 rounded-2xl bg-[#5c1f10] text-[#FFEDE1] text-xs font-bold uppercase tracking-widest hover:bg-[#7a2e1a] active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  {termSubmitting ? "Submitting..." : "Submit Request"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TERMINATION SUBMIT CONFIRM */}
+      <GeneralConfirmationModal
+        isOpen={termConfirm}
+        onClose={() => setTermConfirm(false)}
+        onConfirm={doTermSubmit}
+        variant="warning"
+        title="Submit Termination Request?"
+        message="This will generate and submit a formal termination request letter to management. Are you sure?"
+        confirmText="Yes, Submit"
+        loading={termSubmitting}
+      />
+
       {/* PDF VIEWER MODAL */}
-      {pdfModal && contract.contract_file && (
+      {pdfModal && activePdfFile && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex flex-col">
           {/* Toolbar */}
           <div className="bg-[#5c1f10] px-4 sm:px-5 py-3 flex items-center justify-between shrink-0">
-            <span className="text-white font-black text-xs sm:text-sm uppercase tracking-widest truncate mr-3">Lease Agreement</span>
+            <span className="text-white font-black text-xs sm:text-sm uppercase tracking-widest truncate mr-3">
+              {isTerminated ? "Termination Contract" : isTerminationApproved ? "Termination Letter" : "Lease Agreement"}
+            </span>
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <button
                 onClick={handleDownload}
@@ -247,7 +418,7 @@ export default function ContractCards() {
           <div className="flex-1 overflow-auto bg-[#1a1a1a] flex flex-col items-center py-4 sm:py-6 gap-4 px-3">
             <div className="w-full max-w-[800px]">
             <Document
-              file={contract.contract_file}
+              file={activePdfFile}
               onLoadSuccess={({ numPages }) => { setNumPages(numPages); setPageNumber(1); }}
               onLoadError={() => {}}
               loading={
@@ -259,7 +430,7 @@ export default function ContractCards() {
                 <div className="flex flex-col items-center justify-center h-64 gap-3 text-white/50">
                   <FaClipboardList size={32} />
                   <p className="text-sm">Could not load PDF.</p>
-                  <a href={contract.contract_file} target="_blank" rel="noreferrer"
+                  <a href={activePdfFile} target="_blank" rel="noreferrer"
                     className="text-xs underline text-white/70">Open in new tab</a>
                 </div>
               }

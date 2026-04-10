@@ -19,3 +19,9 @@ export const followUpMaintenanceRequest = async (id) => {
   const response = await api.patch(`${BASE_URL}/${id}/followup`);
   return response.data;
 };
+
+/** Edit a pending maintenance request */
+export const editMaintenanceRequest = async (id, payload) => {
+  const response = await api.patch(`${BASE_URL}/${id}`, payload);
+  return response.data;
+};
