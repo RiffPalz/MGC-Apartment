@@ -132,10 +132,94 @@ export const getTenantMaintenance = async (userId) => {
     id: item.ID,
     title: item.title,
     category: item.category,
+    description: item.description,
     requestedDate: item.dateRequested,
     startDate: item.startDate,
     endDate: item.endDate,
     status: item.status,
     followedUp: item.followedUp,
   }));
+};
+
+/**
+ * EDIT MAINTENANCE REQUEST (Tenant)
+ */
+export const editMaintenance = async (userId, maintenanceId, data) => {
+  const { title, category, description } = data;
+
+  const ALLOWED_CATEGORIES = [
+    "Electrical Maintenance",
+    "Water Interruptions",
+    "Floor Renovation",
+    "Other",
+  ];
+
+  if (!title || typeof title !== "string" || title.trim() === "") {
+    throw new Error("Title is required");
+  }
+
+  if (!ALLOWED_CATEGORIES.includes(category)) {
+    throw new Error("Invalid category");
+  }
+
+  const request = await Maintenance.findOne({ where: { ID: maintenanceId, userId } });
+  if (!request) throw new Error("Maintenance request not found");
+
+  if (request.status !== "Pending") {
+    throw new Error("Only pending requests can be edited");
+  }
+
+  const trimmedTitle = title.trim();
+
+  request.title = trimmedTitle;
+  request.category = category;
+  request.description = description ?? "";
+  await request.save();
+
+  await createNotification({
+    role: "admin",
+    type: "maintenance update",
+    title: "Maintenance Request Edited",
+    message: `Maintenance request "${trimmedTitle}" has been edited by the tenant.`,
+    referenceId: request.ID,
+    referenceType: "maintenance",
+  });
+
+  await createNotification({
+    role: "caretaker",
+    type: "maintenance update",
+    title: "Maintenance Request Edited",
+    message: `Maintenance request "${trimmedTitle}" has been edited by the tenant.`,
+    referenceId: request.ID,
+    referenceType: "maintenance",
+  });
+
+  await createActivityLog({
+    userId,
+    role: "tenant",
+    action: "EDIT MAINTENANCE",
+    description: `You edited your maintenance request: "${trimmedTitle}".`,
+    referenceId: request.ID,
+    referenceType: "maintenance",
+  });
+
+  /* SMS → admin & caretaker */
+  const user = await User.findByPk(userId);
+  const staffUsers = await User.findAll({
+    where: { role: ["admin", "caretaker"] },
+    attributes: ["contactNumber"],
+  });
+  sendSMSBulk(
+    staffUsers.map((u) => u.contactNumber),
+    sms.maintenanceEdited(user?.fullName ?? "Tenant", user?.unitNumber ?? "?", trimmedTitle)
+  );
+
+  return {
+    id: request.ID,
+    title: request.title,
+    category: request.category,
+    description: request.description,
+    status: request.status,
+    requestedDate: request.dateRequested,
+  };
 };

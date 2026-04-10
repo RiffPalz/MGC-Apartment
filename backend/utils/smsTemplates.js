@@ -16,6 +16,9 @@ export const sms = {
   maintenanceSubmitted: (tenantName, unitNumber, title) =>
     `New Maintenance request from Unit ${unitNumber} (${truncate(tenantName, 15)}): "${truncate(title, 25)}"`,
 
+  maintenanceEdited: (tenantName, unitNumber, title) =>
+    `Maintenance request "${truncate(title, 25)}" from Unit ${unitNumber} (${truncate(tenantName, 15)}) has been updated by the tenant.`,
+
   // --- CONTRACT ---
   contractCreated: (unitNumber) =>
     `MGC: Your contract for Unit ${unitNumber} is ready. Please log in to review.`,

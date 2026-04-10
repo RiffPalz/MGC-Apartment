@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Request for Termination of Lease Contract</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #000;
+            background: #fff;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            box-sizing: border-box;
+            padding: 60px;
+            margin: 0 auto;
+        }
+
+        .date {
+            margin-bottom: 28px;
+        }
+
+        .recipient {
+            margin-bottom: 24px;
+        }
+
+        .subject {
+            font-weight: bold;
+            margin-bottom: 24px;
+        }
+
+        .body p {
+            margin: 0 0 14px 0;
+            text-align: justify;
+        }
+
+        .closing {
+            margin-top: 36px;
+        }
+
+        .signature {
+            margin-top: 56px;
+        }
+
+        .signature-line {
+            margin-top: 48px;
+            width: 260px;
+            border-bottom: 1px solid #000;
+        }
+
+        .name {
+            margin-top: 8px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <div class="date">
+            {{requestDate}}
+        </div>
+
+        <div class="recipient">
+            <strong>{{lessorName}}</strong><br>
+            {{buildingName}}<br>
+            {{buildingAddress}}
+        </div>
+
+        <div class="subject">
+            Subject: Request for Early Termination of Lease Contract
+        </div>
+
+        <div class="body">
+            <p>Dear {{lessorName}},</p>
+
+            <p>
+                I, <strong>{{lesseeName}}</strong>, the current tenant of Unit No. <strong>{{unitNo}}</strong> at
+                <strong>{{buildingName}}</strong>, respectfully write to formally request the early termination
+                of my Lease Contract dated <strong>{{contractDate}}</strong>.
+            </p>
+
+            <p>
+                In accordance with the terms of our lease agreement, this letter serves as my
+                thirty (30) days written notice of my intention to terminate the lease early.
+                I intend to vacate the premises on <strong>{{vacateDate}}</strong>.
+            </p>
+
+            <p>
+                I understand that any unpaid rent, utility bills, penalties, or other obligations
+                under the contract must be settled prior to or upon vacating the unit. I also understand
+                that the return of my security deposit, if applicable, shall remain subject to the
+                terms and conditions stated in our lease agreement, including any deductions for damages
+                or unpaid obligations.
+            </p>
+
+            <p>
+                I would like to express my appreciation for the accommodation during my stay.
+                I will ensure that the unit is turned over in clean and proper condition, subject to
+                normal wear and tear.
+            </p>
+
+            <p>
+                I hope for your kind understanding and approval of this request. Please let me know
+                if there are any further documents or procedures I need to complete in relation to
+                the termination and turnover of the unit.
+            </p>
+
+            <p>Thank you.</p>
+        </div>
+
+        <div class="closing">
+            Respectfully yours,
+        </div>
+
+        <div class="signature">
+            <div class="signature-line"></div>
+            <div class="name">{{lesseeName}}</div>
+            <div>{{lesseeAddress}}</div>
+            <div>{{lesseeContact}}</div>
+        </div>
+    </div>
+</body>
+
+</html>

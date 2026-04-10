@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Termination of Lease Contract</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            color: #000;
+        }
+
+        .container {
+            padding: 60px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 16pt;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 10pt;
+        }
+
+        .title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14pt;
+            text-decoration: underline;
+            margin: 30px 0;
+        }
+
+        .content {
+            text-align: justify;
+        }
+
+        .content p {
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .signatures {
+            margin-top: 80px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .signature-box {
+            width: 45%;
+        }
+
+        .signature-line {
+            border-bottom: 1px solid #000;
+            height: 30px;
+            margin-bottom: 8px;
+        }
+
+        .signature-name {
+            font-weight: bold;
+        }
+
+        .signature-title {
+            font-size: 10pt;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+            <h1>MGC BUILDING</h1>
+            <p>762 F. Gomez St., Barangay Ibaba</p>
+            <p>Santa Rosa, Laguna</p>
+            <p>mgcbuilding762@gmail.com</p>
+        </div>
+
+        <div class="title">TERMINATION OF LEASE CONTRACT</div>
+
+        <div class="content">
+
+            <p>
+                This Termination of Lease Contract is made and executed this
+                <strong>{{terminationDay}}</strong> day of
+                <strong>{{terminationMonth}}</strong>, 20<strong>{{terminationYear}}</strong>,
+                in <strong>{{terminationCity}}</strong>, Philippines, by and between:
+            </p>
+
+            <p>
+                <strong>{{lessorName}}</strong>, of legal age, Filipino, with address at
+                <strong>{{lessorAddress}}</strong>, hereinafter referred to as the LESSOR;
+            </p>
+
+            <div style="text-align:center; font-weight:bold; margin: 15px 0;">-and-</div>
+
+            <p>
+                <strong>{{lesseeName}}</strong>, of legal age, Filipino, with address at
+                <strong>{{lesseeAddress}}</strong>, hereinafter referred to as the LESSEE.
+            </p>
+
+            <p>
+                WHEREAS, the parties entered into a Contract of Lease dated
+                <strong>{{originalContractDate}}</strong> covering Unit No.
+                <strong>{{unitNo}}</strong> of the MGC Building;
+            </p>
+
+            <p>
+                WHEREAS, both parties have agreed to terminate the said lease contract under the terms and conditions
+                stated herein;
+            </p>
+
+            <div class="section-title">1. TERMINATION DATE</div>
+            <p>
+                The lease contract shall be officially terminated on
+                <strong>{{terminationEffectiveDate}}</strong>.
+            </p>
+
+            <div class="section-title">2. CONDITION OF PREMISES</div>
+            <p>
+                The LESSEE agrees to vacate the premises and return the unit in good and clean condition, subject to
+                normal wear and tear.
+            </p>
+
+            <div class="section-title">3. FINAL PAYMENTS</div>
+            <p>
+                All unpaid rent, utility bills, and other obligations must be fully settled prior to or upon
+                termination.
+            </p>
+
+            <div class="section-title">4. SECURITY DEPOSIT</div>
+            <p>
+                The Security Deposit shall be returned within thirty (30) days after inspection of the premises, subject
+                to deductions for any damages or unpaid obligations.
+            </p>
+
+            <div class="section-title">5. WAIVER OF CLAIMS</div>
+            <p>
+                Both parties agree to release and discharge each other from any further claims, liabilities, or
+                obligations arising from the lease contract after termination.
+            </p>
+
+            <div class="section-title">6. EFFECTIVITY</div>
+            <p>
+                This termination agreement shall take effect immediately upon signing by both parties.
+            </p>
+
+            <div class="signatures">
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-name">{{lessorName}}</div>
+                    <div class="signature-title">LESSOR</div>
+                </div>
+
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-name">{{lesseeName}}</div>
+                    <div class="signature-title">LESSEE</div>
+                </div>
+            </div>  
+
+        </div>
+    </div>
+
+</body>
+
+</html>
