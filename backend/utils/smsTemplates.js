@@ -41,6 +41,16 @@ export const sms = {
   contractTerminated: (unitNumber) =>
     `MGC: Your contract for Unit ${unitNumber} has been terminated. Contact the office.`,
 
+  // --- TERMINATION REQUEST ---
+  terminationRequestSubmitted: (tenantName, unitNumber) =>
+    `${truncate(tenantName, 15)} (Unit ${unitNumber}) submitted a termination request. Review in portal.`,
+
+  terminationRequestApproved: (unitNumber, vacateDate) =>
+    `MGC: Your termination request for Unit ${unitNumber} is approved. New end date: ${fmtDate(vacateDate)}.`,
+
+  terminationRequestRejected: (unitNumber) =>
+    `MGC: Your termination request for Unit ${unitNumber} was rejected. Contact management for details.`,
+
   // --- ANNOUNCEMENT ---
   announcementPosted: (title, category) =>
     `MGC [${category}]: ${truncate(title, 60)}. Log in for details.`,

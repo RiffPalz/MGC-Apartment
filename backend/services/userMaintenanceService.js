@@ -1,5 +1,6 @@
 import Maintenance from "../models/maintenance.js";
 import User from "../models/user.js";
+import Contract from "../models/contract.js";
 import { createNotification } from "../services/notificationService.js";
 import { createActivityLog } from "../services/activityLogService.js";
 import { sendSMSBulk } from "../utils/sms.js";
@@ -19,6 +20,19 @@ export const createMaintenance = async (userId, data) => {
 
   if (!user || user.role !== "tenant") {
     throw new Error("Only tenants can create maintenance requests");
+  }
+
+  // Block terminated tenants from submitting new requests
+  const terminatedContract = await Contract.findOne({
+    include: [{ model: User, as: "tenants", where: { ID: userId }, required: true, through: { attributes: [] } }],
+    where: { status: "Terminated" },
+  });
+  const activeContract = await Contract.findOne({
+    include: [{ model: User, as: "tenants", where: { ID: userId }, required: true, through: { attributes: [] } }],
+    where: { status: "Active" },
+  });
+  if (terminatedContract && !activeContract) {
+    throw new Error("Maintenance requests are disabled for terminated contracts.");
   }
 
   const request = await Maintenance.create({

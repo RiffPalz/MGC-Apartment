@@ -6,6 +6,7 @@ import {
   FaCheckCircle,
   FaClock,
   FaChevronDown,
+  FaBan,
 } from "react-icons/fa";
 
 import { useSocket } from "../../context/SocketContext";
@@ -15,6 +16,7 @@ import {
   followUpMaintenanceRequest,
   editMaintenanceRequest,
 } from "../../api/tenantAPI/maintenanceAPI";
+import { fetchUserContracts } from "../../api/tenantAPI/ContractAPI";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 const CATEGORIES = [
@@ -44,7 +46,19 @@ function MaintenanceCards() {
   const [editError, setEditError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const [isTerminated, setIsTerminated] = useState(false);
+
   useEffect(() => { loadMaintenanceHistory(); }, []);
+
+  useEffect(() => {
+    fetchUserContracts().then((res) => {
+      if (res.success && res.contracts.length > 0) {
+        const terminated = res.contracts.find((c) => c.status === "Terminated");
+        const active = res.contracts.find((c) => c.status === "Active");
+        setIsTerminated(!!terminated && !active);
+      }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -183,6 +197,17 @@ function MaintenanceCards() {
                 </h2>
               </div>
 
+              {isTerminated ? (
+                <div className="flex flex-col items-center justify-center py-10 gap-4 text-center">
+                  <div className="p-4 bg-red-50 text-red-500 rounded-2xl">
+                    <FaBan size={28} />
+                  </div>
+                  <p className="text-sm font-bold text-[#330101]">Maintenance Requests Disabled</p>
+                  <p className="text-xs text-[#330101]/50 leading-relaxed max-w-[240px]">
+                    Your contract has been terminated. You can no longer submit maintenance requests.
+                  </p>
+                </div>
+              ) : (
               <div className="space-y-5">
                 {/* Category */}
                 <div className="space-y-2">
@@ -236,6 +261,7 @@ function MaintenanceCards() {
                   <FaHammer /> {isSubmitting ? "Submitting..." : "Submit Request"}
                 </button>
               </div>
+              )}
             </div>
           </div>
 
@@ -310,7 +336,7 @@ function MaintenanceCards() {
                                 {formatDate(item.requestedDate)}
                               </p>
                             </div>
-                            {item.status === "Pending" && (
+                            {item.status === "Pending" && !isTerminated && (
                               <button
                                 className="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-[#f7b094] text-[#330101] hover:scale-105 active:scale-95 shadow-md"
                                 onClick={() => handleEditOpen(item)}
@@ -319,13 +345,13 @@ function MaintenanceCards() {
                               </button>
                             )}
                             <button
-                              disabled={isCompleted || isFollowedUp || item.followedUp || followingUpId === item.id}
+                              disabled={isTerminated || isCompleted || isFollowedUp || item.followedUp || followingUpId === item.id}
                               className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                isCompleted || isFollowedUp || item.followedUp
+                                isTerminated || isCompleted || isFollowedUp || item.followedUp
                                   ? "bg-white/5 text-white/20 cursor-not-allowed"
                                   : "bg-[#f7b094] text-[#330101] hover:scale-105 active:scale-95 shadow-md"
                               }`}
-                              onClick={() => handleFollowUp(item)}
+                              onClick={() => !isTerminated && handleFollowUp(item)}
                             >
                               {isCompleted
                                 ? "Completed"

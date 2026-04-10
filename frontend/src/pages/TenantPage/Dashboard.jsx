@@ -85,8 +85,11 @@ export default function DashboardCards() {
         const contractRes = await fetchUserContracts();
         if (contractRes.success && contractRes.contracts.length > 0) {
           const activeContract = contractRes.contracts.find(c => c.status === "Active");
+          const terminatedContract = contractRes.contracts.find(c => c.status === "Terminated");
           if (activeContract) {
-            setContractEndDate(activeContract.end_date);
+            setContractEndDate({ date: activeContract.end_date, terminated: false });
+          } else if (terminatedContract) {
+            setContractEndDate({ date: terminatedContract.termination_date, terminated: true });
           }
         }
       } catch (err) {
@@ -103,10 +106,16 @@ export default function DashboardCards() {
         return;
       }
 
+      // Terminated contract — show 3-day access message
+      if (contractEndDate.terminated) {
+        setCountdown("You can access this account only for 3 days");
+        return;
+      }
+
       const today = new Date();
       today.setHours(0, 0, 0, 0); // normalize to start of day
 
-      const end = new Date(contractEndDate);
+      const end = new Date(contractEndDate.date);
       end.setHours(0, 0, 0, 0);
 
       const diffMs = end - today;
@@ -213,8 +222,8 @@ export default function DashboardCards() {
             {/* TOP STATS */}
             <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
               <StatCard icon={<FaHome />}    label="Unit"        value={profile?.unitNumber ?? "---"}  color="text-[#D96648]"  bg="bg-[#FDF2ED]" />
-              <StatCard icon={<FaUsers />}   label="Residents"   value={profile?.numberOfTenants ?? "---"} color="text-[#330101]" bg="bg-[#F5E6E0]" />
-              <StatCard icon={<FaReceipt />} label="Active Bills" value={Object.values(bills).filter((b) => b && b.status !== "Paid").length} color="text-amber-600" bg="bg-amber-50" />
+              <StatCard icon={<FaUsers />}   label="Residents"   value={contractEndDate?.terminated ? "---" : (profile?.numberOfTenants ?? "---")} color="text-[#330101]" bg="bg-[#F5E6E0]" />
+              <StatCard icon={<FaReceipt />} label="Active Bills" value={contractEndDate?.terminated ? "---" : Object.values(bills).filter((b) => b && b.status !== "Paid").length} color="text-amber-600" bg="bg-amber-50" />
             </div>
 
             {/* BILLS SECTION */}
@@ -234,15 +243,21 @@ export default function DashboardCards() {
                   <FaCalendarAlt className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[#330101]/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-0.5 sm:mb-1">Contract Ends In</p>
-                  <h3 className={`text-sm sm:text-xl font-black truncate ${
-                    countdown === "Expired" ? "text-red-500" :
-                    countdown === "Ends today" ? "text-amber-500" :
-                    "text-[#330101]"
-                  }`}>{countdown}</h3>
-                  {contractEndDate && (
+                  <p className="text-[#330101]/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-0.5 sm:mb-1">
+                    {contractEndDate?.terminated ? "Account Access Expires In" : "Contract Ends In"}
+                  </p>
+                  {contractEndDate?.terminated ? (
+                    <h3 className="text-2xl sm:text-3xl font-black text-red-600">3 Days</h3>
+                  ) : (
+                    <h3 className={`text-sm sm:text-xl font-black truncate ${
+                      countdown === "Expired" ? "text-red-500" :
+                      countdown === "Ends today" ? "text-amber-500" :
+                      "text-[#330101]"
+                    }`}>{countdown}</h3>
+                  )}
+                  {contractEndDate?.date && !contractEndDate?.terminated && (
                     <p className="text-[9px] sm:text-[10px] text-[#330101]/40 mt-0.5">
-                      End date: {new Date(contractEndDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                      End date: {new Date(contractEndDate.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                     </p>
                   )}
                 </div>

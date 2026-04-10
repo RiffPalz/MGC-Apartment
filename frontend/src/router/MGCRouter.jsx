@@ -45,6 +45,7 @@ const AdminSettings = lazy(() => import("../pages/AdminPage/Settings.jsx"));
 const AdminActivityLogs = lazy(() => import("../pages/AdminPage/ActivityLogs.jsx"));
 const AdminSystemConfig = lazy(() => import("../pages/AdminPage/SystemConfig.jsx"));
 const AdminProfile = lazy(() => import("../pages/AdminPage/Profile.jsx"));
+const AdminTerminationRequests = lazy(() => import("../pages/AdminPage/TerminationRequest.jsx"));
 
 // Caretaker Pages
 const CaretakerDashboard = lazy(() => import("../pages/CaretakerPage/Dashboard.jsx"));
@@ -121,6 +122,7 @@ export default function MGCRouter() {
                   <Route path="activity-logs" element={<AdminActivityLogs />} />
                   <Route path="system-config" element={<AdminSystemConfig />} />
                   <Route path="profile" element={<AdminProfile />} />
+                  <Route path="termination-requests" element={<AdminTerminationRequests />} />
                 </Route>
               </Route>
 

@@ -9,6 +9,7 @@ import {
   FaChevronLeft,
   FaHistory,
   FaCog,
+  FaFileSignature,
 } from "react-icons/fa";
 import { MdDashboard, MdSwitchAccount } from "react-icons/md";
 import { GrVmMaintenance, GrAnnounce } from "react-icons/gr";
@@ -30,6 +31,11 @@ export default function AdminSidebar({ open = true, setOpen }) {
     },
     { name: "Announcement", icon: <GrAnnounce />, path: "/admin/announcement" },
     { name: "Contract", icon: <TbContract />, path: "/admin/contract" },
+    {
+      name: "Termination Requests",
+      icon: <FaFileSignature />,
+      path: "/admin/termination-requests",
+    },
     {
       name: "Payment Overview",
       icon: <FaMoneyCheckAlt />,

@@ -6,6 +6,7 @@ import ContractTenant from "./contractTenant.js";
 import Payment from "./payment.js";
 import SystemConfig from "./systemConfig.js";
 import SystemInfo from "./systemInfo.js";
+import TerminationRequest from "./terminationRequest.js";
 
 /* User ↔ Maintenance */
 User.hasMany(Maintenance, {
@@ -53,6 +54,28 @@ Payment.belongsTo(Contract, {
   as: "contract",
 });
 
+/* Contract ↔ TerminationRequests */
+Contract.hasMany(TerminationRequest, {
+  foreignKey: "contract_id",
+  as: "terminationRequests",
+});
+
+TerminationRequest.belongsTo(Contract, {
+  foreignKey: "contract_id",
+  as: "contract",
+});
+
+/* User ↔ TerminationRequests */
+User.hasMany(TerminationRequest, {
+  foreignKey: "user_id",
+  as: "terminationRequests",
+});
+
+TerminationRequest.belongsTo(User, {
+  foreignKey: "user_id",
+  as: "tenant",
+});
+
 export {
   User,
   Maintenance,
@@ -62,4 +85,5 @@ export {
   Payment,
   SystemConfig,
   SystemInfo,
+  TerminationRequest,
 };

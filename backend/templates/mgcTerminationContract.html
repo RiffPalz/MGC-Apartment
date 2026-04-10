@@ -28,6 +28,12 @@
             margin-bottom: 30px;
         }
 
+        .header-logo {
+            width: 70px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
         .header h1 {
             font-size: 16pt;
             margin-bottom: 5px;
@@ -37,6 +43,11 @@
         .header p {
             margin: 0;
             font-size: 10pt;
+        }
+
+        .header a {
+            color: #0066ff;
+            text-decoration: underline;
         }
 
         .title {
@@ -93,10 +104,18 @@
     <div class="container">
 
         <div class="header">
+            <img src="https://res.cloudinary.com/dliynqlm5/image/upload/v1767977668/MGC_vuybok.png" alt="MGC Logo"
+                class="header-logo">
+
             <h1>MGC BUILDING</h1>
             <p>762 F. Gomez St., Barangay Ibaba</p>
             <p>Santa Rosa, Laguna</p>
-            <p>mgcbuilding762@gmail.com</p>
+
+            <p>
+                <a href="mailto:mgcbuilding762@gmail.com">
+                    mgcbuilding762@gmail.com
+                </a>
+            </p>
         </div>
 
         <div class="title">TERMINATION OF LEASE CONTRACT</div>
@@ -180,7 +199,7 @@
                     <div class="signature-name">{{lesseeName}}</div>
                     <div class="signature-title">LESSEE</div>
                 </div>
-            </div>  
+            </div>
 
         </div>
     </div>
