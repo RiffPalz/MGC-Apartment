@@ -79,7 +79,8 @@ export const uploadPaymentReceipt = async (
     imageUrl,
     userId,
     paymentType,
-    referenceNumber
+    referenceNumber,
+    arNumber
 ) => {
 
     const payment = await Payment.findOne({
@@ -129,6 +130,16 @@ export const uploadPaymentReceipt = async (
         throw new Error("Reference number is required for GCash payments");
     }
 
+    // Cash must have AR number
+    if (paymentType === "Cash" && !arNumber) {
+        throw new Error("AR number is required for Cash payments");
+    }
+
+    // GCash payments should not have AR number
+    if (paymentType === "GCash") {
+        arNumber = null;
+    }
+
     // Prevent duplicate GCash reference
     if (paymentType === "GCash") {
 
@@ -145,6 +156,7 @@ export const uploadPaymentReceipt = async (
     payment.receipt_image = imageUrl;
     payment.paymentType = paymentType;
     payment.referenceNumber = referenceNumber;
+    payment.arNumber = arNumber;
     payment.status = "Pending Verification";
 
     // Record payment date when tenant uploads receipt

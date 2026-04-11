@@ -13,6 +13,11 @@ import {
    generateContractPdfAdmin,
    deleteContractAdmin,
 } from "../../controllers/admin/adminContractController.js";
+import {
+   getAllTerminationRequestsController,
+   approveTerminationRequestController,
+   rejectTerminationRequestController,
+} from "../../controllers/terminationRequestController.js";
 import axios from "axios";
 import Contract from "../../models/contract.js";
 import cloudinary from "../../config/cloudinary.js";
@@ -71,6 +76,11 @@ router.post("/:id/generate-pdf", adminAuth, generateContractPdfAdmin);
 
 // Delete a contract permanently
 router.delete("/:id", adminAuth, deleteContractAdmin);
+
+// Termination requests (admin)
+router.get("/termination-requests", adminAuth, getAllTerminationRequestsController);
+router.put("/termination-requests/:id/approve", adminAuth, approveTerminationRequestController);
+router.put("/termination-requests/:id/reject", adminAuth, rejectTerminationRequestController);
 
 // Proxy: streams PDF from Cloudinary — avoids CORS/preview issues in browser
 router.get("/:id/pdf", adminAuth, async (req, res) => {

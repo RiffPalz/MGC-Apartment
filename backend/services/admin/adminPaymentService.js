@@ -184,7 +184,7 @@ export const updatePayment = async (paymentId, data, adminId) => {
   });
   if (!payment) throw new Error("Payment not found");
 
-  const allowed = ["category", "billing_month", "amount", "due_date", "payment_date", "paymentType", "referenceNumber", "status", "utility_bill_file"];
+  const allowed = ["category", "billing_month", "amount", "due_date", "payment_date", "paymentType", "referenceNumber", "arNumber", "status", "utility_bill_file"];
   allowed.forEach((key) => { if (data[key] !== undefined) payment[key] = data[key]; });
   await payment.save();
 

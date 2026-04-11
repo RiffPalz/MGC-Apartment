@@ -112,6 +112,7 @@ export default function AdminPayment() {
       category: p.category,
       paymentType: p.paymentType,
       referenceNumber: p.referenceNumber,
+      arNumber: p.arNumber,
       receiptImage: p.receipt_image,
       utilityBillFile: p.utility_bill_file,
       status: p.status,
@@ -225,6 +226,7 @@ export default function AdminPayment() {
       status: row.status,
       paymentType: row.paymentType ?? "",
       referenceNumber: row.referenceNumber ?? "",
+      arNumber: row.arNumber ?? "",
       receiptImage: row.receiptImage ?? null,
       existingUtilityBillFile: row.utilityBillFile ?? null,
       newUtilityBillFile: null,
@@ -721,7 +723,8 @@ export default function AdminPayment() {
                   ["Payment Date", fmt(viewModal.paymentDate)],
                   ["Amount", `₱${Number(viewModal.amount ?? 0).toLocaleString()}`],
                   ["Payment Type", viewModal.paymentType ?? "—"],
-                  ["Reference No.", viewModal.referenceNumber ?? "—"],
+                  ["Reference No.", viewModal.paymentType === "GCash" ? (viewModal.referenceNumber ?? "—") : "—"],
+                  ["AR No.", viewModal.paymentType === "Cash" ? (viewModal.arNumber ?? "—") : "—"],
                 ].map(([label, val]) => (
                   <div key={label}>
                     <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">{label}</p>
@@ -834,6 +837,16 @@ export default function AdminPayment() {
                     onChange={e => setEditForm(f => ({ ...f, referenceNumber: e.target.value }))}
                     className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 hover:bg-white transition-colors shadow-sm"
                     placeholder="GCash reference number" />
+                </div>
+              )}
+
+              {editForm.paymentType === "Cash" && (
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">AR Number</label>
+                  <input type="text" value={editForm.arNumber}
+                    onChange={e => setEditForm(f => ({ ...f, arNumber: e.target.value }))}
+                    className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 hover:bg-white transition-colors shadow-sm"
+                    placeholder="AR number" />
                 </div>
               )}
 

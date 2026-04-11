@@ -6,6 +6,7 @@ import {
   FaCheckCircle,
   FaClock,
   FaChevronDown,
+  FaBan,
 } from "react-icons/fa";
 
 import { useSocket } from "../../context/SocketContext";
@@ -13,7 +14,9 @@ import {
   submitMaintenanceRequest,
   fetchMyMaintenanceHistory,
   followUpMaintenanceRequest,
+  editMaintenanceRequest,
 } from "../../api/tenantAPI/maintenanceAPI";
+import { fetchUserContracts } from "../../api/tenantAPI/ContractAPI";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 const CATEGORIES = [
@@ -38,8 +41,24 @@ function MaintenanceCards() {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null, payload: null });
   const [historyPage, setHistoryPage] = useState(1);
   const HISTORY_PAGE_SIZE = 4;
+  const [editingId, setEditingId] = useState(null);
+  const [editDraft, setEditDraft] = useState({});
+  const [editError, setEditError] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [isTerminated, setIsTerminated] = useState(false);
 
   useEffect(() => { loadMaintenanceHistory(); }, []);
+
+  useEffect(() => {
+    fetchUserContracts().then((res) => {
+      if (res.success && res.contracts.length > 0) {
+        const terminated = res.contracts.find((c) => c.status === "Terminated");
+        const active = res.contracts.find((c) => c.status === "Active");
+        setIsTerminated(!!terminated && !active);
+      }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -111,6 +130,41 @@ function MaintenanceCards() {
     setConfirmModal({ isOpen: true, type: "followup", payload: item });
   };
 
+  const handleEditOpen = (item) => {
+    setEditingId(item.id);
+    setEditDraft({ category: item.category, title: item.title, description: item.description ?? "" });
+    setEditError(null);
+  };
+
+  const handleEditCancel = () => {
+    setEditingId(null);
+    setEditDraft({});
+    setEditError(null);
+  };
+
+  const handleEditSave = () => {
+    if (!editDraft.title || editDraft.title.trim() === "") {
+      setEditError("Title is required.");
+      return;
+    }
+    setConfirmModal({ isOpen: true, type: "edit", payload: null });
+  };
+
+  const doEditSave = async () => {
+    setConfirmModal({ isOpen: false, type: null, payload: null });
+    setIsSaving(true);
+    setEditError(null);
+    try {
+      await editMaintenanceRequest(editingId, editDraft);
+      setEditingId(null);
+      loadMaintenanceHistory(true);
+    } catch (error) {
+      setEditError(error.response?.data?.message || "Failed to save changes.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const doFollowUp = async (item) => {
     setConfirmModal({ isOpen: false, type: null, payload: null });
     if (!item.id) return;
@@ -143,6 +197,17 @@ function MaintenanceCards() {
                 </h2>
               </div>
 
+              {isTerminated ? (
+                <div className="flex flex-col items-center justify-center py-10 gap-4 text-center">
+                  <div className="p-4 bg-red-50 text-red-500 rounded-2xl">
+                    <FaBan size={28} />
+                  </div>
+                  <p className="text-sm font-bold text-[#330101]">Maintenance Requests Disabled</p>
+                  <p className="text-xs text-[#330101]/50 leading-relaxed max-w-[240px]">
+                    Your contract has been terminated. You can no longer submit maintenance requests.
+                  </p>
+                </div>
+              ) : (
               <div className="space-y-5">
                 {/* Category */}
                 <div className="space-y-2">
@@ -196,6 +261,7 @@ function MaintenanceCards() {
                   <FaHammer /> {isSubmitting ? "Submitting..." : "Submit Request"}
                 </button>
               </div>
+              )}
             </div>
           </div>
 
@@ -270,14 +336,22 @@ function MaintenanceCards() {
                                 {formatDate(item.requestedDate)}
                               </p>
                             </div>
+                            {item.status === "Pending" && !isTerminated && (
+                              <button
+                                className="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-[#f7b094] text-[#330101] hover:scale-105 active:scale-95 shadow-md"
+                                onClick={() => handleEditOpen(item)}
+                              >
+                                Edit
+                              </button>
+                            )}
                             <button
-                              disabled={isCompleted || isFollowedUp || item.followedUp || followingUpId === item.id}
+                              disabled={isTerminated || isCompleted || isFollowedUp || item.followedUp || followingUpId === item.id}
                               className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                isCompleted || isFollowedUp || item.followedUp
+                                isTerminated || isCompleted || isFollowedUp || item.followedUp
                                   ? "bg-white/5 text-white/20 cursor-not-allowed"
                                   : "bg-[#f7b094] text-[#330101] hover:scale-105 active:scale-95 shadow-md"
                               }`}
-                              onClick={() => handleFollowUp(item)}
+                              onClick={() => !isTerminated && handleFollowUp(item)}
                             >
                               {isCompleted
                                 ? "Completed"
@@ -289,6 +363,65 @@ function MaintenanceCards() {
                             </button>
                           </div>
                         </div>
+                        {editingId === item.id && (
+                          <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+                            {/* Category */}
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-white/40">Category</label>
+                              <div className="relative">
+                                <select
+                                  className="w-full appearance-none bg-[#5c2a1a] border border-white/20 rounded-xl px-4 py-3 text-sm font-bold text-[#FFEDE1] focus:ring-2 focus:ring-[#f7b094] outline-none transition cursor-pointer pr-10"
+                                  value={editDraft.category}
+                                  onChange={(e) => setEditDraft((d) => ({ ...d, category: e.target.value }))}
+                                >
+                                  {CATEGORIES.map((c) => <option key={c} value={c} className="bg-white text-[#330101]">{c}</option>)}
+                                </select>
+                                <FaChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#f7b094]" size={11} />
+                              </div>
+                            </div>
+                            {/* Title */}
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-white/40">Title <span className="text-[#f7b094]">*</span></label>
+                              <input
+                                type="text"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm font-bold text-[#FFEDE1] focus:ring-2 focus:ring-[#f7b094] outline-none transition placeholder:opacity-30"
+                                value={editDraft.title}
+                                onChange={(e) => setEditDraft((d) => ({ ...d, title: e.target.value }))}
+                                placeholder="Request title"
+                              />
+                            </div>
+                            {/* Description */}
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-white/40">Description <span className="normal-case tracking-normal font-normal text-white/20">(optional)</span></label>
+                              <textarea
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm font-bold text-[#FFEDE1] focus:ring-2 focus:ring-[#f7b094] outline-none transition resize-none min-h-[80px] placeholder:opacity-30"
+                                value={editDraft.description}
+                                onChange={(e) => setEditDraft((d) => ({ ...d, description: e.target.value }))}
+                                placeholder="Describe the issue..."
+                              />
+                            </div>
+                            {/* Error */}
+                            {editError && (
+                              <p className="text-[#f7b094] text-xs font-bold">{editError}</p>
+                            )}
+                            {/* Actions */}
+                            <div className="flex gap-2 justify-end">
+                              <button
+                                className="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white/10 text-white/60 hover:bg-white/20 transition-all"
+                                onClick={handleEditCancel}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                className="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-[#f7b094] text-[#330101] hover:scale-105 active:scale-95 shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                onClick={handleEditSave}
+                                disabled={isSaving}
+                              >
+                                {isSaving ? "Saving..." : "Save"}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -383,6 +516,18 @@ function MaintenanceCards() {
         title="Send Follow-Up?"
         message="This will notify the building manager to follow up on your request."
         confirmText="Send"
+      />
+
+      {/* CONFIRM: Edit Request */}
+      <GeneralConfirmationModal
+        isOpen={confirmModal.isOpen && confirmModal.type === "edit"}
+        onClose={() => setConfirmModal({ isOpen: false, type: null, payload: null })}
+        onConfirm={doEditSave}
+        variant="warning"
+        title="Save Changes?"
+        message="Are you sure you want to update this maintenance request?"
+        confirmText="Save"
+        loading={isSaving}
       />
     </div>
   );

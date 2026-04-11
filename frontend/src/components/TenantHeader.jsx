@@ -16,6 +16,7 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
 } from "../api/tenantAPI/NotificationAPI";
+import { fetchTenantProfile } from "../api/tenantAPI/tenantAuth";
 import GeneralConfirmationModal from "./GeneralConfirmationModal";
 
 const PAGE_TITLES = {
@@ -41,7 +42,7 @@ const fmtTime = (d) => {
 export default function TenantHeader({ setOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const socket = useSocket();
 
   const [showMenu, setShowMenu] = useState(false);
@@ -53,6 +54,13 @@ export default function TenantHeader({ setOpen }) {
   const notifRef = useRef(null);
   const menuRef = useRef(null);
   const MIN_NOTIFICATION_REFRESH_MS = 10000;
+
+  // Sync fresh profile data into AuthContext on mount so header always shows latest info
+  useEffect(() => {
+    fetchTenantProfile()
+      .then((res) => { if (res?.user) updateUser(res.user); })
+      .catch(() => {});
+  }, []);
 
   // Close dropdowns when clicking outside
   useEffect(() => {

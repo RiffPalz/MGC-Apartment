@@ -4,6 +4,7 @@ import {
     createMaintenanceRequest,
     getMyMaintenanceRequests,
     followUpMaintenanceRequest,
+    editMaintenanceRequest,
 } from "../controllers/userMaintenanceController.js";
 
 const router = express.Router();
@@ -22,6 +23,14 @@ router.get(
     authenticate,
     authorize("tenant"),
     getMyMaintenanceRequests
+);
+
+// Edit a pending maintenance request
+router.patch(
+    "/:id",
+    authenticate,
+    authorize("tenant"),
+    editMaintenanceRequest
 );
 
 // Follow up on a request

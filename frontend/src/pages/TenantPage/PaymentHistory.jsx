@@ -35,6 +35,7 @@ export default function PaymenthisCards() {
   const [uploadModal, setUploadModal] = useState(null); // { payment }
   const [paymentMethod, setPaymentMethod] = useState("");
   const [refNumber, setRefNumber] = useState("");
+  const [arNumber, setArNumber] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [submitConfirm, setSubmitConfirm] = useState(false);
@@ -79,12 +80,14 @@ export default function PaymenthisCards() {
     setUploadModal(null);
     setPaymentMethod("");
     setRefNumber("");
+    setArNumber("");
     setSelectedFile(null);
   };
 
   const submitReceipt = async () => {
     if (!selectedFile) return alert("Please select a receipt image.");
     if (paymentMethod === "GCash" && !refNumber.trim()) return alert("Enter GCash reference number.");
+    if (paymentMethod === "Cash" && !arNumber.trim()) return alert("Enter AR number.");
     setSubmitConfirm(true);
   };
 
@@ -96,6 +99,7 @@ export default function PaymenthisCards() {
       form.append("receipt", selectedFile);
       form.append("paymentType", paymentMethod);
       if (paymentMethod === "GCash") form.append("referenceNumber", refNumber.trim());
+      if (paymentMethod === "Cash") form.append("arNumber", arNumber.trim());
       await uploadReceipt(uploadModal.payment.ID || uploadModal.payment.id, form);
       closeUpload();
       load(true);
@@ -297,7 +301,8 @@ export default function PaymenthisCards() {
                   ["Status", detailModal.status],
                   ["Payment Date", fmt(detailModal.payment_date)],
                   ["Method", detailModal.paymentType || "—"],
-                  ["Reference #", detailModal.referenceNumber || "—"],
+                  ["Reference #", detailModal.paymentType === "GCash" ? (detailModal.referenceNumber || "—") : "—"],
+                  ["AR #", detailModal.paymentType === "Cash" ? (detailModal.arNumber || "—") : "—"],
                 ].map(([label, val]) => (
                   <div key={label} className="flex justify-between items-center py-2.5 border-b border-[#F2DED4] last:border-0">
                     <span className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest">{label}</span>
@@ -379,9 +384,17 @@ export default function PaymenthisCards() {
 
                   {paymentMethod === "GCash" && (
                     <div>
-                      <label className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest mb-2 block">GCash Reference No.</label>
+                      <label className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest mb-2 block">GCash Reference No. <span className="text-red-500">*</span></label>
                       <input type="text" className="w-full bg-[#FFF9F6] border border-[#F2DED4] rounded-xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-[#f7b094] outline-none"
                         placeholder="13-digit reference number" value={refNumber} onChange={(e) => setRefNumber(e.target.value)} />
+                    </div>
+                  )}
+
+                  {paymentMethod === "Cash" && (
+                    <div>
+                      <label className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest mb-2 block">AR Number <span className="text-red-500">*</span></label>
+                      <input type="text" className="w-full bg-[#FFF9F6] border border-[#F2DED4] rounded-xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-[#f7b094] outline-none"
+                        placeholder="Enter AR number" value={arNumber} onChange={(e) => setArNumber(e.target.value)} />
                     </div>
                   )}
 

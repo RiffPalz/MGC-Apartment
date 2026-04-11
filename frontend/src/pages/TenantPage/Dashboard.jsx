@@ -38,6 +38,7 @@ export default function DashboardCards() {
   const [paymentMethod, setPaymentMethod] = useState(""); // "Cash" or "GCash"
   const [selectedFile, setSelectedFile] = useState(null);
   const [refNumber, setRefNumber] = useState("");
+  const [arNumber, setArNumber] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [submitConfirm, setSubmitConfirm] = useState(false);
 
@@ -85,8 +86,11 @@ export default function DashboardCards() {
         const contractRes = await fetchUserContracts();
         if (contractRes.success && contractRes.contracts.length > 0) {
           const activeContract = contractRes.contracts.find(c => c.status === "Active");
+          const terminatedContract = contractRes.contracts.find(c => c.status === "Terminated");
           if (activeContract) {
-            setContractEndDate(activeContract.end_date);
+            setContractEndDate({ date: activeContract.end_date, terminated: false });
+          } else if (terminatedContract) {
+            setContractEndDate({ date: terminatedContract.termination_date, terminated: true });
           }
         }
       } catch (err) {
@@ -103,10 +107,16 @@ export default function DashboardCards() {
         return;
       }
 
+      // Terminated contract — show 3-day access message
+      if (contractEndDate.terminated) {
+        setCountdown("You can access this account only for 3 days");
+        return;
+      }
+
       const today = new Date();
       today.setHours(0, 0, 0, 0); // normalize to start of day
 
-      const end = new Date(contractEndDate);
+      const end = new Date(contractEndDate.date);
       end.setHours(0, 0, 0, 0);
 
       const diffMs = end - today;
@@ -147,6 +157,7 @@ export default function DashboardCards() {
     setUploadModal({ isOpen: false, paymentId: null, billName: "" });
     setSelectedFile(null);
     setRefNumber("");
+    setArNumber("");
     setPaymentMethod("");
   };
 
@@ -178,6 +189,8 @@ export default function DashboardCards() {
   const submitReceipt = async () => {
     if (paymentMethod === "GCash" && !refNumber.trim())
       return alert("Please enter GCash Ref Number.");
+    if (paymentMethod === "Cash" && !arNumber.trim())
+      return alert("Please enter AR Number.");
     if (!selectedFile) return alert("Please upload a receipt photo.");
     setSubmitConfirm(true);
   };
@@ -191,6 +204,8 @@ export default function DashboardCards() {
       formData.append("paymentType", paymentMethod);
       if (paymentMethod === "GCash")
         formData.append("referenceNumber", refNumber.trim());
+      if (paymentMethod === "Cash")
+        formData.append("arNumber", arNumber.trim());
 
       await uploadReceipt(uploadModal.paymentId, formData);
       closeModal();
@@ -213,8 +228,8 @@ export default function DashboardCards() {
             {/* TOP STATS */}
             <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
               <StatCard icon={<FaHome />}    label="Unit"        value={profile?.unitNumber ?? "---"}  color="text-[#D96648]"  bg="bg-[#FDF2ED]" />
-              <StatCard icon={<FaUsers />}   label="Residents"   value={profile?.numberOfTenants ?? "---"} color="text-[#330101]" bg="bg-[#F5E6E0]" />
-              <StatCard icon={<FaReceipt />} label="Active Bills" value={Object.values(bills).filter((b) => b && b.status !== "Paid").length} color="text-amber-600" bg="bg-amber-50" />
+              <StatCard icon={<FaUsers />}   label="Residents"   value={contractEndDate?.terminated ? "---" : (profile?.numberOfTenants ?? "---")} color="text-[#330101]" bg="bg-[#F5E6E0]" />
+              <StatCard icon={<FaReceipt />} label="Active Bills" value={contractEndDate?.terminated ? "---" : Object.values(bills).filter((b) => b && b.status !== "Paid").length} color="text-amber-600" bg="bg-amber-50" />
             </div>
 
             {/* BILLS SECTION */}
@@ -234,15 +249,21 @@ export default function DashboardCards() {
                   <FaCalendarAlt className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[#330101]/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-0.5 sm:mb-1">Contract Ends In</p>
-                  <h3 className={`text-sm sm:text-xl font-black truncate ${
-                    countdown === "Expired" ? "text-red-500" :
-                    countdown === "Ends today" ? "text-amber-500" :
-                    "text-[#330101]"
-                  }`}>{countdown}</h3>
-                  {contractEndDate && (
+                  <p className="text-[#330101]/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-0.5 sm:mb-1">
+                    {contractEndDate?.terminated ? "Account Access Expires In" : "Contract Ends In"}
+                  </p>
+                  {contractEndDate?.terminated ? (
+                    <h3 className="text-2xl sm:text-3xl font-black text-red-600">3 Days</h3>
+                  ) : (
+                    <h3 className={`text-sm sm:text-xl font-black truncate ${
+                      countdown === "Expired" ? "text-red-500" :
+                      countdown === "Ends today" ? "text-amber-500" :
+                      "text-[#330101]"
+                    }`}>{countdown}</h3>
+                  )}
+                  {contractEndDate?.date && !contractEndDate?.terminated && (
                     <p className="text-[9px] sm:text-[10px] text-[#330101]/40 mt-0.5">
-                      End date: {new Date(contractEndDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                      End date: {new Date(contractEndDate.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                     </p>
                   )}
                 </div>
@@ -404,13 +425,27 @@ export default function DashboardCards() {
                     {paymentMethod === "GCash" && (
                       <div>
                         <label className="text-[9px] sm:text-[10px] font-bold text-[#330101]/50 uppercase tracking-widest mb-1.5 block">
-                          GCash Reference No.
+                          GCash Reference No. <span className="text-red-500">*</span>
                         </label>
                         <input type="text"
                           className="w-full bg-[#FFF9F6] border border-[#F2DED4] rounded-xl px-4 sm:px-5 py-3 sm:py-4 text-xs sm:text-sm focus:ring-2 focus:ring-[#f7b094] outline-none transition font-bold"
                           placeholder="Enter 13-digit number"
                           value={refNumber}
                           onChange={(e) => setRefNumber(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    {paymentMethod === "Cash" && (
+                      <div>
+                        <label className="text-[9px] sm:text-[10px] font-bold text-[#330101]/50 uppercase tracking-widest mb-1.5 block">
+                          AR Number <span className="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                          className="w-full bg-[#FFF9F6] border border-[#F2DED4] rounded-xl px-4 sm:px-5 py-3 sm:py-4 text-xs sm:text-sm focus:ring-2 focus:ring-[#f7b094] outline-none transition font-bold"
+                          placeholder="Enter AR number"
+                          value={arNumber}
+                          onChange={(e) => setArNumber(e.target.value)}
                         />
                       </div>
                     )}

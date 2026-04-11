@@ -63,6 +63,11 @@ const Payment = sequelize.define(
       allowNull: true,
     },
 
+    arNumber: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+
     utility_bill_file: {
       type: DataTypes.STRING(500),
       allowNull: true,

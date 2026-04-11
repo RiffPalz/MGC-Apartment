@@ -9,6 +9,7 @@ import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
 import { sendSMSBulk } from "../../utils/sms.js";
 import { sms } from "../../utils/smsTemplates.js";
+import { generateTerminationPdf } from "./contractPdfService.js";
 
 const getWorkingPdfUrl = (storedUrl) => storedUrl || null;
 
@@ -125,12 +126,30 @@ export const terminateContract = async (contractId, adminId) => {
         });
         if (!contract || contract.status !== "Active") throw new Error("Contract not eligible for termination.");
 
-        await contract.update({ status: "Terminated" }, { transaction });
+        const today = new Date().toISOString().split("T")[0];
+
+        await contract.update({ status: "Terminated", termination_date: today }, { transaction });
         for (const tenant of contract.tenants) {
             await tenant.update({ unitNumber: null }, { transaction });
         }
 
         await transaction.commit();
+
+        // Generate termination PDF (outside transaction — Cloudinary upload)
+        try {
+            const tenantNames = contract.tenants.map((t) => t.fullName).join(" & ");
+            const tenantAddress = contract.tenants[0]?.address || "762 F. Gomez St., Barangay Ibaba, Santa Rosa, Laguna";
+            const terminationPdfUrl = await generateTerminationPdf({
+                unit_number: contract.unit?.unit_number,
+                lessee_name: tenantNames,
+                lessee_address: tenantAddress,
+                original_contract_date: contract.start_date,
+                termination_effective_date: today,
+            });
+            await contract.update({ termination_pdf: terminationPdfUrl });
+        } catch (pdfErr) {
+            console.error("[Termination PDF] Failed to generate:", pdfErr.message);
+        }
 
         for (const tenant of contract.tenants) {
             await createNotification({
@@ -138,7 +157,7 @@ export const terminateContract = async (contractId, adminId) => {
                 role: "tenant",
                 type: "contract terminated",
                 title: "Contract Terminated",
-                message: "Your contract has ended.",
+                message: "Your contract has been terminated. You have 3 days to access your account.",
                 referenceId: contract.ID,
                 referenceType: "contract",
             });

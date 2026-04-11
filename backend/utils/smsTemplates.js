@@ -16,6 +16,9 @@ export const sms = {
   maintenanceSubmitted: (tenantName, unitNumber, title) =>
     `New Maintenance request from Unit ${unitNumber} (${truncate(tenantName, 15)}): "${truncate(title, 25)}"`,
 
+  maintenanceEdited: (tenantName, unitNumber, title) =>
+    `Maintenance request "${truncate(title, 25)}" from Unit ${unitNumber} (${truncate(tenantName, 15)}) has been updated by the tenant.`,
+
   // --- CONTRACT ---
   contractCreated: (unitNumber) =>
     `MGC: Your contract for Unit ${unitNumber} is ready. Please log in to review.`,
@@ -37,6 +40,16 @@ export const sms = {
 
   contractTerminated: (unitNumber) =>
     `MGC: Your contract for Unit ${unitNumber} has been terminated. Contact the office.`,
+
+  // --- TERMINATION REQUEST ---
+  terminationRequestSubmitted: (tenantName, unitNumber) =>
+    `${truncate(tenantName, 15)} (Unit ${unitNumber}) submitted a termination request. Review in portal.`,
+
+  terminationRequestApproved: (unitNumber, vacateDate) =>
+    `MGC: Your termination request for Unit ${unitNumber} is approved. New end date: ${fmtDate(vacateDate)}.`,
+
+  terminationRequestRejected: (unitNumber) =>
+    `MGC: Your termination request for Unit ${unitNumber} was rejected. Contact management for details.`,
 
   // --- ANNOUNCEMENT ---
   announcementPosted: (title, category) =>

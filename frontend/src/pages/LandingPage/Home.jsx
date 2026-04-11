@@ -96,7 +96,7 @@ function Home() {
           </p>
           <Link
             to="/applynow"
-            className="mt-8 inline-block bg-[#db6747] hover:bg-white hover:text-[#db6747] text-white font-bold uppercase tracking-[2px] px-10 py-4 text-sm sm:text-base transition-all duration-300 rounded-xl shadow-lg shadow-[#db6747]/30 active:scale-95"
+            className="mt-8 inline-block bg-[#db6747] hover:bg-white hover:text-[#db6747] text-white font-RegularMilk uppercase tracking-[2px] px-10 py-4 text-sm sm:text-base transition-all duration-300 rounded-xl shadow-lg shadow-[#db6747]/30 active:scale-95"
           >
             Apply Now
           </Link>
@@ -217,7 +217,7 @@ function Home() {
             data-aos="zoom-in"
             className="group inline-flex items-center justify-center gap-3
               px-8 py-4 text-base sm:px-12 sm:py-5 sm:text-xl
-              font-bold uppercase bg-white text-[#db6747]
+              font-RegularMilk uppercase bg-white text-[#db6747]
               hover:bg-[#db6747] hover:text-white transition-all duration-500
               rounded-2xl shadow-2xl tracking-[2px] active:scale-95"
           >

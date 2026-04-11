@@ -68,6 +68,7 @@ export default function CaretakerPaymentOverview() {
       category: p.category,
       paymentType: p.paymentType,
       referenceNumber: p.referenceNumber,
+      arNumber: p.arNumber,
       receiptImage: p.receipt_image,
       utilityBillFile: p.utility_bill_file,
       status: p.status,
@@ -474,7 +475,8 @@ export default function CaretakerPaymentOverview() {
                   ["Payment Date", fmt(viewModal.paymentDate)],
                   ["Amount", `₱${Number(viewModal.amount ?? 0).toLocaleString()}`],
                   ["Payment Type", viewModal.paymentType ?? "—"],
-                  ["Reference No.", viewModal.referenceNumber ?? "—"],
+                  ["Reference No.", viewModal.paymentType === "GCash" ? (viewModal.referenceNumber ?? "—") : "—"],
+                  ["AR No.", viewModal.paymentType === "Cash" ? (viewModal.arNumber ?? "—") : "—"],
                 ].map(([label, val]) => (
                   <div key={label} className="bg-slate-50 border border-slate-100 p-3 rounded-xl">
                     <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-1 font-bold">{label}</p>

@@ -140,3 +140,162 @@ export const generateContractPdf = async ({
     throw error;
   }
 };
+
+/**
+ * Generates the MGC Termination of Lease PDF via HTML/Puppeteer and uploads to Cloudinary.
+ * Returns the secure Cloudinary URL.
+ */
+export const generateTerminationPdf = async ({
+  unit_number,
+  lessor_name = "MGC BUILDING MANAGEMENT",
+  lessor_address = "762 F. Gomez St., Barangay Ibaba, Santa Rosa, Laguna",
+  lessee_name,
+  lessee_address,
+  original_contract_date,
+  termination_effective_date,
+  termination_city = "Santa Rosa, Laguna",
+}) => {
+  try {
+    const templatePath = path.resolve(__dirname, "../../templates/mgcTerminationContract.html");
+    let htmlContent = await fs.readFile(templatePath, "utf-8");
+
+    const fmtDate = (d) => {
+      if (!d) return "___________";
+      return new Date(d).toLocaleDateString("en-PH", {
+        year: "numeric", month: "long", day: "numeric",
+      });
+    };
+
+    const termDateObj = termination_effective_date ? new Date(termination_effective_date) : new Date();
+    const termDay   = termDateObj.getDate();
+    const termMonth = termDateObj.toLocaleString("en-PH", { month: "long" });
+    const termYear  = String(termDateObj.getFullYear()).slice(-2);
+
+    const replacements = {
+      "{{terminationDay}}":           termDay,
+      "{{terminationMonth}}":         termMonth,
+      "{{terminationYear}}":          termYear,
+      "{{terminationCity}}":          termination_city,
+      "{{lessorName}}":               lessor_name.toUpperCase(),
+      "{{lessorAddress}}":            lessor_address,
+      "{{lesseeName}}":               (lessee_name || "[NAME OF LESSEE]").toUpperCase(),
+      "{{lesseeAddress}}":            lessee_address || "____________________________________",
+      "{{originalContractDate}}":     fmtDate(original_contract_date),
+      "{{unitNo}}":                   unit_number,
+      "{{terminationEffectiveDate}}": fmtDate(termination_effective_date),
+    };
+
+    for (const [key, value] of Object.entries(replacements)) {
+      htmlContent = htmlContent.replace(new RegExp(key, "g"), value);
+    }
+
+    const browser = await puppeteer.launch({
+      headless: "new",
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "60px", right: "60px", bottom: "60px", left: "60px" },
+    });
+    await browser.close();
+
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: `MGC-Building/terminations/unit_${unit_number}`,
+          resource_type: "raw",
+          type: "upload",
+          access_mode: "public",
+          public_id: `termination_${unit_number}_${Date.now()}.pdf`,
+        },
+        (error, result) => {
+          if (error) return reject(new Error("Failed to upload termination PDF to Cloudinary"));
+          resolve(result.secure_url);
+        }
+      );
+      uploadStream.end(pdfBuffer);
+    });
+  } catch (error) {
+    console.error("Error generating Termination PDF:", error);
+    throw error;
+  }
+};
+
+/**
+ * Generates the Tenant Request for Termination PDF via HTML/Puppeteer and uploads to Cloudinary.
+ */
+export const generateTenantTerminationRequestPdf = async ({
+  unit_number,
+  lessor_name = "MGC BUILDING MANAGEMENT",
+  building_name = "MGC Building",
+  building_address = "762 F. Gomez St., Barangay Ibaba, Santa Rosa, Laguna",
+  lessee_name,
+  lessee_address,
+  contract_date,
+  vacate_date,
+  request_date,
+}) => {
+  try {
+    const templatePath = path.resolve(__dirname, "../../templates/tenantRequestTermination.html");
+    let htmlContent = await fs.readFile(templatePath, "utf-8");
+
+    const fmtDate = (d) => {
+      if (!d) return "___________";
+      return new Date(d).toLocaleDateString("en-PH", {
+        year: "numeric", month: "long", day: "numeric",
+      });
+    };
+
+    const replacements = {
+      "{{requestDate}}":    fmtDate(request_date || new Date()),
+      "{{lessorName}}":     lessor_name,
+      "{{buildingName}}":   building_name,
+      "{{buildingAddress}}": building_address,
+      "{{lesseeName}}":     lessee_name || "[NAME OF LESSEE]",
+      "{{unitNo}}":         unit_number,
+      "{{contractDate}}":   fmtDate(contract_date),
+      "{{vacateDate}}":     fmtDate(vacate_date),
+      "{{lesseeAddress}}":  lessee_address || "____________________________________",
+    };
+
+    for (const [key, value] of Object.entries(replacements)) {
+      htmlContent = htmlContent.replace(new RegExp(key, "g"), value);
+    }
+
+    const browser = await puppeteer.launch({
+      headless: "new",
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "60px", right: "60px", bottom: "60px", left: "60px" },
+    });
+    await browser.close();
+
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: `MGC-Building/termination-requests/unit_${unit_number}`,
+          resource_type: "raw",
+          type: "upload",
+          access_mode: "public",
+          public_id: `termination_request_${unit_number}_${Date.now()}.pdf`,
+        },
+        (error, result) => {
+          if (error) return reject(new Error("Failed to upload termination request PDF"));
+          resolve(result.secure_url);
+        }
+      );
+      uploadStream.end(pdfBuffer);
+    });
+  } catch (error) {
+    console.error("Error generating Tenant Termination Request PDF:", error);
+    throw error;
+  }
+};

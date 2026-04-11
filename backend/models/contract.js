@@ -65,6 +65,16 @@ const Contract = sequelize.define(
             type: DataTypes.STRING(255),
             allowNull: true,
         },
+
+        termination_date: {
+            type: DataTypes.DATEONLY,
+            allowNull: true,
+        },
+
+        termination_pdf: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+        },
     },
     {
         tableName: "contracts",

@@ -47,7 +47,7 @@ export const getPaymentDetailsController = async (req, res) => {
 export const uploadReceiptController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { paymentType, referenceNumber } = req.body;
+    const { paymentType, referenceNumber, arNumber } = req.body;
 
     if (!req.file) {
       return res.status(400).json({
@@ -61,7 +61,8 @@ export const uploadReceiptController = async (req, res) => {
       req.file.path,
       req.auth.id,
       paymentType,
-      referenceNumber
+      referenceNumber,
+      arNumber
     );
 
     emitEvent(req, "payment_updated");

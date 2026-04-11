@@ -61,3 +61,21 @@ export const deleteContract = async (id) => {
   const res = await api.delete(`/admin/contracts/${id}`);
   return res.data;
 };
+
+/** Get all tenant termination requests */
+export const fetchTerminationRequests = async () => {
+  const res = await api.get("/admin/contracts/termination-requests");
+  return res.data;
+};
+
+/** Approve a termination request */
+export const approveTerminationRequest = async (id) => {
+  const res = await api.put(`/admin/contracts/termination-requests/${id}/approve`);
+  return res.data;
+};
+
+/** Reject a termination request */
+export const rejectTerminationRequest = async (id) => {
+  const res = await api.put(`/admin/contracts/termination-requests/${id}/reject`);
+  return res.data;
+};
