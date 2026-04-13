@@ -1,44 +1,17 @@
 import express from "express";
 import { authenticate, authorize } from "../middleware/auth.js";
 import {
-    createMaintenanceRequest,
-    getMyMaintenanceRequests,
-    followUpMaintenanceRequest,
-    editMaintenanceRequest,
+  createMaintenanceRequest,
+  getMyMaintenanceRequests,
+  followUpMaintenanceRequest,
+  editMaintenanceRequest,
 } from "../controllers/userMaintenanceController.js";
 
 const router = express.Router();
 
-// Create maintenance request
-router.post(
-    "/",
-    authenticate,
-    authorize("tenant"),
-    createMaintenanceRequest
-);
-
-// View own maintenance requests
-router.get(
-    "/my",
-    authenticate,
-    authorize("tenant"),
-    getMyMaintenanceRequests
-);
-
-// Edit a pending maintenance request
-router.patch(
-    "/:id",
-    authenticate,
-    authorize("tenant"),
-    editMaintenanceRequest
-);
-
-// Follow up on a request
-router.patch(
-    "/:id/followup",
-    authenticate,
-    authorize("tenant"),
-    followUpMaintenanceRequest
-);
+router.post("/", authenticate, authorize("tenant"), createMaintenanceRequest);
+router.get("/my", authenticate, authorize("tenant"), getMyMaintenanceRequests);
+router.patch("/:id", authenticate, authorize("tenant"), editMaintenanceRequest);
+router.patch("/:id/followup", authenticate, authorize("tenant"), followUpMaintenanceRequest);
 
 export default router;

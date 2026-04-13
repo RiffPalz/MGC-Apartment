@@ -1,5 +1,13 @@
 import express from "express";
-import { register, login, getUserProfile, updateUserProfile, forgotPassword, resetPassword, checkAvailability } from "../controllers/userControllers.js";
+import {
+  register,
+  login,
+  getUserProfile,
+  updateUserProfile,
+  forgotPassword,
+  resetPassword,
+  checkAvailability,
+} from "../controllers/userControllers.js";
 import { authenticate, authorize } from "../middleware/auth.js";
 import { userRegisterValidator } from "../validator/userRegisterValidator.js";
 import { userLoginValidator } from "../validator/userLoginValidator.js";

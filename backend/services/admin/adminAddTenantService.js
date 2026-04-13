@@ -5,7 +5,6 @@ import { createNotification } from "../../services/notificationService.js";
 import { sendMail } from "../../utils/mailer.js";
 import { accountApprovedTemplate } from "../../utils/emailTemplate.js";
 
-/* Generate Tenant Public ID */
 const generatePublicUserID = async () => {
   const lastUser = await User.findOne({
     where: { publicUserID: { [Op.like]: "TENANT-%" } },
@@ -13,8 +12,7 @@ const generatePublicUserID = async () => {
   });
 
   let nextNumber = 1;
-
-  if (lastUser && lastUser.publicUserID) {
+  if (lastUser?.publicUserID) {
     const match = lastUser.publicUserID.match(/TENANT-(\d+)/);
     if (match) nextNumber = parseInt(match[1], 10) + 1;
   }
@@ -22,28 +20,16 @@ const generatePublicUserID = async () => {
   return `TENANT-${String(nextNumber).padStart(3, "0")}`;
 };
 
-/* Create Tenant */
 export const createTenant = async (data, adminId) => {
-  const {
-    fullName,
-    emailAddress,
-    contactNumber,
-    unitNumber,
-    numberOfTenants,
-    userName,
-    password,
-    sex,
-  }= data;
+  const { fullName, emailAddress, contactNumber, unitNumber, numberOfTenants, userName, password, sex } = data;
 
   if (!fullName || !emailAddress || !userName || !password) {
     throw new Error("Missing required fields");
   }
 
-  // Check email
   const existingEmail = await User.findOne({ where: { emailAddress } });
   if (existingEmail) throw new Error("Email already in use");
 
-  // Check username
   const existingUsername = await User.findOne({ where: { userName } });
   if (existingUsername) throw new Error("Username already in use");
 
@@ -63,17 +49,15 @@ export const createTenant = async (data, adminId) => {
     sex: sex || null,
   });
 
-  // Activity Log
   await createActivityLog({
     userId: adminId,
     role: "admin",
     action: "CREATE TENANT",
     description: `You created a tenant account for ${tenant.fullName} (Unit ${tenant.unitNumber ?? "—"}).`,
     referenceId: tenant.ID,
-    referenceType: "user"
+    referenceType: "user",
   });
 
-  // Notification
   await createNotification({
     userId: tenant.ID,
     role: "tenant",
@@ -81,10 +65,9 @@ export const createTenant = async (data, adminId) => {
     title: "Account Created",
     message: "Your tenant account has been created by admin.",
     referenceId: tenant.ID,
-    referenceType: "user"
+    referenceType: "user",
   });
 
-  // Email → tenant (account approved/created by admin)
   sendMail({
     to: tenant.emailAddress,
     subject: "MGC Building — Account Approved",

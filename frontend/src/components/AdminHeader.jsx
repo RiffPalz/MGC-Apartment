@@ -2,15 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useDebounceCallback } from "../hooks/useDebounceCallback";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  FaBars,
-  FaRegBell,
-  FaBell,
-  FaChevronDown,
-  FaCog,
-  FaSignOutAlt,
-  FaUserCircle,
-  FaCheck,
-  FaCheckDouble,
+  FaBars, FaBell, FaChevronDown, FaCog,
+  FaSignOutAlt, FaUserCircle, FaCheck, FaCheckDouble,
 } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { useAuth } from "../context/AuthContext";
@@ -20,8 +13,6 @@ import {
   markAllNotificationsRead,
 } from "../api/adminAPI/NotificationAPI";
 import GeneralConfirmationModal from "./GeneralConfirmationModal";
-
-// Socket
 import { useSocket } from "../context/SocketContext";
 
 const PAGE_TITLES = {
@@ -66,7 +57,6 @@ export default function AdminHeader({ open, setOpen }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  // Socket instance
   const socket = useSocket();
 
   const [showMenu, setShowMenu] = useState(false);
@@ -92,7 +82,6 @@ export default function AdminHeader({ open, setOpen }) {
   const initial = displayName[0]?.toUpperCase() ?? "A";
   const unread = notifications.filter((n) => !n.is_read).length;
 
-  // Load notifications
   const loadNotifications = useCallback(async () => {
     try {
       setNotifsLoading(true);
@@ -104,16 +93,10 @@ export default function AdminHeader({ open, setOpen }) {
     }
   }, []);
 
-  useEffect(() => {
-    loadNotifications();
-  }, [loadNotifications]);
+  useEffect(() => { loadNotifications(); }, [loadNotifications]);
 
-  // Refresh when navigating to a different page — same as tenant
-  useEffect(() => {
-    loadNotifications();
-  }, [location.pathname, loadNotifications]);
+  useEffect(() => { loadNotifications(); }, [location.pathname, loadNotifications]);
 
-  // Listen for real-time notifications — debounced so rapid events don't flood requests
   const debouncedLoad = useDebounceCallback(loadNotifications, 1500);
   useEffect(() => {
     if (!socket) return;
@@ -121,17 +104,13 @@ export default function AdminHeader({ open, setOpen }) {
     return () => socket.off("new_notification", debouncedLoad);
   }, [socket, debouncedLoad]);
 
-  // Mark one as read
   const markRead = async (id) => {
     try {
       await markNotificationRead(id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.ID === id ? { ...n, is_read: true } : n)),
-      );
+      setNotifications((prev) => prev.map((n) => (n.ID === id ? { ...n, is_read: true } : n)));
     } catch {}
   };
 
-  // Mark all as read
   const markAllRead = async () => {
     try {
       await markAllNotificationsRead();
@@ -139,7 +118,6 @@ export default function AdminHeader({ open, setOpen }) {
     } catch {}
   };
 
-  // Logout
   const handleLogout = async () => {
     await logout();
     navigate("/login");

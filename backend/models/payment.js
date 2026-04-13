@@ -10,76 +10,54 @@ const Payment = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
-
     contract_id: {
       type: DataTypes.BIGINT.UNSIGNED,
       allowNull: false,
-      references: {
-        model: Contract,
-        key: "ID",
-      },
+      references: { model: Contract, key: "ID" },
     },
-
     category: {
       type: DataTypes.ENUM("Rent", "Utilities"),
       allowNull: false,
     },
-
     billing_month: {
       type: DataTypes.DATEONLY,
       allowNull: false,
     },
-
     amount: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
-      validate: {
-        min: 0,
-      },
+      validate: { min: 0 },
     },
-
     due_date: {
       type: DataTypes.DATEONLY,
       allowNull: false,
     },
-
     payment_date: {
       type: DataTypes.DATEONLY,
       allowNull: true,
     },
-
     receipt_image: {
       type: DataTypes.STRING(500),
       allowNull: true,
     },
-
     paymentType: {
       type: DataTypes.ENUM("Cash", "GCash"),
       allowNull: true,
     },
-
     referenceNumber: {
       type: DataTypes.STRING(100),
       allowNull: true,
     },
-
     arNumber: {
       type: DataTypes.STRING(100),
       allowNull: true,
     },
-
     utility_bill_file: {
       type: DataTypes.STRING(500),
       allowNull: true,
     },
-
     status: {
-      type: DataTypes.ENUM(
-        "Unpaid",
-        "Pending Verification",
-        "Paid",
-        "Overdue"
-      ),
+      type: DataTypes.ENUM("Unpaid", "Pending Verification", "Paid", "Overdue"),
       allowNull: false,
       defaultValue: "Unpaid",
     },

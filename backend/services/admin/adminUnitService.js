@@ -3,19 +3,14 @@ import { createActivityLog } from "../../services/activityLogService.js";
 
 const FLOOR_MAP = { 1: "Ground Floor", 2: "Second Floor", 3: "Third Floor", 4: "Fourth Floor" };
 
-/**
- * Derive the real display status for a unit.
- * Priority: Disabled > Occupied (live contract) > stored status (Vacant / Under Maintenance)
- */
+/* Derive the real display status for a unit */
 const deriveStatus = (unit, tenants) => {
   if (!unit.is_active) return "Disabled";
   if (tenants.length > 0) return "Occupied";
-  // Preserve Under Maintenance if set; otherwise Vacant
   if (unit.status === "Under Maintenance") return "Under Maintenance";
   return "Vacant";
 };
 
-/* GET ALL UNITS with occupancy info */
 export const getAllUnits = async () => {
   const units = await Unit.findAll({
     include: [{
@@ -54,7 +49,6 @@ export const getAllUnits = async () => {
   });
 };
 
-/* CREATE UNIT */
 export const createUnit = async (data, adminId) => {
   const { unit_number, floor, max_capacity } = data;
   if (!unit_number || !floor) throw new Error("unit_number and floor are required");
@@ -71,16 +65,17 @@ export const createUnit = async (data, adminId) => {
   });
 
   await createActivityLog({
-    userId: adminId, role: "admin",
+    userId: adminId,
+    role: "admin",
     action: "CREATE UNIT",
     description: `You added Unit ${unit.unit_number}.`,
-    referenceId: unit.ID, referenceType: "unit",
+    referenceId: unit.ID,
+    referenceType: "unit",
   });
 
   return unit;
 };
 
-/* DELETE UNIT */
 export const deleteUnit = async (unitId, adminId) => {
   const unit = await Unit.findByPk(unitId);
   if (!unit) throw new Error("Unit not found");
@@ -89,21 +84,21 @@ export const deleteUnit = async (unitId, adminId) => {
   await unit.destroy();
 
   await createActivityLog({
-    userId: adminId, role: "admin",
+    userId: adminId,
+    role: "admin",
     action: "DELETE UNIT",
     description: `You deleted Unit ${unitNumber}.`,
-    referenceId: unitId, referenceType: "unit",
+    referenceId: unitId,
+    referenceType: "unit",
   });
 };
 
-/* UPDATE UNIT */
 export const updateUnit = async (unitId, data, adminId) => {
   const unit = await Unit.findByPk(unitId);
   if (!unit) throw new Error("Unit not found");
 
   if (data.max_capacity !== undefined) unit.max_capacity = data.max_capacity;
 
-  // Handle status changes
   if (data.status !== undefined) {
     if (data.status === "Disabled") {
       unit.is_active = false;
@@ -112,7 +107,6 @@ export const updateUnit = async (unitId, data, adminId) => {
       unit.is_active = true;
       unit.status = "Under Maintenance";
     } else {
-      // Vacant — re-enable and clear maintenance flag
       unit.is_active = true;
       unit.status = "Vacant";
     }
@@ -128,10 +122,12 @@ export const updateUnit = async (unitId, data, adminId) => {
   await unit.save();
 
   await createActivityLog({
-    userId: adminId, role: "admin",
+    userId: adminId,
+    role: "admin",
     action: "UPDATE UNIT",
     description: `You updated Unit ${unit.unit_number} — status: ${unit.status}.`,
-    referenceId: unit.ID, referenceType: "unit",
+    referenceId: unit.ID,
+    referenceType: "unit",
   });
 
   return unit;

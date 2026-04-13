@@ -5,13 +5,11 @@ import { createActivityLog } from "../../services/activityLogService.js";
 import { sendSMSBulk } from "../../utils/sms.js";
 import { sms } from "../../utils/smsTemplates.js";
 
-/* GET ANNOUNCEMENTS */
 export const getAnnouncements = async (category) => {
   const where = category && category !== "All" ? { category } : {};
   return await Announcement.findAll({ where, order: [["created_at", "DESC"]] });
 };
 
-/* CREATE ANNOUNCEMENT */
 export const createAnnouncement = async ({ announcementTitle, announcementMessage, category, caretakerId }) => {
   if (!announcementTitle || !announcementMessage) throw new Error("Title and message are required");
 
@@ -31,7 +29,10 @@ export const createAnnouncement = async ({ announcementTitle, announcementMessag
     referenceType: "announcement",
   });
 
-  const tenants = await User.findAll({ where: { role: "tenant", status: "Approved" }, attributes: ["contactNumber"] });
+  const tenants = await User.findAll({
+    where: { role: "tenant", status: "Approved" },
+    attributes: ["contactNumber"],
+  });
   sendSMSBulk(tenants.map((t) => t.contactNumber), sms.announcementPosted(announcementTitle, category || "General"));
 
   await createActivityLog({
@@ -46,7 +47,6 @@ export const createAnnouncement = async ({ announcementTitle, announcementMessag
   return announcement;
 };
 
-/* UPDATE ANNOUNCEMENT */
 export const updateAnnouncement = async (announcementId, updates, caretakerId) => {
   const announcement = await Announcement.findByPk(announcementId);
   if (!announcement) throw new Error("Announcement not found");
@@ -65,7 +65,6 @@ export const updateAnnouncement = async (announcementId, updates, caretakerId) =
   return announcement;
 };
 
-/* DELETE ANNOUNCEMENT */
 export const deleteAnnouncement = async (announcementId, caretakerId) => {
   const announcement = await Announcement.findByPk(announcementId);
   if (!announcement) throw new Error("Announcement not found");

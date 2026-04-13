@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 import { login as apiLogin, logout as apiLogout } from "../api/authService";
 import { getUser, getToken, clearAuth, setAuth } from "../api/authStorage";
 
@@ -11,7 +11,6 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  // Sync state with localStorage
   const [user, setUser] = useState(() => {
     const token = getToken();
     const storedUser = getUser();
@@ -23,18 +22,13 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     const response = await apiLogin(credentials);
-
-    // Extract user from API response to prevent localStorage race condition
     const freshUser = response?.user || response?.data?.user || getUser();
 
     if (freshUser) {
       setUser(freshUser);
       setIsAuth(true);
-
       const freshToken = response?.token || response?.data?.token || getToken();
-      if (freshToken) {
-        setAuth(freshToken, freshUser, freshUser.role);
-      }
+      if (freshToken) setAuth(freshToken, freshUser, freshUser.role);
     }
 
     return response;
@@ -52,7 +46,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Update profile and sync header
   const updateUser = (updatedFields) => {
     setUser((prev) => {
       const next = { ...prev, ...updatedFields };

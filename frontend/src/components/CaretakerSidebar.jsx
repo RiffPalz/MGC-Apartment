@@ -1,11 +1,10 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import logo from "../assets/images/logo.png";
 import {
-  FaBars, FaChevronLeft, FaSignOutAlt, FaCog,
+  FaBars, FaChevronLeft, FaCog,
   FaTools, FaMoneyCheckAlt, FaBullhorn, FaHistory, FaUsers,
 } from "react-icons/fa";
 import { MdDashboard } from "react-icons/md";
-
 
 const MENU = [
   { name: "Dashboard",    icon: <MdDashboard />,      path: "/caretaker/dashboard" },
@@ -19,8 +18,6 @@ const MENU = [
 
 export default function CaretakerSidebar({ open, setOpen }) {
   const location = useLocation();
-
-
 
   return (
     <aside className={`relative h-full bg-[#5c1f10] text-white shadow-2xl transition-all duration-500 ease-in-out flex flex-col font-NunitoSans z-50 overflow-hidden ${open ? "w-72" : "w-20"}`}>

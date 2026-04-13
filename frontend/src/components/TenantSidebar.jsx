@@ -14,11 +14,11 @@ export default function TenantSidebar({ open = true, setOpen }) {
   const location = useLocation();
 
   const menuItems = [
-    { name: "Dashboard",     icon: <FaHome />,          path: "/tenant/dashboard" },
-    { name: "Maintenance",   icon: <GrVmMaintenance />,  path: "/tenant/maintenance" },
-    { name: "My Contract",   icon: <TbContract />,       path: "/tenant/contract" },
-    { name: "Payments",      icon: <FaMoneyCheckAlt />,  path: "/tenant/payment" },
-    { name: "Activity Logs", icon: <FaHistory />,        path: "/tenant/activityLogs" },
+    { name: "Dashboard",     icon: <FaHome />,          path: "/tenant/dashboard"    },
+    { name: "Maintenance",   icon: <GrVmMaintenance />, path: "/tenant/maintenance"  },
+    { name: "My Contract",   icon: <TbContract />,      path: "/tenant/contract"     },
+    { name: "Payments",      icon: <FaMoneyCheckAlt />, path: "/tenant/payment"      },
+    { name: "Activity Logs", icon: <FaHistory />,       path: "/tenant/activityLogs" },
   ];
 
   return (

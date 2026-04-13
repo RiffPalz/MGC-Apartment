@@ -7,9 +7,7 @@ const storage = new CloudinaryStorage({
   params: async (req, file) => {
     const date = new Date().toISOString().split("T")[0];
     const contractId = req.body?.contract_id || "unknown";
-    
-    // Grab the extension from the original file (e.g., '.pdf' or '.png')
-    const ext = file.originalname.substring(file.originalname.lastIndexOf('.'));
+    const ext = file.originalname.substring(file.originalname.lastIndexOf("."));
 
     return {
       folder: `MGC-Building/utility-bills/contract_${contractId}`,
@@ -17,15 +15,14 @@ const storage = new CloudinaryStorage({
       type: "upload",
       access_mode: "public",
       allowed_formats: ["pdf", "jpg", "jpeg", "png"],
-      // FIX: Add the extension to the end!
-      public_id: `utility_bill_${date}_${Date.now()}${ext}`, 
+      public_id: `utility_bill_${date}_${Date.now()}${ext}`,
     };
   },
 });
 
 const uploadUtilityBill = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 export default uploadUtilityBill;

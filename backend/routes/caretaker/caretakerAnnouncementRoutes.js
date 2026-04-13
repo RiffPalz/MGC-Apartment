@@ -8,6 +8,7 @@ import {
 } from "../../controllers/caretaker/caretakerAnnouncementController.js";
 
 const router = express.Router();
+
 router.use(caretakerAuth);
 
 router.get("/", getAnnouncementsController);

@@ -5,14 +5,10 @@ import ModalPortal from "./ModalPortal";
 
 const WARNING_SECONDS = 60;
 
-/**
- * Session timeout warning modal.
- * Shows a countdown and lets the user continue or end the session.
- */
 export default function SessionTimeoutModal({ isOpen, onContinue, onLogout }) {
   const [seconds, setSeconds] = useState(WARNING_SECONDS);
 
-  // Reset + start countdown whenever modal opens
+  // Reset and start countdown whenever modal opens
   useEffect(() => {
     if (!isOpen) {
       setSeconds(WARNING_SECONDS);
@@ -22,10 +18,7 @@ export default function SessionTimeoutModal({ isOpen, onContinue, onLogout }) {
     setSeconds(WARNING_SECONDS);
     const interval = setInterval(() => {
       setSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
+        if (prev <= 1) { clearInterval(interval); return 0; }
         return prev - 1;
       });
     }, 1000);

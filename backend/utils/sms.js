@@ -6,17 +6,12 @@ dotenv.config();
 const SEMAPHORE_API = "https://api.semaphore.co/api/v4/messages";
 const SENDER_NAME = "capstoneweb";
 
-/**
- * Sends a single SMS with automatic number formatting
- */
+/* Send a single SMS, auto-formatting the number to 63XXXXXXXXXX */
 export const sendSMS = async (to, body) => {
   if (!to || !body) return;
 
-  // Ensure number format is 63XXXXXXXXXX
   const digits = to.replace(/\D/g, "");
-  const number = digits.startsWith("63")
-    ? digits
-    : `63${digits.replace(/^0/, "")}`;
+  const number = digits.startsWith("63") ? digits : `63${digits.replace(/^0/, "")}`;
 
   try {
     await axios.post(
@@ -27,16 +22,14 @@ export const sendSMS = async (to, body) => {
         message: body,
         sendername: SENDER_NAME,
       },
-      { timeout: 8000 } // Stop waiting after 8 seconds
+      { timeout: 8000 }
     );
   } catch (err) {
     console.error(`[SMS Error] ${number}:`, err?.response?.data || err.message);
   }
 };
 
-/**
- * Sends SMS to a list of numbers in small batches to avoid delays
- */
+/* Send SMS to multiple numbers in small batches */
 export const sendSMSBulk = async (numbers, body) => {
   if (!numbers?.length) return;
 
@@ -45,11 +38,8 @@ export const sendSMSBulk = async (numbers, body) => {
 
   for (let i = 0; i < unique.length; i += BATCH_SIZE) {
     const batch = unique.slice(i, i + BATCH_SIZE);
-
-    // Send current batch simultaneously
     await Promise.allSettled(batch.map((n) => sendSMS(n, body)));
 
-    // Brief pause to prevent API/Carrier throttling
     if (i + BATCH_SIZE < unique.length) {
       await new Promise((resolve) => setTimeout(resolve, 200));
     }

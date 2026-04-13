@@ -1,6 +1,5 @@
 import { getConfig, updateConfig } from "../../services/admin/adminConfigService.js";
 
-/* GET CONFIG */
 export const getConfigController = async (req, res) => {
   try {
     const config = await getConfig();
@@ -10,11 +9,9 @@ export const getConfigController = async (req, res) => {
   }
 };
 
-/* UPDATE CONFIG */
 export const updateConfigController = async (req, res) => {
   try {
-    const adminId = req.admin?.id;
-    const config = await updateConfig(req.body, req.files ?? {}, adminId);
+    const config = await updateConfig(req.body, req.files ?? {}, req.admin?.id);
     return res.status(200).json({ success: true, config });
   } catch (error) {
     if (error.status === 422) {

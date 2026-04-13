@@ -88,15 +88,9 @@ export default function GeneralConfirmationModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    if (cancelButtonRef.current) cancelButtonRef.current.focus();
 
-    if (cancelButtonRef.current) {
-      cancelButtonRef.current.focus();
-    }
-
-    const handler = (e) => {
-      if (e.key === "Escape" && !loading) onClose();
-    };
-
+    const handler = (e) => { if (e.key === "Escape" && !loading) onClose(); };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [isOpen, onClose, loading]);
@@ -115,27 +109,22 @@ export default function GeneralConfirmationModal({
         aria-labelledby="modal-title"
         aria-describedby="modal-message"
       >
-        {/* max-w-sm ensures the modal doesn't stretch too wide on desktop */}
         <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 sm:p-8 animate-in zoom-in-95 duration-200 border border-slate-100">
-
-          {/* Icon Container */}
           <div className={`w-16 h-16 rounded-2xl ${cfg.iconBg} flex items-center justify-center mb-6 mx-auto sm:mx-0 shadow-sm border border-slate-50`}>
             <span className={cfg.iconColor}>{cfg.icon}</span>
           </div>
 
-          {/* Title */}
           <h3 id="modal-title" className="text-xl sm:text-2xl font-black text-slate-900 mb-2 text-center sm:text-left tracking-tight">
             {title || cfg.defaultTitle}
           </h3>
 
-          {/* Message */}
           {message && (
             <p id="modal-message" className="text-sm font-medium text-slate-500 mb-8 leading-relaxed text-center sm:text-left">
               {message}
             </p>
           )}
 
-          {/* Responsive Action Buttons: Vertical on mobile, Horizontal on desktop */}
+          {/* Responsive buttons: vertical on mobile, horizontal on desktop */}
           <div className="flex flex-col-reverse sm:flex-row gap-3 mt-2">
             <button
               ref={cancelButtonRef}

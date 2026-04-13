@@ -8,7 +8,6 @@ import { createActivityLog } from "../services/activityLogService.js";
 import { sendSMS, sendSMSBulk } from "../utils/sms.js";
 import { sms } from "../utils/smsTemplates.js";
 
-// Generate unique tenant ID like TENANT-001, TENANT-002, etc.
 const generatePublicUserID = async () => {
   const lastUser = await User.findOne({
     where: { publicUserID: { [Op.like]: "TENANT-%" } },
@@ -24,7 +23,6 @@ const generatePublicUserID = async () => {
   return `TENANT-${String(nextNumber).padStart(3, "0")}`;
 };
 
-// Register a new tenant
 export const registerUser = async (userData) => {
   const { fullName, email, contactNumber, unitNumber, numberOfTenants, userName, password, sex } = userData;
 
@@ -33,16 +31,14 @@ export const registerUser = async (userData) => {
   }
 
   const existingEmail = await User.findOne({ where: { emailAddress: email } });
-  if (existingEmail && existingEmail.status !== "Declined") {
-    throw new Error("Email already in use");
-  }
+  if (existingEmail && existingEmail.status !== "Declined") throw new Error("Email already in use");
 
   const existingUsername = await User.findOne({ where: { userName } });
   if (existingUsername && existingUsername.status !== "Declined") {
     throw new Error("This username already has an existing account.");
   }
 
-  // Remove any old Declined records that would conflict on unique constraints
+  // Remove old Declined records that would conflict on unique constraints
   await User.destroy({
     where: {
       status: "Declined",
@@ -73,7 +69,6 @@ export const registerUser = async (userData) => {
     sex: sex || null,
   });
 
-  // Send Pending status email
   const { sendMail } = await import("../utils/mailer.js");
   const { accountPendingTemplate } = await import("../utils/emailTemplate.js");
   sendMail({
@@ -82,10 +77,8 @@ export const registerUser = async (userData) => {
     html: accountPendingTemplate(fullName),
   }).catch(() => {});
 
-  // SMS → tenant confirming registration received
   sendSMS(contactNumber, sms.registrationReceived(fullName));
 
-  // SMS → all admins notifying of new tenant registration
   const admins = await User.findAll({
     where: { role: "admin", status: "Approved" },
     attributes: ["contactNumber"],
@@ -98,7 +91,6 @@ export const registerUser = async (userData) => {
   return user;
 };
 
-// Tenant login
 export const loginUser = async ({ userName, password }) => {
   const user = await User.findOne({ where: { userName } });
   if (!user || user.role !== "tenant") throw new Error("Invalid username or password");
@@ -117,7 +109,7 @@ export const loginUser = async ({ userName, password }) => {
     userId: user.ID,
     role: user.role,
     action: "LOGIN",
-    description: `You logged in to your account.`,
+    description: "You logged in to your account.",
     referenceId: user.ID,
     referenceType: "user",
   });
@@ -139,14 +131,12 @@ export const loginUser = async ({ userName, password }) => {
   };
 };
 
-// Fetch tenant profile
 export const getUserProfileService = async (userId) => {
   const user = await User.findByPk(userId);
   if (!user) throw new Error("User not found");
   return user;
 };
 
-// Update tenant profile
 export const updateUserProfileService = async (userId, updateData) => {
   const user = await User.findByPk(userId);
   if (!user) throw new Error("User not found");
@@ -163,13 +153,12 @@ export const updateUserProfileService = async (userId, updateData) => {
     user.emailAddress = emailAddress;
   }
 
-  // Password change
   if (newPassword) {
     if (!currentPassword) throw new Error("Current password is required");
     const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) throw new Error("Current password is incorrect");
     if (newPassword.length < 6) throw new Error("New password must be at least 6 characters");
-    user.password_hash = newPassword; // beforeUpdate hook will hash it
+    user.password_hash = newPassword;
   }
 
   await user.save();
@@ -186,16 +175,12 @@ export const updateUserProfileService = async (userId, updateData) => {
   return user;
 };
 
-/* ── CHECK AVAILABILITY ── */
 export const checkAvailabilityService = async (userName) => {
-  // Units that already have at least one tenant account (any status)
   const takenUsers = await User.findAll({
     where: { role: "tenant", unitNumber: { [Op.ne]: null } },
     attributes: ["unitNumber", "status"],
   });
 
-  // A unit is "taken" if it has an Approved or Pending account
-  // (Declined accounts free the slot back up)
   const takenUnits = [
     ...new Set(
       takenUsers
@@ -207,52 +192,50 @@ export const checkAvailabilityService = async (userName) => {
   let usernameTaken = false;
   if (userName) {
     const existing = await User.findOne({ where: { userName } });
-    if (existing && existing.status !== "Declined") {
-      usernameTaken = true;
-    }
+    if (existing && existing.status !== "Declined") usernameTaken = true;
   }
 
   return { takenUnits, usernameTaken };
 };
 
-/* ── FORGOT PASSWORD ── */
 export const forgotPasswordService = async (emailAddress) => {
-    const user = await User.findOne({ where: { emailAddress, role: "tenant" } });
-    if (!user) throw new Error("No registered account found with this email address.");
+  const user = await User.findOne({ where: { emailAddress, role: "tenant" } });
+  if (!user) throw new Error("No registered account found with this email address.");
 
-    const { generateVerificationCode } = await import("../utils/codeGenerator.js");
-    const { sendMail } = await import("../utils/mailer.js");
-    const { passwordResetTemplate } = await import("../utils/emailTemplate.js");
+  const { generateVerificationCode } = await import("../utils/codeGenerator.js");
+  const { sendMail } = await import("../utils/mailer.js");
+  const { passwordResetTemplate } = await import("../utils/emailTemplate.js");
 
-    const resetCode = generateVerificationCode();
-    user.resetPasswordCode = resetCode;
-    user.code_expires_at   = new Date(Date.now() + 15 * 60 * 1000); // 15 min
-    await user.save();
+  const resetCode = generateVerificationCode();
+  user.resetPasswordCode = resetCode;
+  user.code_expires_at = new Date(Date.now() + 15 * 60 * 1000);
+  await user.save();
 
-    await sendMail({
-        to: user.emailAddress,
-        subject: "MGC Building — Password Reset Code",
-        html: passwordResetTemplate(user.fullName, resetCode),
-    });
+  await sendMail({
+    to: user.emailAddress,
+    subject: "MGC Building — Password Reset Code",
+    html: passwordResetTemplate(user.fullName, resetCode),
+  });
 
-    return { message: "Password reset code sent to your email." };
+  return { message: "Password reset code sent to your email." };
 };
 
-/* ── RESET PASSWORD ── */
 export const resetPasswordService = async (emailAddress, resetCode, newPassword) => {
-    const user = await User.findOne({ where: { emailAddress, role: "tenant" } });
-    if (!user) throw new Error("Account not found.");
+  const user = await User.findOne({ where: { emailAddress, role: "tenant" } });
+  if (!user) throw new Error("Account not found.");
 
-    if (!user.resetPasswordCode || user.resetPasswordCode !== resetCode)
-        throw new Error("Invalid reset code.");
+  if (!user.resetPasswordCode || user.resetPasswordCode !== resetCode) {
+    throw new Error("Invalid reset code.");
+  }
 
-    if (!user.code_expires_at || user.code_expires_at < new Date())
-        throw new Error("Reset code has expired. Please request a new one.");
+  if (!user.code_expires_at || user.code_expires_at < new Date()) {
+    throw new Error("Reset code has expired. Please request a new one.");
+  }
 
-    user.password_hash    = newPassword; // beforeUpdate hook will re-hash
-    user.resetPasswordCode = null;
-    user.code_expires_at   = null;
-    await user.save();
+  user.password_hash = newPassword;
+  user.resetPasswordCode = null;
+  user.code_expires_at = null;
+  await user.save();
 
-    return { message: "Password reset successfully." };
+  return { message: "Password reset successfully." };
 };

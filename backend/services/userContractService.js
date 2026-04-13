@@ -5,7 +5,6 @@ import User from "../models/user.js";
 const getViewUrl = (storedUrl) => storedUrl || null;
 const getDownloadUrl = (storedUrl) => storedUrl || null;
 
-/** Get contracts for a specific user */
 export const getUserContracts = async (userId) => {
   const contracts = await Contract.findAll({
     include: [
@@ -14,7 +13,7 @@ export const getUserContracts = async (userId) => {
         as: "tenants",
         required: true,
         where: { ID: userId },
-        attributes: []
+        attributes: [],
       },
       {
         model: Unit,

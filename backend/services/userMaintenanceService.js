@@ -6,23 +6,14 @@ import { createActivityLog } from "../services/activityLogService.js";
 import { sendSMSBulk } from "../utils/sms.js";
 import { sms } from "../utils/smsTemplates.js";
 
-/**
- * CREATE MAINTENANCE REQUEST (Tenant)
- */
 export const createMaintenance = async (userId, data) => {
   const { category, title, description } = data;
 
-  if (!category || !title) {
-    throw new Error("Category and title are required");
-  }
+  if (!category || !title) throw new Error("Category and title are required");
 
   const user = await User.findByPk(userId);
+  if (!user || user.role !== "tenant") throw new Error("Only tenants can create maintenance requests");
 
-  if (!user || user.role !== "tenant") {
-    throw new Error("Only tenants can create maintenance requests");
-  }
-
-  // Block terminated tenants from submitting new requests
   const terminatedContract = await Contract.findOne({
     include: [{ model: User, as: "tenants", where: { ID: userId }, required: true, through: { attributes: [] } }],
     where: { status: "Terminated" },
@@ -35,34 +26,26 @@ export const createMaintenance = async (userId, data) => {
     throw new Error("Maintenance requests are disabled for terminated contracts.");
   }
 
-  const request = await Maintenance.create({
-    userId,
-    category,
-    title,
-    description,
-  });
+  const request = await Maintenance.create({ userId, category, title, description });
 
-  /* NOTIFY CARETAKER */
   await createNotification({
     role: "caretaker",
     type: "maintenance request",
     title: "New Maintenance Request",
     message: `${title} reported by a tenant`,
     referenceId: request.ID,
-    referenceType: "maintenance"
+    referenceType: "maintenance",
   });
 
-  /* NOTIFY ADMIN */
   await createNotification({
     role: "admin",
     type: "maintenance request",
     title: "New Maintenance Request",
     message: `${title} reported by a tenant`,
     referenceId: request.ID,
-    referenceType: "maintenance"
+    referenceType: "maintenance",
   });
 
-  /* SMS → admin & caretaker */
   const staffUsers = await User.findAll({
     where: { role: ["admin", "caretaker"] },
     attributes: ["contactNumber"],
@@ -78,7 +61,7 @@ export const createMaintenance = async (userId, data) => {
     action: "CREATE MAINTENANCE",
     description: `You submitted a maintenance request: "${title}".`,
     referenceId: request.ID,
-    referenceType: "maintenance"
+    referenceType: "maintenance",
   });
 
   return {
@@ -90,9 +73,6 @@ export const createMaintenance = async (userId, data) => {
   };
 };
 
-/**
- * FOLLOW UP ON MAINTENANCE REQUEST (Tenant)
- */
 export const followUpMaintenance = async (userId, maintenanceId) => {
   const request = await Maintenance.findOne({ where: { ID: maintenanceId, userId } });
   if (!request) throw new Error("Maintenance request not found");
@@ -101,7 +81,6 @@ export const followUpMaintenance = async (userId, maintenanceId) => {
   request.followedUp = true;
   await request.save();
 
-  // Notify admin
   await createNotification({
     role: "admin",
     type: "maintenance follow-up",
@@ -111,7 +90,6 @@ export const followUpMaintenance = async (userId, maintenanceId) => {
     referenceType: "maintenance",
   });
 
-  // Notify caretaker
   await createNotification({
     role: "caretaker",
     type: "maintenance follow-up",
@@ -133,9 +111,6 @@ export const followUpMaintenance = async (userId, maintenanceId) => {
   return { message: "Follow-up sent successfully" };
 };
 
-/**
- * GET TENANT MAINTENANCE REQUESTS
- */
 export const getTenantMaintenance = async (userId) => {
   const requests = await Maintenance.findAll({
     where: { userId },
@@ -155,9 +130,6 @@ export const getTenantMaintenance = async (userId) => {
   }));
 };
 
-/**
- * EDIT MAINTENANCE REQUEST (Tenant)
- */
 export const editMaintenance = async (userId, maintenanceId, data) => {
   const { title, category, description } = data;
 
@@ -168,23 +140,14 @@ export const editMaintenance = async (userId, maintenanceId, data) => {
     "Other",
   ];
 
-  if (!title || typeof title !== "string" || title.trim() === "") {
-    throw new Error("Title is required");
-  }
-
-  if (!ALLOWED_CATEGORIES.includes(category)) {
-    throw new Error("Invalid category");
-  }
+  if (!title || typeof title !== "string" || title.trim() === "") throw new Error("Title is required");
+  if (!ALLOWED_CATEGORIES.includes(category)) throw new Error("Invalid category");
 
   const request = await Maintenance.findOne({ where: { ID: maintenanceId, userId } });
   if (!request) throw new Error("Maintenance request not found");
-
-  if (request.status !== "Pending") {
-    throw new Error("Only pending requests can be edited");
-  }
+  if (request.status !== "Pending") throw new Error("Only pending requests can be edited");
 
   const trimmedTitle = title.trim();
-
   request.title = trimmedTitle;
   request.category = category;
   request.description = description ?? "";
@@ -217,7 +180,6 @@ export const editMaintenance = async (userId, maintenanceId, data) => {
     referenceType: "maintenance",
   });
 
-  /* SMS → admin & caretaker */
   const user = await User.findByPk(userId);
   const staffUsers = await User.findAll({
     where: { role: ["admin", "caretaker"] },

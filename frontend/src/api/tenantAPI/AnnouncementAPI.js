@@ -9,7 +9,6 @@ export const fetchAnnouncements = async () => {
   if (announcementsCache && now - announcementsCacheTime < ANNOUNCEMENTS_CACHE_TTL) {
     return announcementsCache;
   }
-
   const response = await api.get("/users/announcements");
   announcementsCache = response.data;
   announcementsCacheTime = now;

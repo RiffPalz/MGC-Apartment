@@ -19,9 +19,7 @@ export function ConfigProvider({ children }) {
 
   useEffect(() => {
     fetchConfig()
-      .then((data) => {
-        if (data?.config) setConfig((prev) => ({ ...prev, ...data.config }));
-      })
+      .then((data) => { if (data?.config) setConfig((prev) => ({ ...prev, ...data.config })); })
       .catch(() => {})
       .finally(() => setConfigLoaded(true));
   }, []);

@@ -1,6 +1,5 @@
 import express from "express";
 import adminAuth from "../../middleware/adminAuth.js";
-
 import {
   getAllApplicationRequestsController,
   deleteApplicationRequestController,
@@ -16,6 +15,5 @@ router.get("/today", adminAuth, getTodayUnreadController);
 router.get("/", adminAuth, getAllApplicationRequestsController);
 router.patch("/:id/read", adminAuth, markApplicationReadController);
 router.delete("/:id", adminAuth, deleteApplicationRequestController);
-
 
 export default router;

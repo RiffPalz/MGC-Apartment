@@ -39,9 +39,9 @@ export default function Navbar() {
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
-  const close      = () => setIsOpen(false);
-  const textColor  = scrolled ? "text-gray-900" : "text-white";
-  const NAV_ITEMS  = ["hero", "about", "apply", "contact"];
+  const close = () => setIsOpen(false);
+  const textColor = scrolled ? "text-gray-900" : "text-white";
+  const NAV_ITEMS = ["hero", "about", "apply", "contact"];
 
   /* ── Mobile full-screen menu rendered via portal so it's never clipped ── */
   const mobileMenu = createPortal(
