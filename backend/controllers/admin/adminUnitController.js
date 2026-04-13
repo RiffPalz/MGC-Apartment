@@ -5,7 +5,7 @@ export const fetchAllUnits = async (req, res) => {
   try {
     const units = await getAllUnits();
     return res.status(200).json({ success: true, count: units.length, units });
-  } catch (error) {
+  } catch {
     return res.status(500).json({ success: false, message: "Failed to fetch units" });
   }
 };

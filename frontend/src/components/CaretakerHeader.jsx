@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useDebounceCallback } from "../hooks/useDebounceCallback";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FaBars, FaRegBell, FaBell, FaChevronDown, FaSignOutAlt, FaUserCircle, FaCheck, FaCheckDouble } from "react-icons/fa";
+import { FaBars, FaBell, FaChevronDown, FaSignOutAlt, FaUserCircle, FaCheck, FaCheckDouble } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { useAuth } from "../context/AuthContext";
 import { fetchCaretakerNotifications, markNotificationRead, markAllNotificationsRead } from "../api/caretakerAPI/NotificationAPI";
@@ -80,10 +80,8 @@ export default function CaretakerHeader({ open, setOpen }) {
 
   useEffect(() => { loadNotifications(); }, [loadNotifications]);
 
-  // Refresh when navigating to a different page — same as tenant
   useEffect(() => { loadNotifications(); }, [location.pathname, loadNotifications]);
 
-  // Real-time listener — debounced so rapid events don't flood requests
   const debouncedLoad = useDebounceCallback(loadNotifications, 1500);
   useEffect(() => {
     if (!socket) return;
@@ -91,7 +89,6 @@ export default function CaretakerHeader({ open, setOpen }) {
     return () => socket.off("new_notification", debouncedLoad);
   }, [socket, debouncedLoad]);
 
-  // Actions
   const markRead = async (id) => {
     try {
       await markNotificationRead(id);

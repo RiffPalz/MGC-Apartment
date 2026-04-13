@@ -6,7 +6,6 @@ dotenv.config();
 const resend = new Resend(process.env.RESEND_API);
 const FROM_ADDRESS = `MGC Building <${process.env.RESEND_FROM_EMAIL}>`;
 
-/** Send email via Resend */
 export const sendMail = async ({ to, subject, html, attachments }) => {
   const payload = {
     from: FROM_ADDRESS,
@@ -15,7 +14,6 @@ export const sendMail = async ({ to, subject, html, attachments }) => {
     html,
   };
 
-  // Format attachments if provided
   if (attachments?.length) {
     payload.attachments = attachments.map((a) => ({
       filename: a.filename,
@@ -25,9 +23,7 @@ export const sendMail = async ({ to, subject, html, attachments }) => {
 
   const { data, error } = await resend.emails.send(payload);
 
-  if (error) {
-    throw new Error(`Resend error: ${error.message}`);
-  }
+  if (error) throw new Error(`Resend error: ${error.message}`);
 
   return data;
 };

@@ -4,7 +4,7 @@ import { getSystemInfoController, updateSystemInfoController } from "../controll
 
 const router = express.Router();
 
-router.get("/", getSystemInfoController);               // public — anyone can read
-router.patch("/", adminAuth, updateSystemInfoController); // admin only — write
+router.get("/", getSystemInfoController);
+router.patch("/", adminAuth, updateSystemInfoController);
 
 export default router;

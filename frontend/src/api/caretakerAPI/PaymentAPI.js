@@ -2,7 +2,7 @@ import api from "../config";
 
 export const fetchAllPayments = async () => {
   const res = await api.get("/caretaker/payments");
-  return res.data; // { success, count, payments[] }
+  return res.data;
 };
 
 export const fetchPendingPayments = async () => {

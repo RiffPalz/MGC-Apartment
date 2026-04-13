@@ -14,7 +14,7 @@ export default function TenantLayout() {
   const socket = useSocket();
   const { updateUser } = useAuth();
 
-  // Sync profile updates
+  // Sync profile updates via socket
   useEffect(() => {
     if (!socket) return;
     const handler = (updated) => {
@@ -25,57 +25,49 @@ export default function TenantLayout() {
     return () => socket.off("profile_updated", handler);
   }, [socket, updateUser]);
 
-  // Handle screen resize
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
       setIsSidebarOpen(!mobile);
     };
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Auto-close mobile sidebar on navigation
   useEffect(() => {
     if (isMobile) setIsSidebarOpen(false);
   }, [location, isMobile]);
 
   return (
     <div className="flex h-screen bg-[#f8f9fa] font-NunitoSans overflow-hidden w-full">
-
-      {/* Mobile Overlay */}
       {isMobile && (
         <div
-          className={`fixed inset-0 bg-[#330101]/60 z-40 transition-opacity duration-300 backdrop-blur-sm ${isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-            }`}
+          className={`fixed inset-0 bg-[#330101]/60 z-40 transition-opacity duration-300 backdrop-blur-sm ${
+            isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      {/* Mobile Sidebar */}
       {isMobile && (
         <div
-          className={`fixed inset-y-0 left-0 z-50 max-w-[80vw] w-72 h-full shadow-2xl transition-transform duration-300 ease-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
+          className={`fixed inset-y-0 left-0 z-50 max-w-[80vw] w-72 h-full shadow-2xl transition-transform duration-300 ease-out ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
         >
           <TenantSidebar open={true} setOpen={setIsSidebarOpen} />
         </div>
       )}
 
-      {/* Desktop Sidebar */}
       {!isMobile && (
         <div className="h-full shadow-xl z-20 relative shrink-0">
           <TenantSidebar open={isSidebarOpen} setOpen={setIsSidebarOpen} />
         </div>
       )}
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full relative overflow-hidden min-w-0 w-full transition-all duration-300">
         <TenantHeader setOpen={setIsSidebarOpen} />
-
-        {/* Scrollable container for pages (Outlet) */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth w-full">
           <Outlet />
         </main>

@@ -1,9 +1,6 @@
-/**
- * One-time migration: adds the `status` ENUM column to the `units` table.
- * Run with: node utils/migrateUnitStatus.js  (from the backend/ directory)
- */
 import dotenv from "dotenv";
 dotenv.config();
+
 import { sequelize } from "../config/database.js";
 import { QueryTypes } from "sequelize";
 
@@ -24,7 +21,6 @@ const run = async () => {
       );
       console.log("`status` column added successfully.");
 
-      // Back-fill: mark inactive units as Disabled
       const [updated] = await sequelize.query(
         `UPDATE units SET status = 'Disabled' WHERE is_active = 0`,
         { type: QueryTypes.RAW }

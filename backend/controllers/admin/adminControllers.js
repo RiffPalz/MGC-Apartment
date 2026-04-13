@@ -1,71 +1,47 @@
 import {
   adminLogin,
   verifyAdminOtp,
-  resendAdminCode
+  resendAdminCode,
 } from "../../services/admin/adminAuthService.js";
-
 import {
   updateAdminProfile,
   updateTenantApprovalService,
   createCaretakerService,
   createAdminService,
-  deleteUserService
+  deleteUserService,
 } from "../../services/admin/adminService.js";
-
 import User from "../../models/user.js";
 import { Op } from "sequelize";
 import Contract from "../../models/contract.js";
 import Unit from "../../models/unit.js";
 import { emitEvent } from "../../utils/emitEvent.js";
 
-/* LOGIN */
 export const loginAdmin = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const result = await adminLogin({ email, password });
-
-    return res.status(200).json({
-      success: true,
-      message: result.message,
-      adminId: result.adminId,
-    });
-
+    const result = await adminLogin(req.body);
+    return res.status(200).json({ success: true, message: result.message, adminId: result.adminId });
   } catch (error) {
-
-    return res.status(401).json({
-      success: false,
-      message: error.message
-    });
+    return res.status(401).json({ success: false, message: error.message });
   }
 };
 
-/* VERIFY OTP */
 export const loginCodeVerify = async (req, res) => {
   try {
-    const { adminId, verificationCode } = req.body;
-    const result = await verifyAdminOtp({ adminId, verificationCode });
-
+    const result = await verifyAdminOtp(req.body);
     return res.status(200).json({
       success: true,
       message: result.message,
       accessToken: result.accessToken,
       admin: result.admin,
     });
-
   } catch (error) {
-
-    return res.status(401).json({
-      success: false,
-      message: error.message
-    });
+    return res.status(401).json({ success: false, message: error.message });
   }
 };
 
-/* FETCH PROFILE */
 export const fetchAdminProfile = async (req, res) => {
   try {
     const { instance: admin } = req.admin;
-
     return res.status(200).json({
       success: true,
       admin: {
@@ -79,17 +55,11 @@ export const fetchAdminProfile = async (req, res) => {
         profilePicture: admin.profilePicture || null,
       },
     });
-
-  } catch (error) {
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch admin profile"
-    });
+  } catch {
+    return res.status(500).json({ success: false, message: "Failed to fetch admin profile" });
   }
 };
 
-/* UPDATE PROFILE */
 export const saveAdminProfile = async (req, res) => {
   try {
     const updatedAdmin = await updateAdminProfile(req.admin, req.body);
@@ -114,18 +84,11 @@ export const saveAdminProfile = async (req, res) => {
         profilePicture: updatedAdmin.profilePicture || null,
       },
     });
-
-
   } catch (error) {
-
-    return res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
-/* UPLOAD PROFILE PICTURE */
 export const uploadProfilePictureController = async (req, res) => {
   try {
     const { instance: admin } = req.admin;
@@ -147,101 +110,50 @@ export const uploadProfilePictureController = async (req, res) => {
   }
 };
 
-/* RESEND OTP */
 export const resendCodeController = async (req, res) => {
   try {
     const { adminId } = req.body;
-
-    if (!adminId) {
-      return res.status(400).json({
-        success: false,
-        message: "Admin ID is required"
-      });
-    }
+    if (!adminId) return res.status(400).json({ success: false, message: "Admin ID is required" });
 
     await resendAdminCode(adminId);
-
-    return res.status(200).json({
-      success: true,
-      message: "Verification code resent successfully"
-    });
-
+    return res.status(200).json({ success: true, message: "Verification code resent successfully" });
   } catch (error) {
-
-    return res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
-/* CREATE CARETAKER */
 export const createCaretaker = async (req, res) => {
   try {
     const caretaker = await createCaretakerService(req.admin.instance, req.body);
-
-    return res.status(201).json({
-      success: true,
-      message: "Caretaker created successfully",
-      caretaker
-    });
-
-
+    return res.status(201).json({ success: true, message: "Caretaker created successfully", caretaker });
   } catch (error) {
-
-    return res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
-/* CREATE ADMIN */
 export const createAdmin = async (req, res) => {
   try {
     const admin = await createAdminService(req.admin.instance, req.body);
-
-    return res.status(201).json({
-      success: true,
-      message: "Admin created successfully",
-      admin
-    });
-
-
+    return res.status(201).json({ success: true, message: "Admin created successfully", admin });
   } catch (error) {
-
-    return res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
-/* DELETE USER */
 export const deleteUser = async (req, res) => {
   try {
-    const { userId } = req.params;
-
-    await deleteUserService(req.admin.instance, userId);
+    await deleteUserService(req.admin.instance, req.params.userId);
     emitEvent(req, "tenants_updated");
     return res.status(200).json({ success: true, message: "User deleted successfully" });
-
-
   } catch (error) {
-
-    return res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
-/* GET SINGLE TENANT PROFILE */
 export const getTenantProfile = async (req, res) => {
   try {
-    const { id } = req.params;
     const tenant = await User.findOne({
-      where: { ID: id, role: "tenant" },
+      where: { ID: req.params.id, role: "tenant" },
       include: [{
         model: Contract,
         as: "contracts",
@@ -269,35 +181,37 @@ export const getTenantProfile = async (req, res) => {
         sex: tenant.sex ?? null,
         status: tenant.status,
         createdAt: tenant.created_at,
-        contract: activeContract ? {
-          id: activeContract.ID,
-          startDate: activeContract.start_date,
-          endDate: activeContract.end_date,
-          rentAmount: activeContract.rent_amount,
-          status: activeContract.status,
-          unit: activeContract.unit ? {
-            id: activeContract.unit.ID,
-            unitNumber: activeContract.unit.unit_number,
-            floor: activeContract.unit.floor,
-          } : null,
-        } : null,
+        contract: activeContract
+          ? {
+              id: activeContract.ID,
+              startDate: activeContract.start_date,
+              endDate: activeContract.end_date,
+              rentAmount: activeContract.rent_amount,
+              status: activeContract.status,
+              unit: activeContract.unit
+                ? {
+                    id: activeContract.unit.ID,
+                    unitNumber: activeContract.unit.unit_number,
+                    floor: activeContract.unit.floor,
+                  }
+                : null,
+            }
+          : null,
       },
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({ success: false, message: "Failed to fetch tenant profile" });
   }
 };
 
-/* UPDATE TENANT PROFILE (admin) */
 export const updateTenantProfile = async (req, res) => {
   try {
-    const { id } = req.params;
     const { fullName, emailAddress, contactNumber, numberOfTenants, sex } = req.body;
 
-    const tenant = await User.findOne({ where: { ID: id, role: "tenant" } });
+    const tenant = await User.findOne({ where: { ID: req.params.id, role: "tenant" } });
     if (!tenant) return res.status(404).json({ success: false, message: "Tenant not found" });
 
-    if (fullName)        tenant.fullName       = fullName.trim();
+    if (fullName) tenant.fullName = fullName.trim();
     if (contactNumber !== undefined) tenant.contactNumber = contactNumber;
     if (numberOfTenants !== undefined) tenant.numberOfTenants = numberOfTenants;
     if (sex !== undefined) tenant.sex = sex || null;
@@ -308,7 +222,6 @@ export const updateTenantProfile = async (req, res) => {
       tenant.emailAddress = emailAddress.trim();
     }
 
-    // If numberOfTenants changed, auto-update the active contract's rent_amount
     const prevPax = tenant.numberOfTenants;
     const newPax = numberOfTenants !== undefined ? Number(numberOfTenants) : prevPax;
 
@@ -318,15 +231,10 @@ export const updateTenantProfile = async (req, res) => {
       const newRent = newPax >= 2 ? 3000 : 2500;
       const { default: Contract } = await import("../../models/contract.js");
       const { default: ContractTenant } = await import("../../models/contractTenant.js");
-      // Find the active contract this tenant belongs to
       const link = await ContractTenant.findOne({ where: { user_id: tenant.ID } });
       if (link) {
-        const activeContract = await Contract.findOne({
-          where: { ID: link.contract_id, status: "Active" },
-        });
-        if (activeContract) {
-          await activeContract.update({ rent_amount: newRent });
-        }
+        const activeContract = await Contract.findOne({ where: { ID: link.contract_id, status: "Active" } });
+        if (activeContract) await activeContract.update({ rent_amount: newRent });
       }
     }
 
@@ -363,7 +271,6 @@ export const updateTenantProfile = async (req, res) => {
   }
 };
 
-/* GET APPROVED TENANTS WITHOUT ACTIVE CONTRACT */
 export const getApprovedTenantsNoContract = async (req, res) => {
   try {
     const tenants = await User.findAll({
@@ -377,7 +284,6 @@ export const getApprovedTenantsNoContract = async (req, res) => {
       order: [["created_at", "DESC"]],
     });
 
-    // Only those with no active contract
     const result = tenants
       .filter((t) => !t.contracts || t.contracts.length === 0)
       .map((t) => ({
@@ -391,12 +297,11 @@ export const getApprovedTenantsNoContract = async (req, res) => {
       }));
 
     return res.status(200).json({ success: true, tenants: result });
-  } catch (error) {
+  } catch {
     return res.status(500).json({ success: false, message: "Failed to fetch tenants" });
   }
 };
 
-/* GET STAFF (admins + caretakers) */
 export const getStaffUsers = async (req, res) => {
   try {
     const staff = await User.findAll({
@@ -405,36 +310,23 @@ export const getStaffUsers = async (req, res) => {
       order: [["created_at", "DESC"]],
     });
     return res.status(200).json({ success: true, staff });
-  } catch (error) {
+  } catch {
     return res.status(500).json({ success: false, message: "Failed to fetch staff" });
   }
 };
 
-/* GET PENDING TENANTS */
 export const getPendingUsers = async (req, res) => {
   try {
     const users = await User.findAll({
       where: { role: "tenant", status: "Pending" },
       order: [["created_at", "DESC"]],
     });
-
-    return res.status(200).json({
-      success: true,
-      count: users.length,
-      users
-    });
-
-
-  } catch (error) {
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch pending users"
-    });
+    return res.status(200).json({ success: true, count: users.length, users });
+  } catch {
+    return res.status(500).json({ success: false, message: "Failed to fetch pending users" });
   }
 };
 
-/* APPROVE / DECLINE TENANT */
 export const updateUserApproval = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -443,45 +335,27 @@ export const updateUserApproval = async (req, res) => {
     await updateTenantApprovalService(req.admin.instance, userId, status);
     emitEvent(req, "tenants_updated");
     return res.status(200).json({ success: true, message: `Tenant ${status} successfully` });
-
   } catch (error) {
     console.error("updateUserApproval error:", error.message, "| userId:", req.params.userId, "| status:", req.body?.status);
-    return res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
-/* TENANTS OVERVIEW */
 export const getTenantsOverview = async (req, res) => {
   try {
     const tenants = await User.findAll({
       where: { role: "tenant", status: "Approved" },
-      include: [
-        {
-          model: Contract,
-          as: "contracts",
-          where: { status: "Active" },
-          required: false,
-          include: [{ model: Unit, as: "unit" }]
-        }
-      ],
+      include: [{
+        model: Contract,
+        as: "contracts",
+        where: { status: "Active" },
+        required: false,
+        include: [{ model: Unit, as: "unit" }],
+      }],
       order: [["created_at", "DESC"]],
     });
-
-    return res.status(200).json({
-      success: true,
-      count: tenants.length,
-      tenants
-    });
-
-
-  } catch (error) {
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch tenants overview"
-    });
+    return res.status(200).json({ success: true, count: tenants.length, tenants });
+  } catch {
+    return res.status(500).json({ success: false, message: "Failed to fetch tenants overview" });
   }
 };

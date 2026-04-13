@@ -1,12 +1,11 @@
-import { getUserContracts } from "../services/userContractService.js";
 import axios from "axios";
+import { getUserContracts } from "../services/userContractService.js";
 import Contract from "../models/contract.js";
 import cloudinary from "../config/cloudinary.js";
 
 export const getUserContractsController = async (req, res) => {
   try {
-    const userId = req.auth.id;
-    const contracts = await getUserContracts(userId);
+    const contracts = await getUserContracts(req.auth.id);
     return res.status(200).json({ success: true, count: contracts.length, contracts });
   } catch (error) {
     console.error(error);
@@ -14,12 +13,10 @@ export const getUserContractsController = async (req, res) => {
   }
 };
 
-// Proxy endpoint — signs the Cloudinary URL and redirects, or streams bytes
+/* Signs the Cloudinary URL and redirects, or streams bytes as fallback */
 export const proxyContractPdf = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const contract = await Contract.findByPk(id);
+    const contract = await Contract.findByPk(req.params.id);
     if (!contract?.contract_file) {
       return res.status(404).json({ success: false, message: "Contract file not found." });
     }
@@ -38,10 +35,9 @@ export const proxyContractPdf = async (req, res) => {
       return res.redirect(signedUrl);
     }
 
-    // Fallback: proxy bytes directly
     const response = await axios.get(pdfUrl, { responseType: "arraybuffer", timeout: 15000 });
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="contract_${id}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="contract_${req.params.id}.pdf"`);
     return res.send(Buffer.from(response.data));
   } catch (error) {
     console.error("PDF proxy error:", error.message);

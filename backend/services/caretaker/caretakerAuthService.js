@@ -3,22 +3,13 @@ import jwt from "jsonwebtoken";
 import { createActivityLog } from "../../services/activityLogService.js";
 
 export const caretakerLogin = async ({ userName, password }) => {
-  if (!userName || !password) {
-    throw new Error("Username and password are required");
-  }
+  if (!userName || !password) throw new Error("Username and password are required");
 
-  const user = await User.findOne({
-    where: { userName: userName, role: "caretaker" },
-  });
-
-  if (!user) {
-    throw new Error("Invalid username or password");
-  }
+  const user = await User.findOne({ where: { userName, role: "caretaker" } });
+  if (!user) throw new Error("Invalid username or password");
 
   const isMatch = await user.comparePassword(password);
-  if (!isMatch) {
-    throw new Error("Invalid username or password");
-  }
+  if (!isMatch) throw new Error("Invalid username or password");
 
   const token = jwt.sign(
     { id: user.ID, role: "caretaker" },

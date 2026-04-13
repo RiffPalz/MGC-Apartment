@@ -23,31 +23,24 @@ const VALID_SLOTS = new Set(["left1", "left2", "left3", "rightTop", "rightLarge"
 
 export { DEFAULT_CONFIG };
 
-/* GET CONFIG */
 export const getConfig = async () => {
   const instance = await SystemConfig.findOne();
   return instance ?? { ...DEFAULT_CONFIG };
 };
 
-/* UPDATE CONFIG */
 export const updateConfig = async (data, files = {}, adminId = null) => {
-  // Load existing record (or create from defaults)
   let instance = await SystemConfig.findOne();
-  if (!instance) {
-    instance = await SystemConfig.create({ ...DEFAULT_CONFIG });
-  }
+  if (!instance) instance = await SystemConfig.create({ ...DEFAULT_CONFIG });
 
-  // Partial update: only overwrite a field if a non-empty value was provided
   const has = (key) => data[key] !== undefined && data[key] !== null && String(data[key]).trim() !== "";
 
-  if (has("mgc_name"))    instance.mgc_name    = String(data.mgc_name).trim();
-  if (has("address"))     instance.address     = String(data.address).trim();
+  if (has("mgc_name")) instance.mgc_name = String(data.mgc_name).trim();
+  if (has("address")) instance.address = String(data.address).trim();
   if (has("monthly_rate")) instance.monthly_rate = data.monthly_rate;
   if (data.monthly_rate_description !== undefined) instance.monthly_rate_description = data.monthly_rate_description;
   if (has("deposit_terms")) instance.deposit_terms = String(data.deposit_terms).trim();
   if (data.deposit_terms_description !== undefined) instance.deposit_terms_description = data.deposit_terms_description;
 
-  // Gallery images — only update if provided
   if (data.gallery_images !== undefined) {
     let galleryImages;
     try {
@@ -62,18 +55,16 @@ export const updateConfig = async (data, files = {}, adminId = null) => {
       throw { status: 422, message: "gallery_images must be an array" };
     }
 
-    // Validate slot values only
     for (let i = 0; i < galleryImages.length; i++) {
       if (!VALID_SLOTS.has(galleryImages[i].slot)) {
         throw { status: 422, message: `gallery_images[${i}].slot must be one of: left1, left2, left3, rightTop, rightLarge` };
       }
     }
 
-    // Apply any newly uploaded file URLs
     for (let i = 0; i <= 4; i++) {
       const fileField = `gallery_${i}`;
-      if (files[fileField] && files[fileField][0]) {
-        if (galleryImages[i]) galleryImages[i] = { ...galleryImages[i], url: files[fileField][0].path };
+      if (files[fileField]?.[0] && galleryImages[i]) {
+        galleryImages[i] = { ...galleryImages[i], url: files[fileField][0].path };
       }
     }
 

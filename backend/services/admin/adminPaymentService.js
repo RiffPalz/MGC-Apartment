@@ -5,17 +5,16 @@ import Unit from "../../models/unit.js";
 import User from "../../models/user.js";
 import { createNotification } from "../../services/notificationService.js";
 import { createActivityLog } from "../../services/activityLogService.js";
-import { sendSMS, sendSMSBulk } from "../../utils/sms.js";
+import { sendSMS } from "../../utils/sms.js";
 import { sms } from "../../utils/smsTemplates.js";
 
-/* CREATE PAYMENT */
 export const createPayment = async ({ contract_id, category, billing_month, amount, due_date, utility_bill_file }, adminId) => {
   const contract = await Contract.findOne({
     where: { ID: contract_id },
     include: [
       { model: Unit, as: "unit", attributes: ["unit_number"] },
-      { model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } }
-    ]
+      { model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } },
+    ],
   });
   if (!contract) throw new Error("Contract not found");
   if (!contract.tenants?.length) throw new Error("No tenant associated with this contract");
@@ -25,14 +24,17 @@ export const createPayment = async ({ contract_id, category, billing_month, amou
   const billingLabel = new Date(billing_month).toLocaleDateString("en-US", { year: "numeric", month: "long" });
 
   const today = new Date().setHours(0, 0, 0, 0);
-  const dueDate = new Date(due_date).setHours(0, 0, 0, 0);
-  if (dueDate < today) throw new Error("Due date cannot be in the past.");
+  if (new Date(due_date).setHours(0, 0, 0, 0) < today) throw new Error("Due date cannot be in the past.");
 
   const existing = await Payment.findOne({ where: { contract_id, category, billing_month } });
   if (existing) throw new Error("Payment for this month already exists.");
 
   const payment = await Payment.create({
-    contract_id, category, billing_month, amount, due_date,
+    contract_id,
+    category,
+    billing_month,
+    amount,
+    due_date,
     ...(utility_bill_file ? { utility_bill_file } : {}),
   });
 
@@ -43,7 +45,7 @@ export const createPayment = async ({ contract_id, category, billing_month, amou
     title: "New Bill Generated",
     message: `${category} bill for ${billing_month} has been created.`,
     referenceId: payment.ID,
-    referenceType: "payment"
+    referenceType: "payment",
   });
 
   sendSMS(tenant.contactNumber, sms.billCreated(category, billing_month));
@@ -54,39 +56,39 @@ export const createPayment = async ({ contract_id, category, billing_month, amou
     action: "CREATE PAYMENT",
     description: `You created a ${category} bill for Unit ${unitNumber} for the month of ${billingLabel}.`,
     referenceId: payment.ID,
-    referenceType: "payment"
+    referenceType: "payment",
   });
 
   return payment;
 };
 
-/* GET ALL PAYMENTS WITH DETAILS */
 export const getAllPayments = async () => {
   return await Payment.findAll({
-    include: [
-      {
-        model: Contract,
-        as: "contract",
-        attributes: ["ID", "start_date", "end_date"],
-        include: [
-          { model: Unit, as: "unit", attributes: ["unit_number", "floor"] },
-          { model: User, as: "tenants", attributes: ["ID", "fullName", "publicUserID", "contactNumber"], through: { attributes: [] } }
-        ]
-      }
-    ],
-    order: [["created_at", "DESC"]]
+    include: [{
+      model: Contract,
+      as: "contract",
+      attributes: ["ID", "start_date", "end_date"],
+      include: [
+        { model: Unit, as: "unit", attributes: ["unit_number", "floor"] },
+        {
+          model: User,
+          as: "tenants",
+          attributes: ["ID", "fullName", "publicUserID", "contactNumber"],
+          through: { attributes: [] },
+        },
+      ],
+    }],
+    order: [["created_at", "DESC"]],
   });
 };
 
-/* GET PAYMENTS BY CONTRACT */
 export const getPaymentsByContract = async (contractId) => {
   return await Payment.findAll({
     where: { contract_id: contractId },
-    order: [["billing_month", "DESC"]]
+    order: [["billing_month", "DESC"]],
   });
 };
 
-/* VERIFY PAYMENT */
 export const verifyPayment = async (paymentId, adminId) => {
   const payment = await Payment.findOne({
     where: { ID: paymentId },
@@ -95,9 +97,9 @@ export const verifyPayment = async (paymentId, adminId) => {
       as: "contract",
       include: [
         { model: Unit, as: "unit", attributes: ["unit_number"] },
-        { model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } }
-      ]
-    }]
+        { model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } },
+      ],
+    }],
   });
 
   if (!payment) throw new Error("Payment not found");
@@ -105,6 +107,7 @@ export const verifyPayment = async (paymentId, adminId) => {
 
   const tenant = payment.contract.tenants[0];
   const unitNumber = payment.contract.unit?.unit_number ?? "—";
+
   payment.status = "Paid";
   await payment.save();
 
@@ -115,7 +118,7 @@ export const verifyPayment = async (paymentId, adminId) => {
     title: "Payment Verified",
     message: "Your payment has been verified successfully.",
     referenceId: payment.ID,
-    referenceType: "payment"
+    referenceType: "payment",
   });
 
   await createNotification({
@@ -124,7 +127,7 @@ export const verifyPayment = async (paymentId, adminId) => {
     title: "Payment Verified",
     message: `Payment ${payment.ID} has been verified by admin.`,
     referenceId: payment.ID,
-    referenceType: "payment"
+    referenceType: "payment",
   });
 
   sendSMS(tenant.contactNumber, sms.paymentVerified(payment.category));
@@ -135,34 +138,36 @@ export const verifyPayment = async (paymentId, adminId) => {
     action: "VERIFY PAYMENT",
     description: `You verified Unit ${unitNumber}'s ${payment.category} payment receipt.`,
     referenceId: payment.ID,
-    referenceType: "payment"
+    referenceType: "payment",
   });
 
   return payment;
 };
 
-/* MONTHLY PAYMENT SUMMARY */
 export const getMonthlySummary = async (billingMonth) => {
   return await Payment.findAll({
     attributes: [
       [sequelize.col("contract.unit.unit_number"), "unit_number"],
       "billing_month",
-      [sequelize.fn("SUM", sequelize.col("amount")), "totalAmount"]
+      [sequelize.fn("SUM", sequelize.col("amount")), "totalAmount"],
     ],
-    include: [{ model: Contract, as: "contract", attributes: [], include: [{ model: Unit, as: "unit", attributes: [] }] }],
+    include: [{
+      model: Contract,
+      as: "contract",
+      attributes: [],
+      include: [{ model: Unit, as: "unit", attributes: [] }],
+    }],
     where: { billing_month: billingMonth },
     group: ["contract.unit.unit_number", "billing_month"],
-    order: [[sequelize.col("contract.unit.unit_number"), "ASC"]]
+    order: [[sequelize.col("contract.unit.unit_number"), "ASC"]],
   });
 };
 
-/* DASHBOARD SUMMARY */
 export const getPaymentDashboard = async () => {
-  const totalCollected = await Payment.sum("amount", { where: { status: "Paid" } }) || 0;
+  const totalCollected = (await Payment.sum("amount", { where: { status: "Paid" } })) || 0;
   const pendingVerification = await Payment.count({ where: { status: "Pending Verification" } });
   const overduePayments = await Payment.count({ where: { status: "Overdue" } });
 
-  // Unpaid bills — count + distinct unit numbers
   const unpaidRecords = await Payment.findAll({
     where: { status: "Unpaid" },
     attributes: ["ID"],
@@ -176,11 +181,7 @@ export const getPaymentDashboard = async () => {
 
   const unpaidBills = unpaidRecords.length;
   const unpaidUnitNumbers = [
-    ...new Set(
-      unpaidRecords
-        .map((p) => p.contract?.unit?.unit_number)
-        .filter(Boolean)
-    ),
+    ...new Set(unpaidRecords.map((p) => p.contract?.unit?.unit_number).filter(Boolean)),
   ].sort((a, b) => a - b);
 
   const monthlyRevenue = await Payment.findAll({
@@ -197,10 +198,9 @@ export const getPaymentDashboard = async () => {
   return { totalCollected, pendingVerification, overduePayments, unpaidBills, unpaidUnitNumbers, monthlyRevenue };
 };
 
-/* UPDATE PAYMENT */
 export const updatePayment = async (paymentId, data, adminId) => {
   const payment = await Payment.findByPk(paymentId, {
-    include: [{ model: Contract, as: "contract", include: [{ model: Unit, as: "unit", attributes: ["unit_number"] }] }]
+    include: [{ model: Contract, as: "contract", include: [{ model: Unit, as: "unit", attributes: ["unit_number"] }] }],
   });
   if (!payment) throw new Error("Payment not found");
 
@@ -210,19 +210,20 @@ export const updatePayment = async (paymentId, data, adminId) => {
 
   const unitNumber = payment.contract?.unit?.unit_number ?? "—";
   await createActivityLog({
-    userId: adminId, role: "admin",
+    userId: adminId,
+    role: "admin",
     action: "UPDATE PAYMENT",
     description: `You updated Unit ${unitNumber}'s ${payment.category} payment record.`,
-    referenceId: payment.ID, referenceType: "payment",
+    referenceId: payment.ID,
+    referenceType: "payment",
   });
 
   return payment;
 };
 
-/* DELETE PAYMENT */
 export const deletePayment = async (paymentId, adminId) => {
   const payment = await Payment.findByPk(paymentId, {
-    include: [{ model: Contract, as: "contract", include: [{ model: Unit, as: "unit", attributes: ["unit_number"] }] }]
+    include: [{ model: Contract, as: "contract", include: [{ model: Unit, as: "unit", attributes: ["unit_number"] }] }],
   });
   if (!payment) throw new Error("Payment not found");
 
@@ -231,9 +232,11 @@ export const deletePayment = async (paymentId, adminId) => {
   await payment.destroy();
 
   await createActivityLog({
-    userId: adminId, role: "admin",
+    userId: adminId,
+    role: "admin",
     action: "DELETE PAYMENT",
     description: `You deleted Unit ${unitNumber}'s ${category} payment record.`,
-    referenceId: paymentId, referenceType: "payment",
+    referenceId: paymentId,
+    referenceType: "payment",
   });
 };

@@ -9,9 +9,7 @@ export const updateExpiredLeases = async () => {
     {
       where: {
         leaseStatus: "Active",
-        leaseEndDate: {
-          [Op.lt]: today,
-        },
+        leaseEndDate: { [Op.lt]: today },
       },
     }
   );

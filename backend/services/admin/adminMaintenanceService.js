@@ -4,7 +4,6 @@ import { createActivityLog } from "../../services/activityLogService.js";
 import { sendSMS } from "../../utils/sms.js";
 import { sms } from "../../utils/smsTemplates.js";
 
-/* CREATE MAINTENANCE REQUEST */
 export const createMaintenance = async (data, adminId) => {
   const { userId, category, title, description, status, startDate, endDate } = data;
 
@@ -21,7 +20,6 @@ export const createMaintenance = async (data, adminId) => {
     endDate: endDate || null,
   });
 
-  // Notify tenant and caretakers
   await createNotification({
     userId,
     role: "tenant",
@@ -41,7 +39,6 @@ export const createMaintenance = async (data, adminId) => {
     referenceType: "maintenance",
   });
 
-  // Log admin action
   await createActivityLog({
     userId: adminId,
     role: "admin",
@@ -54,7 +51,6 @@ export const createMaintenance = async (data, adminId) => {
   return { message: "Maintenance request created by admin", id: request.ID };
 };
 
-/* APPROVE MAINTENANCE REQUEST */
 export const approveMaintenance = async (maintenanceId, adminId) => {
   const request = await Maintenance.findByPk(maintenanceId, {
     include: [{ model: User, as: "user", attributes: ["contactNumber", "fullName", "unitNumber"] }],
@@ -65,7 +61,6 @@ export const approveMaintenance = async (maintenanceId, adminId) => {
   request.status = "Approved";
   await request.save();
 
-  // Notify parties
   await createNotification({
     userId: request.userId,
     role: "tenant",
@@ -85,10 +80,8 @@ export const approveMaintenance = async (maintenanceId, adminId) => {
     referenceType: "maintenance",
   });
 
-  // SMS → tenant
   sendSMS(request.user?.contactNumber, sms.maintenanceStatusUpdated(request.title, "Approved"));
 
-  // Log approval
   await createActivityLog({
     userId: adminId,
     role: "admin",
@@ -101,9 +94,9 @@ export const approveMaintenance = async (maintenanceId, adminId) => {
   return { message: "Maintenance request approved" };
 };
 
-/* UPDATE MAINTENANCE REQUEST */
 export const updateMaintenance = async (maintenanceId, data, adminId) => {
   const { status, startDate, endDate } = data;
+
   const request = await Maintenance.findByPk(maintenanceId, {
     include: [{ model: User, as: "user", attributes: ["contactNumber", "unitNumber"] }],
   });
@@ -112,7 +105,6 @@ export const updateMaintenance = async (maintenanceId, data, adminId) => {
   const allowedStatuses = ["Pending", "Approved", "In Progress", "Done"];
   if (status && !allowedStatuses.includes(status)) throw new Error("Invalid status value");
 
-  // Prevent rolling back once In Progress
   const forwardOnly = ["In Progress", "Done"];
   if (forwardOnly.includes(request.status) && (status === "Pending" || status === "Approved")) {
     throw new Error(`Cannot roll back status from "${request.status}" to "${status}".`);
@@ -123,30 +115,27 @@ export const updateMaintenance = async (maintenanceId, data, adminId) => {
   if (status) {
     request.status = status;
 
-    // Auto-set startDate only when moving to In Progress
     if (status === "In Progress" && !request.startDate) {
       request.startDate = startDate || now;
     }
 
-    // Auto-set endDate when marking Done
     if (status === "Done") {
       if (!request.startDate) request.startDate = startDate || now;
       request.endDate = endDate || now;
     }
 
-    // Clear dates if rolling back to Pending or Approved
     if (status === "Pending" || status === "Approved") {
       request.startDate = null;
       request.endDate = null;
     }
   }
 
-  if (startDate && endDate && new Date(endDate) < new Date(startDate))
+  if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
     throw new Error("End date must be later than start date");
+  }
 
   await request.save();
 
-  // Notify tenant and caretakers
   await createNotification({
     userId: request.userId,
     role: "tenant",
@@ -166,12 +155,10 @@ export const updateMaintenance = async (maintenanceId, data, adminId) => {
     referenceType: "maintenance",
   });
 
-  // SMS → tenant (only for meaningful status changes)
   if (["Approved", "In Progress", "Done"].includes(request.status)) {
     sendSMS(request.user?.contactNumber, sms.maintenanceStatusUpdated(request.title, request.status));
   }
 
-  // Log update
   await createActivityLog({
     userId: adminId,
     role: "admin",
@@ -184,7 +171,6 @@ export const updateMaintenance = async (maintenanceId, data, adminId) => {
   return { message: "Maintenance updated successfully" };
 };
 
-/* GET ALL MAINTENANCE REQUESTS */
 export const getAllMaintenance = async () => {
   const requests = await Maintenance.findAll({
     include: [{
@@ -195,7 +181,7 @@ export const getAllMaintenance = async () => {
     order: [["created_at", "DESC"]],
   });
 
-  return requests.map(item => ({
+  return requests.map((item) => ({
     id: item.ID,
     title: item.title,
     category: item.category,
@@ -213,7 +199,6 @@ export const getAllMaintenance = async () => {
   }));
 };
 
-/* DELETE MAINTENANCE REQUEST */
 export const deleteMaintenance = async (maintenanceId, adminId) => {
   const request = await Maintenance.findByPk(maintenanceId);
   if (!request) throw new Error("Maintenance request not found");
@@ -228,6 +213,5 @@ export const deleteMaintenance = async (maintenanceId, adminId) => {
   });
 
   await request.destroy();
-
   return { message: "Maintenance deleted successfully" };
 };

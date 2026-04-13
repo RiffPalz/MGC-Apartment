@@ -4,17 +4,14 @@ import { useAuth } from "../context/AuthContext";
 import useSessionTimeout from "../hooks/useSessionTimeout";
 import SessionTimeoutModal from "./SessionTimeoutModal";
 
-const WARNING_MS = 60 * 1000; // 60-second countdown for all roles
+const WARNING_MS = 60 * 1000;
 
 const TIMEOUT_BY_ROLE = {
-  admin:     15 * 60 * 1000, // 15 minutes
-  caretaker: 10 * 60 * 1000, // 10 minutes
-  tenant:     5 * 60 * 1000, // 5 minutes
+  admin:     15 * 60 * 1000,
+  caretaker: 10 * 60 * 1000,
+  tenant:     5 * 60 * 1000,
 };
 
-/**
- * Wrap authenticated layouts with this to get role-based session timeout.
- */
 export default function SessionTimeoutProvider({ children }) {
   const { isAuthenticated, logout, user } = useAuth();
   const navigate = useNavigate();
@@ -25,9 +22,7 @@ export default function SessionTimeoutProvider({ children }) {
     [user?.role]
   );
 
-  const handleWarn = useCallback(() => {
-    setShowModal(true);
-  }, []);
+  const handleWarn = useCallback(() => setShowModal(true), []);
 
   const handleAutoLogout = useCallback(async () => {
     setShowModal(false);

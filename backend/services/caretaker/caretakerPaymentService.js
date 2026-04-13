@@ -7,139 +7,100 @@ import { createActivityLog } from "../../services/activityLogService.js";
 import { sendSMS } from "../../utils/sms.js";
 import { sms } from "../../utils/smsTemplates.js";
 
-
-/* GET ALL PAYMENTS */
 export const getAllPayments = async () => {
-
-    const payments = await Payment.findAll({
-        include: [
-            {
-                model: Contract,
-                as: "contract",
-                attributes: ["ID"],
-                include: [
-                    {
-                        model: Unit,
-                        as: "unit",
-                        attributes: ["unit_number", "floor"]
-                    },
-                    {
-                        model: User,
-                        as: "tenants",
-                        attributes: ["ID", "fullName", "publicUserID", "contactNumber"],
-                        through: { attributes: [] }
-                    }
-                ]
-            }
-        ],
-        order: [["created_at", "DESC"]]
-    });
-
-    return payments;
+  return await Payment.findAll({
+    include: [{
+      model: Contract,
+      as: "contract",
+      attributes: ["ID"],
+      include: [
+        { model: Unit, as: "unit", attributes: ["unit_number", "floor"] },
+        {
+          model: User,
+          as: "tenants",
+          attributes: ["ID", "fullName", "publicUserID", "contactNumber"],
+          through: { attributes: [] },
+        },
+      ],
+    }],
+    order: [["created_at", "DESC"]],
+  });
 };
 
-
-/* GET PENDING PAYMENTS */
 export const getPendingPayments = async () => {
-
-    const payments = await Payment.findAll({
-        where: { status: "Pending Verification" },
-        include: [
-            {
-                model: Contract,
-                as: "contract",
-                include: [
-                    {
-                        model: Unit,
-                        as: "unit",
-                        attributes: ["unit_number"]
-                    },
-                    {
-                        model: User,
-                        as: "tenants",
-                        attributes: ["ID", "fullName", "contactNumber"],
-                        through: { attributes: [] }
-                    }
-                ]
-            }
-        ],
-        order: [["created_at", "DESC"]]
-    });
-
-    return payments;
+  return await Payment.findAll({
+    where: { status: "Pending Verification" },
+    include: [{
+      model: Contract,
+      as: "contract",
+      include: [
+        { model: Unit, as: "unit", attributes: ["unit_number"] },
+        {
+          model: User,
+          as: "tenants",
+          attributes: ["ID", "fullName", "contactNumber"],
+          through: { attributes: [] },
+        },
+      ],
+    }],
+    order: [["created_at", "DESC"]],
+  });
 };
 
-
-/* VERIFY PAYMENT */
 export const verifyPayment = async (paymentId, caretakerId) => {
+  const payment = await Payment.findOne({
+    where: { ID: paymentId },
+    include: [{
+      model: Contract,
+      as: "contract",
+      include: [
+        { model: Unit, as: "unit", attributes: ["unit_number"] },
+        {
+          model: User,
+          as: "tenants",
+          attributes: ["ID", "contactNumber"],
+          through: { attributes: [] },
+        },
+      ],
+    }],
+  });
 
-    const payment = await Payment.findOne({
-        where: { ID: paymentId },
-        include: [
-            {
-                model: Contract,
-                as: "contract",
-                include: [
-                    {
-                        model: Unit,
-                        as: "unit",
-                        attributes: ["unit_number"]
-                    },
-                    {
-                        model: User,
-                        as: "tenants",
-                        attributes: ["ID", "contactNumber"],
-                        through: { attributes: [] }
-                    }
-                ]
-            }
-        ]
-    });
+  if (!payment) throw new Error("Payment not found");
+  if (payment.status !== "Pending Verification") throw new Error("Payment is not awaiting verification");
 
-    if (!payment) {
-        throw new Error("Payment not found");
-    }
+  const tenantId = payment.contract.tenants?.[0]?.ID;
+  payment.status = "Paid";
+  await payment.save();
 
-    if (payment.status !== "Pending Verification") {
-        throw new Error("Payment is not awaiting verification");
-    }
+  await createNotification({
+    role: "tenant",
+    userId: tenantId,
+    type: "payment verified",
+    title: "Payment Verified",
+    message: "Your payment has been verified successfully.",
+    referenceId: payment.ID,
+    referenceType: "payment",
+  });
 
-    const tenantId = payment.contract.tenants?.[0]?.ID;
+  await createNotification({
+    role: "admin",
+    type: "payment verified",
+    title: "Payment Verified",
+    message: `Payment ${payment.ID} verified by caretaker.`,
+    referenceId: payment.ID,
+    referenceType: "payment",
+  });
 
-    payment.status = "Paid";
-    await payment.save();
+  sendSMS(payment.contract.tenants?.[0]?.contactNumber, sms.paymentVerified(payment.category));
 
-    await createNotification({
-        role: "tenant",
-        userId: tenantId,
-        type: "payment verified",
-        title: "Payment Verified",
-        message: "Your payment has been verified successfully.",
-        referenceId: payment.ID,
-        referenceType: "payment"
-    });
+  await createActivityLog({
+    userId: caretakerId,
+    role: "caretaker",
+    action: "VERIFY PAYMENT",
+    description: `You verified Unit ${payment.contract?.unit?.unit_number ?? "—"}'s ${payment.category} receipt.`,
+    referenceId: payment.ID,
+    referenceType: "payment",
+  });
 
-    await createNotification({
-        role: "admin",
-        type: "payment verified",
-        title: "Payment Verified",
-        message: `Payment ${payment.ID} verified by caretaker.`,
-        referenceId: payment.ID,
-        referenceType: "payment"
-    });
-
-    // SMS → tenant
-    const tenantContact = payment.contract.tenants?.[0]?.contactNumber;
-    sendSMS(tenantContact, sms.paymentVerified(payment.category));
-
-    await createActivityLog({
-        userId: caretakerId,
-        role: "caretaker",
-        action: "VERIFY PAYMENT",
-        description: `You verified Unit ${payment.contract?.unit?.unit_number ?? "—"}'s ${payment.category} receipt.`,
-        referenceId: payment.ID,
-        referenceType: "payment"
-    });
-
-    return payment;
+  return payment;
 };

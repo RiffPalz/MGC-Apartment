@@ -6,10 +6,7 @@ function App() {
   return (
     <>
       <MGCRouter />
-      <Toaster
-        position="top-center"
-        toastOptions={{ duration: 3050 }}
-      />
+      <Toaster position="top-center" toastOptions={{ duration: 3050 }} />
     </>
   );
 }

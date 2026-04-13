@@ -1,6 +1,5 @@
 import api from "../config";
 
-/** Fetch activity logs with optional filters */
 export const fetchAllActivityLogs = async (filters = {}) => {
   const params = {};
 

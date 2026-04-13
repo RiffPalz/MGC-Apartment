@@ -3,39 +3,24 @@ import { User, Contract, Unit } from "../../models/index.js";
 import { emitEvent } from "../../utils/emitEvent.js";
 import { updateCaretakerProfile } from "../../services/caretaker/caretakerService.js";
 
-/** CARETAKER LOGIN */
 export const loginCaretaker = async (req, res) => {
   try {
     const { userName, password } = req.body;
 
     if (!userName || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Username and password are required",
-      });
+      return res.status(400).json({ success: false, message: "Username and password are required" });
     }
 
     const result = await caretakerLogin({ userName, password });
-
-    return res.status(200).json({
-      success: true,
-      accessToken: result.accessToken,
-      role: "caretaker",
-      caretaker: result.caretaker,
-    });
+    return res.status(200).json({ success: true, accessToken: result.accessToken, role: "caretaker", caretaker: result.caretaker });
   } catch (error) {
-    return res.status(401).json({
-      success: false,
-      message: error.message || "Invalid username or password",
-    });
+    return res.status(401).json({ success: false, message: error.message || "Invalid username or password" });
   }
 };
 
-/** FETCH CARETAKER PROFILE */
 export const fetchCaretakerProfile = async (req, res) => {
   try {
     const { instance } = req.caretaker;
-
     return res.status(200).json({
       success: true,
       caretaker: {
@@ -50,19 +35,14 @@ export const fetchCaretakerProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("Fetch caretaker profile error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch caretaker profile",
-    });
+    return res.status(500).json({ success: false, message: "Failed to fetch caretaker profile" });
   }
 };
 
-/** UPDATE CARETAKER PROFILE */
 export const saveCaretakerProfile = async (req, res) => {
   try {
     const updatedUser = await updateCaretakerProfile(req.caretaker, req.body);
 
-    // Real-time update
     emitEvent(req, "dataUpdated", {
       type: "CARETAKER",
       action: "UPDATED",
@@ -82,17 +62,11 @@ export const saveCaretakerProfile = async (req, res) => {
         role: updatedUser.role,
       },
     });
-
   } catch (error) {
-
-    return res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
-/** GET TENANTS OVERVIEW (caretaker-accessible) */
 export const getTenantsOverviewCaretaker = async (req, res) => {
   try {
     const tenants = await User.findAll({
@@ -107,12 +81,11 @@ export const getTenantsOverviewCaretaker = async (req, res) => {
       order: [["created_at", "DESC"]],
     });
     return res.status(200).json({ success: true, count: tenants.length, tenants });
-  } catch (error) {
+  } catch {
     return res.status(500).json({ success: false, message: "Failed to fetch tenants" });
   }
 };
 
-/** GET UNITS (caretaker-accessible) */
 export const getUnitsCaretaker = async (req, res) => {
   try {
     const units = await Unit.findAll({
@@ -134,7 +107,7 @@ export const getUnitsCaretaker = async (req, res) => {
     });
 
     const result = units.map((u) => {
-      const hasActiveTenants = (u.contracts ?? []).some(c => (c.tenants ?? []).length > 0);
+      const hasActiveTenants = (u.contracts ?? []).some((c) => (c.tenants ?? []).length > 0);
       let status;
       if (!u.is_active) status = "Disabled";
       else if (hasActiveTenants) status = "Occupied";
@@ -152,12 +125,11 @@ export const getUnitsCaretaker = async (req, res) => {
     });
 
     return res.status(200).json({ success: true, units: result });
-  } catch (error) {
+  } catch {
     return res.status(500).json({ success: false, message: "Failed to fetch units" });
   }
 };
 
-/** CREATE TENANT (caretaker-accessible) */
 export const createTenantCaretaker = async (req, res) => {
   try {
     const { createTenant } = await import("../../services/admin/adminAddTenantService.js");

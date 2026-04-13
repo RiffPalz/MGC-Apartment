@@ -47,39 +47,35 @@ EventEmitter.defaultMaxListeners = 20;
 const app = express();
 const httpServer = createServer(app);
 
-// 1. Proxy
 app.set("trust proxy", 1);
 
-// 2. CORS & Security (Must be BEFORE Rate Limiter)
 const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:5175',
-  'https://mgc-aparment.vercel.app',
-  process.env.FRONTEND_URL
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+  "https://mgc-aparment.vercel.app",
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
-    }
-    callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+      callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  })
+);
 
-app.use(helmet({
-  crossOriginResourcePolicy: false,
-}));
+app.use(helmet({ crossOriginResourcePolicy: false }));
 
-// 3. Rate Limiting
+// Rate limiting
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'development' ? 2000 : 300,
-  message: { success: false, message: 'Too many requests, please try again later.' },
+  max: process.env.NODE_ENV === "development" ? 2000 : 300,
+  message: { success: false, message: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -87,7 +83,7 @@ const generalLimiter = rateLimit({
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
-  message: { success: false, message: 'Too many authentication attempts, please try again after 15 minutes.' },
+  message: { success: false, message: "Too many authentication attempts, please try again after 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -98,27 +94,24 @@ app.use("/api/users/register", authLimiter);
 app.use("/api/admin/login", authLimiter);
 app.use("/api/caretaker/login", authLimiter);
 
-// 4. Data Parsers
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
-// 5. Socket.IO Setup
+// Socket.IO
 const io = new Server(httpServer, {
   cors: {
-    origin: function (origin, callback) {
+    origin: (origin, callback) => {
       if (!origin) return callback(null, true);
       const isLocalhost = /^https?:\/\/localhost:\d+$/.test(origin);
-      if (isLocalhost || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      callback(new Error('Not allowed by CORS'));
+      if (isLocalhost || allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error("Not allowed by CORS"));
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    credentials: true
+    credentials: true,
   },
   transports: ["websocket", "polling"],
   pingTimeout: 60000,
-  pingInterval: 25000
+  pingInterval: 25000,
 });
 
 app.set("io", io);
@@ -126,11 +119,15 @@ app.set("io", io);
 io.on("connection", (socket) => {
   socket.on("join_role", (role) => socket.join(role));
   socket.on("join_user", (userId) => socket.join(`user_${userId}`));
-  socket.on("disconnect", (reason) => console.log(`Client disconnected: ${socket.id} (${reason})`));
-  socket.on("connect_error", (error) => console.error(`Socket error: ${error.message}`));
+  socket.on("disconnect", (reason) =>
+    console.log(`Client disconnected: ${socket.id} (${reason})`)
+  );
+  socket.on("connect_error", (error) =>
+    console.error(`Socket error: ${error.message}`)
+  );
 });
 
-// 6. Mount Routes
+// Routes
 app.use("/api/applications", applicationRequestRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/activity-logs", activityLogRoutes);
@@ -158,33 +155,31 @@ app.use("/api/users/contracts", userContractRoutes);
 app.use("/api/users/payments", userPaymentRoutes);
 app.use("/api/users/announcements", userAnnouncementRoutes);
 
-// Health Check
-app.get("/", (req, res) => res.send("API is running"));
+app.get("/", (_req, res) => res.send("API is running"));
 
-// Global Error Handler
-app.use((err, req, res, next) => {
+// Global error handler
+app.use((err, _req, res, _next) => {
   console.error("Server Error:", err);
   const isProd = process.env.NODE_ENV === "production";
   res.status(err.status || 500).json({
     success: false,
-    message: isProd ? "An unexpected internal server error occurred." : err.message
+    message: isProd ? "An unexpected internal server error occurred." : err.message,
   });
 });
 
-// Server Initialization
 const PORT = process.env.PORT || 5000;
 
 httpServer.listen(PORT, async () => {
   try {
     await connectDB();
-    await sequelize.sync({ alter: true});
+    await sequelize.sync({ alter: true });
     console.log("Database synchronized successfully");
 
     await runSeeders();
     startSystemCron();
 
     console.log(`Server running on port ${PORT}`);
-    console.log(`WebSocket ready for real-time notifications`);
+    console.log("WebSocket ready for real-time notifications");
   } catch (error) {
     console.error("Server startup failed:", error.message);
     process.exit(1);
