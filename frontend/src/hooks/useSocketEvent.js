@@ -1,10 +1,7 @@
 import { useEffect } from "react";
 import { useSocket } from "../context/SocketContext";
 
-/**
- * Listen to socket event(s) and run a callback.
- * Cleans up listeners on unmount or update.
- */
+/* Listen to one or more socket events and run a callback. Cleans up on unmount. */
 export function useSocketEvent(events, callback) {
   const socket = useSocket();
 
@@ -12,15 +9,8 @@ export function useSocketEvent(events, callback) {
     if (!socket || !callback) return;
 
     const eventList = Array.isArray(events) ? events : [events];
+    eventList.forEach((event) => socket.on(event, callback));
 
-    eventList.forEach((event) => {
-      socket.on(event, callback);
-    });
-
-    return () => {
-      eventList.forEach((event) => {
-        socket.off(event, callback);
-      });
-    };
+    return () => eventList.forEach((event) => socket.off(event, callback));
   }, [socket, callback, events]);
 }

@@ -7,7 +7,6 @@ const configRouter = express.Router();
 configRouter.get("/", getConfigController);
 
 // Public endpoint — returns units available for tenant registration
-// Excludes: Disabled, Occupied (has active contract), Under Maintenance
 configRouter.get("/units", async (req, res) => {
   try {
     const units = await Unit.findAll({
@@ -16,7 +15,6 @@ configRouter.get("/units", async (req, res) => {
       order: [["unit_number", "ASC"]],
     });
 
-    // Find unit IDs that have an active contract with at least one tenant
     const activeContracts = await Contract.findAll({
       where: { status: "Active" },
       attributes: ["unit_id"],
@@ -38,12 +36,7 @@ configRouter.get("/units", async (req, res) => {
           ? "Under Maintenance"
           : "Vacant";
 
-      return {
-        ID: u.ID,
-        unit_number: u.unit_number,
-        floor: u.floor,
-        status: derivedStatus,
-      };
+      return { ID: u.ID, unit_number: u.unit_number, floor: u.floor, status: derivedStatus };
     });
 
     return res.status(200).json({ success: true, units: result });

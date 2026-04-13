@@ -1,10 +1,9 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { getUser, getRole } from "../api/authStorage";
 
-// Create context to share socket across components
 const SocketContext = createContext();
 export const useSocket = () => useContext(SocketContext);
 
@@ -15,15 +14,14 @@ export const SocketProvider = ({ children }) => {
     const user = getUser();
     const role = getRole();
 
-    // Only connect if a user is logged in
     if (!user) return;
 
-    // Strip trailing /api path — Socket.IO must connect to the root server URL
+    // Strip trailing /api — Socket.IO must connect to the root server URL
     const rawUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
     const backendUrl = rawUrl.replace(/\/api\/?$/, "");
 
     const newSocket = io(backendUrl, {
-      transports: ["polling", "websocket"], // Start with polling, upgrade to WS
+      transports: ["polling", "websocket"],
       withCredentials: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
@@ -32,24 +30,19 @@ export const SocketProvider = ({ children }) => {
       autoConnect: true,
     });
 
-    // Join user-specific rooms after connecting
     newSocket.on("connect", () => {
       newSocket.emit("join_role", role);
       newSocket.emit("join_user", user.id || user.ID);
     });
 
-    // Handle connection errors quietly
     newSocket.on("connect_error", () => {
-      console.warn("⚠️ Socket connection delayed. Retrying...");
+      console.warn("Socket connection delayed. Retrying...");
     });
 
     setSocket(newSocket);
 
-    // Cleanup on unmount
-    return () => {
-      if (newSocket) newSocket.disconnect();
-    };
-  }, []); // Run only once
+    return () => { if (newSocket) newSocket.disconnect(); };
+  }, []);
 
   return (
     <SocketContext.Provider value={socket}>

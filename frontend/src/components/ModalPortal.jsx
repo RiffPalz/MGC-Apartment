@@ -8,7 +8,6 @@ export default function ModalPortal({ children }) {
   useEffect(() => {
     const node = el.current;
     document.body.appendChild(node);
-    // blur the app root so the backdrop effect works globally
     document.getElementById("root")?.classList.add("modal-open");
     return () => {
       document.body.removeChild(node);

@@ -8,73 +8,29 @@ import SystemConfig from "./systemConfig.js";
 import SystemInfo from "./systemInfo.js";
 import TerminationRequest from "./terminationRequest.js";
 
-/* User ↔ Maintenance */
-User.hasMany(Maintenance, {
-  foreignKey: "userId",
-  as: "maintenanceRequests",
-});
+// User ↔ Maintenance
+User.hasMany(Maintenance, { foreignKey: "userId", as: "maintenanceRequests" });
+Maintenance.belongsTo(User, { foreignKey: "userId", as: "user" });
 
-Maintenance.belongsTo(User, {
-  foreignKey: "userId",
-  as: "user",
-});
+// Unit ↔ Contract
+Unit.hasMany(Contract, { foreignKey: "unit_id", as: "contracts" });
+Contract.belongsTo(Unit, { foreignKey: "unit_id", as: "unit" });
 
-/* Unit ↔ Contract */
-Unit.hasMany(Contract, {
-  foreignKey: "unit_id",
-  as: "contracts",
-});
+// Contract ↔ User (Many-to-Many)
+Contract.belongsToMany(User, { through: ContractTenant, foreignKey: "contract_id", as: "tenants" });
+User.belongsToMany(Contract, { through: ContractTenant, foreignKey: "user_id", as: "contracts" });
 
-Contract.belongsTo(Unit, {
-  foreignKey: "unit_id",
-  as: "unit",
-});
+// Contract ↔ Payment
+Contract.hasMany(Payment, { foreignKey: "contract_id", as: "payments" });
+Payment.belongsTo(Contract, { foreignKey: "contract_id", as: "contract" });
 
-/* Contract ↔ User (Many-to-Many) */
-Contract.belongsToMany(User, {
-  through: ContractTenant,
-  foreignKey: "contract_id",
-  as: "tenants",
-});
+// Contract ↔ TerminationRequest
+Contract.hasMany(TerminationRequest, { foreignKey: "contract_id", as: "terminationRequests" });
+TerminationRequest.belongsTo(Contract, { foreignKey: "contract_id", as: "contract" });
 
-User.belongsToMany(Contract, {
-  through: ContractTenant,
-  foreignKey: "user_id",
-  as: "contracts",
-});
-
-/* Contract ↔ Payments */
-Contract.hasMany(Payment, {
-  foreignKey: "contract_id",
-  as: "payments",
-});
-
-Payment.belongsTo(Contract, {
-  foreignKey: "contract_id",
-  as: "contract",
-});
-
-/* Contract ↔ TerminationRequests */
-Contract.hasMany(TerminationRequest, {
-  foreignKey: "contract_id",
-  as: "terminationRequests",
-});
-
-TerminationRequest.belongsTo(Contract, {
-  foreignKey: "contract_id",
-  as: "contract",
-});
-
-/* User ↔ TerminationRequests */
-User.hasMany(TerminationRequest, {
-  foreignKey: "user_id",
-  as: "terminationRequests",
-});
-
-TerminationRequest.belongsTo(User, {
-  foreignKey: "user_id",
-  as: "tenant",
-});
+// User ↔ TerminationRequest
+User.hasMany(TerminationRequest, { foreignKey: "user_id", as: "terminationRequests" });
+TerminationRequest.belongsTo(User, { foreignKey: "user_id", as: "tenant" });
 
 export {
   User,

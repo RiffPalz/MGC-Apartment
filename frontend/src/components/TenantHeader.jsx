@@ -1,13 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  FaBars,
-  FaRegBell,
-  FaBell,
-  FaChevronDown,
-  FaSignOutAlt,
-  FaUserCircle,
-  FaCheck,
+  FaBars, FaBell, FaChevronDown,
+  FaSignOutAlt, FaUserCircle, FaCheck,
 } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
@@ -55,7 +50,7 @@ export default function TenantHeader({ setOpen }) {
   const menuRef = useRef(null);
   const MIN_NOTIFICATION_REFRESH_MS = 10000;
 
-  // Sync fresh profile data into AuthContext on mount so header always shows latest info
+  // Sync fresh profile data into AuthContext on mount
   useEffect(() => {
     fetchTenantProfile()
       .then((res) => { if (res?.user) updateUser(res.user); })

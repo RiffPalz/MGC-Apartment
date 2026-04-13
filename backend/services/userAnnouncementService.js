@@ -1,42 +1,30 @@
 import Announcement from "../models/announcement.js";
-import { Op } from "sequelize";
 
-/* GET ALL ANNOUNCEMENTS */
 export const getAnnouncements = async (category) => {
-
   const whereClause = {};
+  if (category && category !== "All") whereClause.category = category;
 
-  // filter by category if provided
-  if (category && category !== "All") {
-    whereClause.category = category;
-  }
-
-  const announcements = await Announcement.findAll({
+  return await Announcement.findAll({
     where: whereClause,
     attributes: [
-      'ID',
-      ['announcementTitle', 'title'],
-      ['announcementMessage', 'message'],
-      'category',
-      'created_at'
+      "ID",
+      ["announcementTitle", "title"],
+      ["announcementMessage", "message"],
+      "category",
+      "created_at",
     ],
-    order: [["created_at", "DESC"]]
+    order: [["created_at", "DESC"]],
   });
-
-  return announcements;
 };
 
-/* GET SINGLE ANNOUNCEMENT */
 export const getSingleAnnouncement = async (id) => {
-  const announcement = await Announcement.findByPk(id, {
+  return await Announcement.findByPk(id, {
     attributes: [
-      'ID',
-      ['announcementTitle', 'title'],
-      ['announcementMessage', 'message'],
-      'category',
-      'created_at'
-    ]
+      "ID",
+      ["announcementTitle", "title"],
+      ["announcementMessage", "message"],
+      "category",
+      "created_at",
+    ],
   });
-
-  return announcement;
 };

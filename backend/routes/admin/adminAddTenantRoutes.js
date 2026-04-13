@@ -4,10 +4,6 @@ import { createTenantController } from "../../controllers/admin/adminTenantContr
 
 const router = express.Router();
 
-router.post(
-  "/",
-  adminAuth,
-  createTenantController
-);
+router.post("/", adminAuth, createTenantController);
 
 export default router;

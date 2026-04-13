@@ -2,34 +2,20 @@ import { useEffect, useRef, useCallback } from "react";
 
 const INACTIVITY_EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"];
 
-/**
- * Session inactivity handler
- */
-const useSessionTimeout = ({
-  timeoutMs = 5 * 60 * 1000,
-  warningMs = 60 * 1000,
-  onWarn,
-  onLogout,
-  active = false,
-}) => {
+const useSessionTimeout = ({ timeoutMs = 5 * 60 * 1000, warningMs = 60 * 1000, onWarn, onLogout, active = false }) => {
   const inactivityTimer = useRef(null);
   const logoutTimer = useRef(null);
 
-  // Clear timers
   const clearTimers = useCallback(() => {
     clearTimeout(inactivityTimer.current);
     clearTimeout(logoutTimer.current);
   }, []);
 
-  // Start logout countdown
   const startLogoutCountdown = useCallback(() => {
     clearTimeout(logoutTimer.current);
-    logoutTimer.current = setTimeout(() => {
-      onLogout?.();
-    }, warningMs);
+    logoutTimer.current = setTimeout(() => onLogout?.(), warningMs);
   }, [warningMs, onLogout]);
 
-  // Reset inactivity timer
   const resetTimer = useCallback(() => {
     clearTimers();
     inactivityTimer.current = setTimeout(() => {
@@ -38,7 +24,6 @@ const useSessionTimeout = ({
     }, timeoutMs);
   }, [timeoutMs, clearTimers, onWarn, startLogoutCountdown]);
 
-  // Continue session
   const continueSession = useCallback(() => {
     clearTimers();
     resetTimer();
@@ -52,15 +37,11 @@ const useSessionTimeout = ({
 
     resetTimer();
 
-    INACTIVITY_EVENTS.forEach((evt) =>
-      window.addEventListener(evt, resetTimer, { passive: true })
-    );
+    INACTIVITY_EVENTS.forEach((evt) => window.addEventListener(evt, resetTimer, { passive: true }));
 
     return () => {
       clearTimers();
-      INACTIVITY_EVENTS.forEach((evt) =>
-        window.removeEventListener(evt, resetTimer)
-      );
+      INACTIVITY_EVENTS.forEach((evt) => window.removeEventListener(evt, resetTimer));
     };
   }, [active, resetTimer, clearTimers]);
 

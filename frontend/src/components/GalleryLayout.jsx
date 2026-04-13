@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/static-components */
 import { useState, useEffect } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";

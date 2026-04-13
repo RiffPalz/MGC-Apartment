@@ -51,17 +51,10 @@ export default function Notification({ userRole }) {
     }
   }, [userRole, authLoading]);
 
-  // Load notifications on mount
-  useEffect(() => {
-    loadNotifications();
-  }, [loadNotifications]);
+  useEffect(() => { loadNotifications(); }, [loadNotifications]);
 
-  // Refresh notifications when user navigates to a different page
-  useEffect(() => {
-    loadNotifications(true);
-  }, [location.pathname, loadNotifications]);
+  useEffect(() => { loadNotifications(true); }, [location.pathname, loadNotifications]);
 
-  // WebSocket listeners — debounced so rapid events don't flood requests
   const debouncedLoad = useDebounceCallback(() => loadNotifications(true), 1500);
   useEffect(() => {
     if (!socket) return;
@@ -69,7 +62,6 @@ export default function Notification({ userRole }) {
     return () => socket.off("new_notification", debouncedLoad);
   }, [socket, debouncedLoad]);
 
-  // Handle outside clicks
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {

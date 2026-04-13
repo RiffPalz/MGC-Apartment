@@ -20,7 +20,7 @@ const DEFAULT_CONFIG = {
 
 export const createDefaultSystemConfig = async () => {
   try {
-    const [config, created] = await SystemConfig.findOrCreate({
+    const [, created] = await SystemConfig.findOrCreate({
       where: {},
       defaults: DEFAULT_CONFIG,
     });

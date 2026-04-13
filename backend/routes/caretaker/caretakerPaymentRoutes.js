@@ -1,6 +1,5 @@
 import express from "express";
 import caretakerAuth from "../../middleware/caretakerAuth.js";
-
 import {
   getAllPaymentsController,
   getPendingPaymentsController,
@@ -9,6 +8,7 @@ import {
 } from "../../controllers/caretaker/caretakerPaymentController.js";
 
 const router = express.Router();
+
 router.use(caretakerAuth);
 
 router.get("/", getAllPaymentsController);
