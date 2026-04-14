@@ -8,6 +8,8 @@ import { Server } from "socket.io";
 import { EventEmitter } from "events";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { fileURLToPath } from "url";
+import path from "path";
 
 import { connectDB, sequelize } from "./config/database.js";
 
@@ -74,7 +76,7 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 // Rate limiting
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === "development" ? 2000 : 300,
+  max: process.env.NODE_ENV === "development" ? 10000 : 300,
   message: { success: false, message: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -82,7 +84,7 @@ const generalLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: process.env.NODE_ENV === "development" ? 500 : 10,
   message: { success: false, message: "Too many authentication attempts, please try again after 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -96,6 +98,14 @@ app.use("/api/caretaker/login", authLimiter);
 
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+
+// Serve uploaded files as static assets (local dev mode)
+if (process.env.STORAGE_MODE === "local") {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+  console.log("Local storage mode: serving /uploads as static files");
+}
 
 // Socket.IO
 const io = new Server(httpServer, {
@@ -172,7 +182,7 @@ const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, async () => {
   try {
     await connectDB();
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: false });
     console.log("Database synchronized successfully");
 
     await runSeeders();

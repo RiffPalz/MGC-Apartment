@@ -1,8 +1,9 @@
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
+import { isLocalStorage, diskStorage } from "../utils/localStorage.js";
 
-const storage = new CloudinaryStorage({
+const cloudinaryStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
     const date = new Date().toISOString().split("T")[0];
@@ -20,8 +21,13 @@ const storage = new CloudinaryStorage({
   },
 });
 
+const localDiskStorage = diskStorage("utility_bills", (req) => {
+  const contractId = req.body?.contract_id || "unknown";
+  return `utility_bill_contract${contractId}_${Date.now()}`;
+});
+
 const uploadUtilityBill = multer({
-  storage,
+  storage: isLocalStorage() ? localDiskStorage : cloudinaryStorage,
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 

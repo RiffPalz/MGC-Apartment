@@ -12,6 +12,7 @@ import Contract from "../../models/contract.js";
 import User from "../../models/user.js";
 import Unit from "../../models/unit.js";
 import { emitEvent } from "../../utils/emitEvent.js";
+import { getFileUrl } from "../../utils/localStorage.js";
 
 /* Send a real-time contract notification to specific users */
 const notifyContractUpdate = (req, title, message, targetUsers = []) => {
@@ -25,7 +26,7 @@ export const createContractAdmin = async (req, res) => {
     const adminId = req.admin?.id || req.auth?.id;
     const { unit_id } = req.params;
     const { rent_amount, start_date, end_date, status, tenancy_rules, termination_renewal_conditions } = req.body;
-    const contract_file = req.file ? (req.file.secure_url || req.file.path) : null;
+    const contract_file = req.file ? getFileUrl(req.file, "contracts") : null;
 
     const contract = await createContractByAdmin(
       { unit_id, rent_amount: Number(rent_amount), start_date, end_date, status, tenancy_rules, termination_renewal_conditions, contract_file },
@@ -107,7 +108,7 @@ export const editContractAdmin = async (req, res) => {
   try {
     const adminId = req.admin?.id || req.auth?.id;
     const updates = { ...req.body };
-    if (req.file) updates.contract_file = req.file.secure_url || req.file.path;
+    if (req.file) updates.contract_file = getFileUrl(req.file, "contracts");
 
     const updatedContract = await editContract(req.params.id, updates, adminId);
 

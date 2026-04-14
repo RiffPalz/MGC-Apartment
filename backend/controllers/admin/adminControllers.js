@@ -15,6 +15,7 @@ import { Op } from "sequelize";
 import Contract from "../../models/contract.js";
 import Unit from "../../models/unit.js";
 import { emitEvent } from "../../utils/emitEvent.js";
+import { getFileUrl } from "../../utils/localStorage.js";
 
 export const loginAdmin = async (req, res) => {
   try {
@@ -97,7 +98,7 @@ export const uploadProfilePictureController = async (req, res) => {
       return res.status(400).json({ success: false, message: "No image uploaded" });
     }
 
-    admin.profilePicture = req.file.path;
+    admin.profilePicture = getFileUrl(req.file, "profile_pictures");
     await admin.save();
 
     return res.status(200).json({

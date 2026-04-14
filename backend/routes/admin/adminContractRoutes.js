@@ -1,5 +1,7 @@
 import express from "express";
 import axios from "axios";
+import path from "path";
+import { fileURLToPath } from "url";
 import uploadContract from "../../middleware/uploadContract.js";
 import adminAuth from "../../middleware/adminAuth.js";
 import {
@@ -20,6 +22,10 @@ import {
 } from "../../controllers/terminationRequestController.js";
 import Contract from "../../models/contract.js";
 import cloudinary from "../../config/cloudinary.js";
+import { isLocalStorage } from "../../utils/localStorage.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -38,7 +44,7 @@ router.get("/termination-requests", adminAuth, getAllTerminationRequestsControll
 router.put("/termination-requests/:id/approve", adminAuth, approveTerminationRequestController);
 router.put("/termination-requests/:id/reject", adminAuth, rejectTerminationRequestController);
 
-// PDF proxy — signs the Cloudinary URL and redirects, or streams bytes as fallback
+// PDF proxy — serves local file or signs Cloudinary URL depending on STORAGE_MODE
 router.get("/:id/pdf", adminAuth, async (req, res) => {
   try {
     const contract = await Contract.findByPk(req.params.id);
@@ -47,8 +53,14 @@ router.get("/:id/pdf", adminAuth, async (req, res) => {
     }
 
     const pdfUrl = contract.contract_file;
-    const match = pdfUrl.match(/\/raw\/upload\/(?:v\d+\/)?(.+)$/);
 
+    // Local mode: the stored value is a full http://localhost URL — redirect directly
+    if (isLocalStorage()) {
+      return res.redirect(pdfUrl);
+    }
+
+    // Cloudinary mode: sign and redirect
+    const match = pdfUrl.match(/\/raw\/upload\/(?:v\d+\/)?(.+)$/);
     if (match) {
       const signedUrl = cloudinary.url(match[1], {
         resource_type: "raw",
@@ -60,6 +72,7 @@ router.get("/:id/pdf", adminAuth, async (req, res) => {
       return res.redirect(signedUrl);
     }
 
+    // Fallback: proxy bytes
     const response = await axios.get(pdfUrl, { responseType: "arraybuffer", timeout: 15000 });
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="contract_${req.params.id}.pdf"`);

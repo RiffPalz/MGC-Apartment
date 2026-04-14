@@ -10,12 +10,13 @@ import {
   deletePayment,
 } from "../../services/admin/adminPaymentService.js";
 import { emitEvent } from "../../utils/emitEvent.js";
+import { isLocalStorage, getFileUrl } from "../../utils/localStorage.js";
 
 export const createPaymentAdmin = async (req, res) => {
   try {
     const adminId = req.admin?.id || req.auth?.id;
     const { contract_id, category, billing_month, amount, due_date } = req.body;
-    const utility_bill_file = req.file ? (req.file.secure_url || req.file.path) : null;
+    const utility_bill_file = getFileUrl(req.file, "utility_bills");
 
     const payment = await createPayment(
       { contract_id, category, billing_month, amount, due_date, utility_bill_file },
@@ -38,7 +39,7 @@ export const createPaymentAdmin = async (req, res) => {
 
     return res.status(201).json({ success: true, message: "Payment bill created successfully", payment });
   } catch (error) {
-    if (req.file?.filename) {
+    if (req.file?.filename && !isLocalStorage()) {
       await cloudinary.uploader.destroy(req.file.filename, { resource_type: "raw" }).catch(console.error);
     }
     return res.status(400).json({ success: false, message: error.message });
@@ -113,14 +114,14 @@ export const getPaymentDashboardAdmin = async (req, res) => {
 export const updatePaymentAdmin = async (req, res) => {
   try {
     const adminId = req.admin?.id || req.auth?.id;
-    if (req.file) req.body.utility_bill_file = req.file.secure_url || req.file.path;
+    if (req.file) req.body.utility_bill_file = getFileUrl(req.file, "utility_bills");
 
     const payment = await updatePayment(req.params.id, req.body, adminId);
     emitEvent(req, "payment_updated");
     return res.status(200).json({ success: true, message: "Payment updated", payment });
   } catch (error) {
     console.error("updatePaymentAdmin error:", error);
-    if (req.file?.filename) {
+    if (req.file?.filename && !isLocalStorage()) {
       await cloudinary.uploader.destroy(req.file.filename, { resource_type: "raw" }).catch(console.error);
     }
     return res.status(500).json({ success: false, message: error.message });

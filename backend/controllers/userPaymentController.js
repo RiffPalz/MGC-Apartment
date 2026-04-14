@@ -1,6 +1,7 @@
 import cloudinary from "../config/cloudinary.js";
 import { getMyPayments, getPaymentDetails, uploadPaymentReceipt } from "../services/userPaymentService.js";
 import { emitEvent } from "../utils/emitEvent.js";
+import { isLocalStorage, getFileUrl } from "../utils/localStorage.js";
 
 export const getMyPaymentsController = async (req, res) => {
   try {
@@ -30,7 +31,7 @@ export const uploadReceiptController = async (req, res) => {
 
     const payment = await uploadPaymentReceipt(
       req.params.id,
-      req.file.path,
+      getFileUrl(req.file, "receipts"),
       req.auth.id,
       paymentType,
       referenceNumber,
@@ -52,7 +53,7 @@ export const uploadReceiptController = async (req, res) => {
 
     return res.status(200).json({ success: true, message: "Receipt uploaded successfully", payment });
   } catch (error) {
-    if (req.file?.filename) {
+    if (req.file?.filename && !isLocalStorage()) {
       await cloudinary.uploader.destroy(req.file.filename);
     }
     return res.status(400).json({ success: false, message: error.message });

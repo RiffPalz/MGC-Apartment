@@ -1,8 +1,9 @@
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
+import { isLocalStorage, diskStorage } from "../utils/localStorage.js";
 
-const storage = new CloudinaryStorage({
+const cloudinaryStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req) => {
     const today = new Date();
@@ -28,8 +29,18 @@ const storage = new CloudinaryStorage({
   },
 });
 
+const localDiskStorage = diskStorage("application_requests", (req) => {
+  const fullName = req.body.fullName || "unknown";
+  const safeName = fullName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim()
+    .replace(/\s+/g, "_");
+  return `${safeName}_${Date.now()}`;
+});
+
 const uploadApplicationID = multer({
-  storage,
+  storage: isLocalStorage() ? localDiskStorage : cloudinaryStorage,
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 

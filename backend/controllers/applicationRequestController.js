@@ -1,5 +1,6 @@
 import { createApplicationRequest, checkApplicationStatus } from "../services/applicationRequestService.js";
 import { emitEvent } from "../utils/emitEvent.js";
+import { getFileUrl } from "../utils/localStorage.js";
 
 export const submitApplicationRequestController = async (req, res) => {
   try {
@@ -9,7 +10,7 @@ export const submitApplicationRequestController = async (req, res) => {
       fullName,
       emailAddress,
       contactNumber,
-      validID: req.file?.path,
+      validID: getFileUrl(req.file, "application_requests"),
       message,
     });
 

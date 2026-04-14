@@ -1,8 +1,9 @@
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
+import { isLocalStorage, diskStorage } from "../utils/localStorage.js";
 
-const storage = new CloudinaryStorage({
+const cloudinaryStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req) => {
     const today = new Date();
@@ -20,8 +21,13 @@ const storage = new CloudinaryStorage({
   },
 });
 
+const localDiskStorage = diskStorage("receipts", (req) => {
+  const tenantId = req.auth?.id || "unknown";
+  return `receipt_tenant${tenantId}_${Date.now()}`;
+});
+
 const uploadReceipt = multer({
-  storage,
+  storage: isLocalStorage() ? localDiskStorage : cloudinaryStorage,
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 

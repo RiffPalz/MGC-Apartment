@@ -3,25 +3,12 @@ import cloudinary from "../../config/cloudinary.js";
 import fs from "fs/promises";
 import { fileURLToPath } from "url";
 import path from "path";
+import { isLocalStorage, uploadsDir, localFileUrl } from "../../utils/localStorage.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/* Upload a PDF buffer to Cloudinary and return the secure URL */
-const uploadPdfToCloudinary = (buffer, folder, publicId) => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: "raw", type: "upload", access_mode: "public", public_id },
-      (error, result) => {
-        if (error) return reject(new Error("Failed to upload PDF to Cloudinary"));
-        resolve(result.secure_url);
-      }
-    );
-    uploadStream.end(buffer);
-  });
-};
-
-/* Render an HTML template to PDF using Puppeteer */
+/* Render an HTML template to a PDF buffer using Puppeteer */
 const renderPdf = async (htmlContent) => {
   const browser = await puppeteer.launch({
     headless: "new",
@@ -38,12 +25,42 @@ const renderPdf = async (htmlContent) => {
   return pdfBuffer;
 };
 
+/* Save PDF buffer to local disk and return the accessible URL */
+const savePdfLocally = async (buffer, subfolder, filename) => {
+  const dir = uploadsDir(subfolder);
+  const filePath = path.join(dir, filename);
+  await fs.writeFile(filePath, buffer);
+  return localFileUrl(subfolder, filename);
+};
+
+/* Upload PDF buffer to Cloudinary and return the secure URL */
+const uploadPdfToCloudinary = (buffer, folder, publicId) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder, resource_type: "raw", type: "upload", access_mode: "public", public_id },
+      (error, result) => {
+        if (error) return reject(new Error("Failed to upload PDF to Cloudinary"));
+        resolve(result.secure_url);
+      }
+    );
+    uploadStream.end(buffer);
+  });
+};
+
+/* Route PDF to local disk or Cloudinary based on STORAGE_MODE */
+const storePdf = async (buffer, cloudinaryFolder, cloudinaryPublicId, localSubfolder, localFilename) => {
+  if (isLocalStorage()) {
+    return await savePdfLocally(buffer, localSubfolder, localFilename);
+  }
+  return await uploadPdfToCloudinary(buffer, cloudinaryFolder, cloudinaryPublicId);
+};
+
 const fmtDate = (d) =>
   d
     ? new Date(d).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
     : "___________";
 
-/* Generate the MGC Contract of Lease PDF and upload to Cloudinary */
+/* Generate the MGC Contract of Lease PDF */
 export const generateContractPdf = async ({
   unit_number,
   lessor_name = "MGC BUILDING MANAGEMENT",
@@ -115,10 +132,14 @@ export const generateContractPdf = async ({
     }
 
     const pdfBuffer = await renderPdf(htmlContent);
-    return await uploadPdfToCloudinary(
+    const filename = `contract_${unit_number}_${Date.now()}.pdf`;
+
+    return await storePdf(
       pdfBuffer,
       `MGC-Building/contracts/unit_${unit_number}`,
-      `contract_${unit_number}_${Date.now()}.pdf`
+      filename,
+      "contracts",
+      filename
     );
   } catch (error) {
     console.error("Error generating Contract PDF:", error);
@@ -126,7 +147,7 @@ export const generateContractPdf = async ({
   }
 };
 
-/* Generate the MGC Termination of Lease PDF and upload to Cloudinary */
+/* Generate the MGC Termination of Lease PDF */
 export const generateTerminationPdf = async ({
   unit_number,
   lessor_name = "MGC BUILDING MANAGEMENT",
@@ -165,10 +186,14 @@ export const generateTerminationPdf = async ({
     }
 
     const pdfBuffer = await renderPdf(htmlContent);
-    return await uploadPdfToCloudinary(
+    const filename = `termination_${unit_number}_${Date.now()}.pdf`;
+
+    return await storePdf(
       pdfBuffer,
       `MGC-Building/terminations/unit_${unit_number}`,
-      `termination_${unit_number}_${Date.now()}.pdf`
+      filename,
+      "terminations",
+      filename
     );
   } catch (error) {
     console.error("Error generating Termination PDF:", error);
@@ -176,7 +201,7 @@ export const generateTerminationPdf = async ({
   }
 };
 
-/* Generate the Tenant Request for Termination PDF and upload to Cloudinary */
+/* Generate the Tenant Request for Termination PDF */
 export const generateTenantTerminationRequestPdf = async ({
   unit_number,
   lessor_name = "MGC BUILDING MANAGEMENT",
@@ -209,10 +234,14 @@ export const generateTenantTerminationRequestPdf = async ({
     }
 
     const pdfBuffer = await renderPdf(htmlContent);
-    return await uploadPdfToCloudinary(
+    const filename = `termination_request_${unit_number}_${Date.now()}.pdf`;
+
+    return await storePdf(
       pdfBuffer,
       `MGC-Building/termination-requests/unit_${unit_number}`,
-      `termination_request_${unit_number}_${Date.now()}.pdf`
+      filename,
+      "termination_requests",
+      filename
     );
   } catch (error) {
     console.error("Error generating Tenant Termination Request PDF:", error);

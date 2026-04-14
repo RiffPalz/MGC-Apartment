@@ -1,8 +1,9 @@
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
+import { isLocalStorage, diskStorage } from "../utils/localStorage.js";
 
-const storage = new CloudinaryStorage({
+const cloudinaryStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req) => ({
     folder: "MGC-Building/profile-pictures",
@@ -12,8 +13,13 @@ const storage = new CloudinaryStorage({
   }),
 });
 
+const localDiskStorage = diskStorage("profile_pictures", (req) => {
+  const id = req.admin?.id || req.caretaker?.id || "user";
+  return `profile_${id}_${Date.now()}`;
+});
+
 const uploadProfilePicture = multer({
-  storage,
+  storage: isLocalStorage() ? localDiskStorage : cloudinaryStorage,
   limits: { fileSize: 3 * 1024 * 1024 },
 });
 
