@@ -340,7 +340,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Doughnut */}
-          <div className="relative flex-1 min-h-[160px] flex items-center justify-center">
+          <div className="relative flex-1 min-h-40 flex items-center justify-center">
             <Doughnut data={doughnutData} options={doughnutOptions} />
             {/* Center label */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
