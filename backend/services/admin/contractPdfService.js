@@ -1,4 +1,5 @@
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import cloudinary from "../../config/cloudinary.js";
 import fs from "fs/promises";
 import { fileURLToPath } from "url";
@@ -23,9 +24,12 @@ const uploadPdfToCloudinary = (buffer, folder, publicId) => {
 
 /* Render an HTML template to PDF using Puppeteer */
 const renderPdf = async (htmlContent) => {
+  const executablePath = await chromium.executablePath();
   const browser = await puppeteer.launch({
-    headless: "new",
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath,
+    headless: chromium.headless,
   });
   const page = await browser.newPage();
   await page.setContent(htmlContent, { waitUntil: "networkidle0" });
