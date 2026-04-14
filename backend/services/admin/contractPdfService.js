@@ -11,10 +11,11 @@ const __dirname = path.dirname(__filename);
 /* Upload a PDF buffer to Cloudinary and return the secure URL */
 const uploadPdfToCloudinary = (buffer, folder, publicId) => {
   return new Promise((resolve, reject) => {
+    const cleanPublicId = publicId.replace(/\.pdf$/i, "");
     const uploadStream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: "raw", type: "upload", access_mode: "public", public_id },
+      { folder, resource_type: "raw", type: "upload", access_mode: "public", public_id: cleanPublicId },
       (error, result) => {
-        if (error) return reject(new Error("Failed to upload PDF to Cloudinary"));
+        if (error) return reject(new Error(`Failed to upload PDF to Cloudinary: ${error.message}`));
         resolve(result.secure_url);
       }
     );
