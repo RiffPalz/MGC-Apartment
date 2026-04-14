@@ -340,7 +340,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Doughnut */}
-          <div className="relative flex-1 min-h-[160px] flex items-center justify-center">
+          <div className="relative flex-1 min-h-40 flex items-center justify-center">
             <Doughnut data={doughnutData} options={doughnutOptions} />
             {/* Center label */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -469,7 +469,7 @@ export default function AdminDashboard() {
 
       </div>
 
-      {/* ── EXTRA ROW: Account Approvals ── */}
+      {/* ── EXTRA ROW: Account Approvals + Unpaid Payments ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Account Approvals */}
@@ -512,50 +512,68 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* Payment Alerts */}
-        {hasAlerts && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col gap-3">
-            <div className="flex items-center gap-2 text-[#db6747] mb-2">
-              <div className="p-1.5 bg-orange-50 rounded-md"><FaClock size={13} /></div>
+        {/* Unpaid Payments */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-500">
+              <div className="p-1.5 bg-amber-50 rounded-md"><FaMoneyBillWave size={13} /></div>
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Payment Alerts</h3>
-                <p className="text-[10px] text-slate-400 uppercase">Requires attention</p>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Unpaid Payments</h3>
+                <p className="text-[10px] text-slate-400 uppercase">Bills awaiting payment</p>
               </div>
             </div>
-            {payDash.pendingVerification > 0 && (
-              <AlertChip icon={<FaClock size={11} />}
-                label={`${payDash.pendingVerification} pending verification`}
-                cls="text-[#db6747] bg-white border-orange-200"
-                onClick={() => navigate("/admin/payments")} />
-            )}
-            {payDash.overduePayments > 0 && (
-              <AlertChip icon={<FaClock size={11} />}
-                label={`${payDash.overduePayments} overdue payments`}
-                cls="text-red-600 bg-white border-red-200"
-                onClick={() => navigate("/admin/payments")} />
-            )}
-            {payDash.unpaidBills > 0 && (
-              <div
-                onClick={() => navigate("/admin/payments")}
-                className="flex flex-col gap-2 px-3 py-2.5 rounded-md border border-amber-200 bg-white cursor-pointer hover:opacity-80 transition-opacity"
-              >
-                <div className="flex items-center gap-2 text-amber-600 text-xs font-bold">
-                  <FaClock size={11} />
-                  {payDash.unpaidBills} unpaid bill{payDash.unpaidBills !== 1 ? "s" : ""}
-                </div>
-                {payDash.unpaidUnitNumbers?.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pl-4">
-                    {payDash.unpaidUnitNumbers.map((u) => (
-                      <span key={u} className="text-[10px] font-black px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">
-                        Unit {u}
-                      </span>
-                    ))}
-                  </div>
-                )}
+            <NavBtn onClick={() => navigate("/admin/payments")} />
+          </div>
+
+          <div className="flex-1 flex flex-col">
+            {payDash.unpaidBills === 0 || !payDash.unpaidBills ? (
+              <div className="p-8 flex flex-col items-center justify-center flex-1">
+                <FaCheckCircle className="text-emerald-400 mb-2" size={24} />
+                <p className="text-xs text-slate-400">No unpaid bills</p>
               </div>
+            ) : (
+              <>
+                {/* Summary row */}
+                <div className="px-5 py-3 bg-amber-50/60 border-b border-amber-100 flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-amber-600 uppercase tracking-widest">
+                    {payDash.unpaidBills} unpaid bill{payDash.unpaidBills !== 1 ? "s" : ""}
+                  </span>
+                  <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">
+                    {payDash.unpaidUnitNumbers?.length ?? 0} unit{(payDash.unpaidUnitNumbers?.length ?? 0) !== 1 ? "s" : ""} affected
+                  </span>
+                </div>
+
+                {/* Unit list */}
+                <div className="divide-y divide-slate-100 flex-1 overflow-y-auto max-h-52 custom-scrollbar">
+                  {(payDash.unpaidUnitNumbers ?? []).map((unitNum) => (
+                    <div
+                      key={unitNum}
+                      onClick={() => navigate("/admin/payments")}
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-amber-50/40 transition-colors cursor-pointer"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center shrink-0">
+                        <MdApartment size={15} className="text-amber-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-black text-slate-800">Unit {unitNum}</p>
+                        <p className="text-[10px] text-slate-400">Unpaid bill pending</p>
+                      </div>
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-md bg-amber-50 text-amber-600 border border-amber-200 uppercase tracking-wider shrink-0">
+                        Unpaid
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
-        )}
+
+          {/* Footer total */}
+          <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Unpaid</p>
+            <p className="text-lg font-black text-amber-600">{payDash.unpaidBills ?? 0}</p>
+          </div>
+        </div>
 
       </div>
     </div>
