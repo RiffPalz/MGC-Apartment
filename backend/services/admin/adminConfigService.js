@@ -1,6 +1,5 @@
 import SystemConfig from "../../models/systemConfig.js";
 import { createActivityLog } from "../../services/activityLogService.js";
-import { getFileUrl } from "../../utils/localStorage.js";
 
 const DEFAULT_CONFIG = {
   mgc_name: "MGC Building",
@@ -65,7 +64,7 @@ export const updateConfig = async (data, files = {}, adminId = null) => {
     for (let i = 0; i <= 4; i++) {
       const fileField = `gallery_${i}`;
       if (files[fileField]?.[0] && galleryImages[i]) {
-        galleryImages[i] = { ...galleryImages[i], url: getFileUrl(files[fileField][0], "gallery") };
+        galleryImages[i] = { ...galleryImages[i], url: files[fileField][0].path };
       }
     }
 

@@ -29,7 +29,7 @@ configRouter.get("/units", async (req, res) => {
     const occupiedUnitIds = new Set(activeContracts.map((c) => c.unit_id));
 
     const result = units.map((u) => {
-      const isOccupied = occupiedUnitIds.has(u.ID);
+      const isOccupied = occupiedUnitIds.has(u.ID) || u.status === "Occupied";
       const derivedStatus = isOccupied
         ? "Occupied"
         : u.status === "Under Maintenance"
