@@ -1,4 +1,5 @@
 import User from "../../models/user.js";
+import Unit from "../../models/unit.js";
 import { Op } from "sequelize";
 import { createActivityLog } from "../../services/activityLogService.js";
 import { createNotification } from "../../services/notificationService.js";
@@ -57,6 +58,16 @@ export const createTenant = async (data, adminId) => {
     referenceId: tenant.ID,
     referenceType: "user",
   });
+
+  // Automatically mark the assigned unit as Occupied when tenant is created by admin
+  if (tenant.unitNumber) {
+    const unit = await Unit.findOne({ where: { unit_number: tenant.unitNumber } });
+    if (unit) {
+      unit.status = "Occupied";
+      unit.is_active = true;
+      await unit.save();
+    }
+  }
 
   await createNotification({
     userId: tenant.ID,

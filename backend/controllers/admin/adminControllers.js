@@ -334,6 +334,7 @@ export const updateUserApproval = async (req, res) => {
 
     await updateTenantApprovalService(req.admin.instance, userId, status);
     emitEvent(req, "tenants_updated");
+    emitEvent(req, "units_updated");
     return res.status(200).json({ success: true, message: `Tenant ${status} successfully` });
   } catch (error) {
     console.error("updateUserApproval error:", error.message, "| userId:", req.params.userId, "| status:", req.body?.status);

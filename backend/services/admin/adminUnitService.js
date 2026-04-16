@@ -7,6 +7,7 @@ const FLOOR_MAP = { 1: "Ground Floor", 2: "Second Floor", 3: "Third Floor", 4: "
 const deriveStatus = (unit, tenants) => {
   if (!unit.is_active) return "Disabled";
   if (tenants.length > 0) return "Occupied";
+  if (unit.status === "Occupied") return "Occupied";
   if (unit.status === "Under Maintenance") return "Under Maintenance";
   return "Vacant";
 };
