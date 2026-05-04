@@ -148,11 +148,62 @@ export const startSystemCron = () => {
       }
     }
 
-    // Mark overdue payments
-    await Payment.update(
-      { status: "Overdue" },
-      { where: { due_date: { [Op.lt]: today }, status: "Unpaid" } }
-    );
+    // Mark overdue payments and send SMS notifications
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+    // Helper: compute date string N days from today
+    const offsetDate = (days) => {
+      const d = new Date(today);
+      d.setDate(d.getDate() + days);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+
+    const in3 = offsetDate(3);
+
+    // Fetch payments for SMS — only Unpaid/Overdue, with tenant contact info
+    const paymentInclude = [{
+      model: Contract,
+      as: "contract",
+      include: [{
+        model: User,
+        as: "tenants",
+        attributes: ["contactNumber"],
+        through: { attributes: [] },
+      }],
+    }];
+
+    // 1. Due in 3 days — send reminder
+    const dueSoonPayments = await Payment.findAll({
+      where: { due_date: in3, status: "Unpaid" },
+      include: paymentInclude,
+    });
+    for (const p of dueSoonPayments) {
+      const contacts = p.contract?.tenants?.map((t) => t.contactNumber).filter(Boolean) ?? [];
+      if (contacts.length) sendSMSBulk(contacts, sms.paymentDueSoon(p.category, p.due_date));
+    }
+
+    // 2. Due today — send due-now alert
+    const dueTodayPayments = await Payment.findAll({
+      where: { due_date: todayStr, status: "Unpaid" },
+      include: paymentInclude,
+    });
+    for (const p of dueTodayPayments) {
+      const contacts = p.contract?.tenants?.map((t) => t.contactNumber).filter(Boolean) ?? [];
+      if (contacts.length) sendSMSBulk(contacts, sms.paymentDueToday(p.category, p.due_date));
+    }
+
+    // 3. Mark overdue (past due date, still Unpaid) and send overdue SMS
+    const overduePayments = await Payment.findAll({
+      where: { due_date: { [Op.lt]: todayStr }, status: "Unpaid" },
+      include: paymentInclude,
+    });
+    for (const p of overduePayments) {
+      p.status = "Overdue";
+      await p.save();
+      const contacts = p.contract?.tenants?.map((t) => t.contactNumber).filter(Boolean) ?? [];
+      if (contacts.length) sendSMSBulk(contacts, sms.paymentOverdue(p.category, p.due_date));
+    }
 
     console.log("Cron tasks completed");
   });

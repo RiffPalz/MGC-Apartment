@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import { sequelize } from "../../config/database.js";
 import Payment from "../../models/payment.js";
 import Contract from "../../models/contract.js";
@@ -63,6 +64,14 @@ export const createPayment = async ({ contract_id, category, billing_month, amou
 };
 
 export const getAllPayments = async () => {
+  // Eagerly mark any unpaid payments past their due date as Overdue before returning
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  await Payment.update(
+    { status: "Overdue" },
+    { where: { due_date: { [Op.lt]: todayStr }, status: "Unpaid" } }
+  );
+
   return await Payment.findAll({
     include: [{
       model: Contract,
@@ -164,6 +173,14 @@ export const getMonthlySummary = async (billingMonth) => {
 };
 
 export const getPaymentDashboard = async () => {
+  // Sync overdue status before computing dashboard counts
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  await Payment.update(
+    { status: "Overdue" },
+    { where: { due_date: { [Op.lt]: todayStr }, status: "Unpaid" } }
+  );
+
   const totalCollected = (await Payment.sum("amount", { where: { status: "Paid" } })) || 0;
   const pendingVerification = await Payment.count({ where: { status: "Pending Verification" } });
   const overduePayments = await Payment.count({ where: { status: "Overdue" } });
@@ -206,6 +223,14 @@ export const updatePayment = async (paymentId, data, adminId) => {
 
   const allowed = ["category", "billing_month", "amount", "due_date", "payment_date", "paymentType", "referenceNumber", "arNumber", "status", "utility_bill_file"];
   allowed.forEach((key) => { if (data[key] !== undefined) payment[key] = data[key]; });
+
+  // Auto-recalculate status when due_date changes, unless payment is already Paid or Pending Verification
+  if (data.due_date !== undefined && payment.status !== "Paid" && payment.status !== "Pending Verification") {
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    payment.status = data.due_date < todayStr ? "Overdue" : "Unpaid";
+  }
+
   await payment.save();
 
   const unitNumber = payment.contract?.unit?.unit_number ?? "—";
