@@ -97,6 +97,13 @@ app.use("/api/caretaker/login", authLimiter);
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
+// Serve uploaded files (contracts, receipts, profile pictures, etc.)
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+app.use("/uploads", express.static(join(__dirname, "uploads")));
+
 // Socket.IO
 const io = new Server(httpServer, {
   cors: {
