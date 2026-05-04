@@ -41,6 +41,7 @@ const STATUS_CFG = {
 };
 
 const currentBillingMonth = new Date().toISOString().split("T")[0];
+const today = currentBillingMonth; // used as min for due date pickers
 
 const EMPTY_FORM = {
   contract_id: "", category: "Rent", billing_month: currentBillingMonth, due_date: "", amount: "",
@@ -669,7 +670,7 @@ export default function AdminPayment() {
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Due Date</label>
-                  <input required type="date" value={form.due_date}
+                  <input required type="date" value={form.due_date} min={today}
                     onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))}
                     className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 hover:bg-white transition-colors shadow-sm" />
                 </div>
@@ -804,7 +805,7 @@ export default function AdminPayment() {
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Due Date</label>
-                  <input type="date" value={editForm.due_date}
+                  <input type="date" value={editForm.due_date} min={today}
                     onChange={e => setEditForm(f => ({ ...f, due_date: e.target.value }))}
                     className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 hover:bg-white transition-colors shadow-sm" />
                 </div>

@@ -3,6 +3,15 @@ export const sms = {
   billCreated: (category, billingMonth) =>
     `MGC: A new ${category} bill for ${fmtMonth(billingMonth)} is ready. Log in to pay.`,
 
+  paymentDueSoon: (category, dueDate) =>
+    `MGC: Reminder — your ${category} bill is due in 3 days (${fmtDate(dueDate)}). Please settle on time.`,
+
+  paymentDueToday: (category, dueDate) =>
+    `MGC: Your ${category} bill is due TODAY (${fmtDate(dueDate)}). Please pay now to avoid penalties.`,
+
+  paymentOverdue: (category, dueDate) =>
+    `MGC: Your ${category} bill was due on ${fmtDate(dueDate)} and is now OVERDUE. Please settle immediately.`,
+
   paymentVerified: (category) =>
     `MGC: Your ${category} payment has been verified. Thank you!`,
 
