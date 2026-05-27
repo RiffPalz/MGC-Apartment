@@ -9,15 +9,17 @@ import { sendSMS } from "../../utils/sms.js";
 import { sms } from "../../utils/smsTemplates.js";
 
 export const getAllPayments = async () => {
-  // Eagerly mark any unpaid payments past their due date as Overdue before returning
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  // Mark overdue — skip deleted rows
   await Payment.update(
     { status: "Overdue" },
-    { where: { due_date: { [Op.lt]: todayStr }, status: "Unpaid" } }
+    { where: { due_date: { [Op.lt]: todayStr }, status: "Unpaid", is_deleted: { [Op.or]: [false, null] } } }
   );
 
   return await Payment.findAll({
+    where: { is_deleted: { [Op.or]: [false, null] } },
     include: [{
       model: Contract,
       as: "contract",
@@ -38,7 +40,7 @@ export const getAllPayments = async () => {
 
 export const getPendingPayments = async () => {
   return await Payment.findAll({
-    where: { status: "Pending Verification" },
+    where: { status: "Pending Verification", is_deleted: { [Op.or]: [false, null] } },
     include: [{
       model: Contract,
       as: "contract",

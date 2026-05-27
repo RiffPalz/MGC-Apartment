@@ -61,6 +61,15 @@ const Payment = sequelize.define(
       allowNull: false,
       defaultValue: "Unpaid",
     },
+    is_deleted: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    deleted_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     tableName: "payments",
@@ -71,6 +80,7 @@ const Payment = sequelize.define(
       { fields: ["contract_id"] },
       { fields: ["status"] },
       { fields: ["billing_month"] },
+      { fields: ["is_deleted"] },
     ],
   }
 );
