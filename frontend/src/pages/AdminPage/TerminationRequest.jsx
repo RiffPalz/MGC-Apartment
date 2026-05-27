@@ -378,7 +378,7 @@ export default function AdminTerminationRequests() {
 
       {/* PDF VIEWER MODAL */}
       {pdfModal && pdfFile && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex flex-col">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-60 flex flex-col">
           {/* Toolbar */}
           <div className="bg-slate-900 px-4 sm:px-5 py-3 flex items-center justify-between shrink-0">
             <span className="text-white font-bold text-xs sm:text-sm uppercase tracking-widest truncate mr-3">

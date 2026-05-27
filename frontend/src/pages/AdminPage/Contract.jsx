@@ -852,7 +852,7 @@ export default function AdminContract() {
                   onChange={(e) => setRenewForm((f) => ({ ...f, newEndDate: e.target.value }))}
                   className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 hover:bg-white transition-colors shadow-sm" />
               </div>
-              <p className="text-[10px] text-slate-400 leading-relaxed font-medium bg-blue-50 text-blue-700 px-3 py-2 rounded-lg border border-blue-100">
+              <p className="text-[10px] text-slate-400 leading-relaxed font-medium bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
                 The contract PDF will be automatically regenerated with the new dates.
               </p>
               <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end pt-4 sm:pt-6 border-t border-slate-100 mt-6 sm:mt-8">
