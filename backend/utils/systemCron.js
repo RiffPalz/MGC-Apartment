@@ -7,6 +7,7 @@ import User from "../models/user.js";
 import Unit from "../models/unit.js";
 import { sendSMS, sendSMSBulk } from "./sms.js";
 import { sms } from "./smsTemplates.js";
+import { createNotification } from "../services/notificationService.js";
 
 export const startSystemCron = () => {
   // Runs every day at midnight
@@ -16,8 +17,52 @@ export const startSystemCron = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const day = today.getDate();
+    const todayStr = today.toISOString().split("T")[0];
 
-    // Deactivate tenants 3 days after contract termination
+    // ── 1. Auto-expire Active contracts whose end_date has passed ──────────
+    const expiredContracts = await Contract.findAll({
+      where: {
+        status: "Active",
+        end_date: { [Op.lte]: todayStr },
+      },
+      include: [
+        { model: Unit, as: "unit", attributes: ["ID", "unit_number"] },
+        {
+          model: User,
+          as: "tenants",
+          attributes: ["ID", "fullName", "contactNumber", "status"],
+          through: { attributes: [] },
+        },
+      ],
+    });
+
+    for (const contract of expiredContracts) {
+      await contract.update({ status: "Expired" });
+
+      // Clear unitNumber from all linked tenants
+      for (const tenant of contract.tenants) {
+        await User.update({ unitNumber: null }, { where: { ID: tenant.ID } });
+
+        await createNotification({
+          userId: tenant.ID,
+          role: "tenant",
+          type: "contract expired",
+          title: "Contract Expired",
+          message: `Your lease contract for Unit ${contract.unit?.unit_number ?? ""} has expired.`,
+          referenceId: contract.ID,
+          referenceType: "contract",
+        });
+      }
+
+      const tenantContacts = contract.tenants.map((t) => t.contactNumber).filter(Boolean);
+      if (tenantContacts.length > 0) {
+        sendSMSBulk(tenantContacts, `Your lease contract for Unit ${contract.unit?.unit_number ?? ""} has expired as of ${todayStr}.`);
+      }
+
+      console.log(`[Cron] Contract ${contract.ID} (Unit ${contract.unit?.unit_number}) marked as Expired.`);
+    }
+
+    // ── 2. Deactivate tenants 3 days after contract termination ────────────
     const threeDaysAgo = new Date(today);
     threeDaysAgo.setDate(today.getDate() - 3);
 
@@ -46,13 +91,7 @@ export const startSystemCron = () => {
       }
     }
 
-    // Auto-complete expired active contracts
-    await Contract.update(
-      { status: "Completed" },
-      { where: { end_date: { [Op.lt]: today }, status: "Active" } }
-    );
-
-    // Contract expiry SMS reminders (30 days & 5 days)
+    // ── 3. Contract expiry SMS reminders (30 days & 5 days) ───────────────
     const in30 = new Date(today);
     in30.setDate(today.getDate() + 30);
     const in5 = new Date(today);
@@ -103,7 +142,7 @@ export const startSystemCron = () => {
       }
     }
 
-    // Generate monthly rent bills
+    // ── 4. Generate monthly rent bills ────────────────────────────────────
     const contracts = await Contract.findAll({
       where: {
         start_date: { [Op.lte]: today },
@@ -148,7 +187,7 @@ export const startSystemCron = () => {
       }
     }
 
-    // Mark overdue payments
+    // ── 5. Mark overdue payments ──────────────────────────────────────────
     await Payment.update(
       { status: "Overdue" },
       { where: { due_date: { [Op.lt]: today }, status: "Unpaid" } }

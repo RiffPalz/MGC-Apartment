@@ -295,7 +295,8 @@ export default function AdminDashboard() {
         />
         <StatCard
           icon={<FaMoneyBillWave size={18} />}
-          label="Total Collected" value={fmt(payDash.totalCollected)}
+          label={`Collected — ${new Date().toLocaleString("en-US", { month: "long", year: "numeric" })}`}
+          value={fmt(payDash.totalCollected)}
           color="text-emerald-500" bg="bg-emerald-50"
         />
       </div>

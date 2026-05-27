@@ -107,7 +107,7 @@ export const terminateContract = async (contractId, adminId) => {
       ],
       transaction,
     });
-    if (!contract || contract.status !== "Active") throw new Error("Contract not eligible for termination.");
+    if (!contract || !["Active", "Expired"].includes(contract.status)) throw new Error("Contract not eligible for termination.");
 
     const today = new Date().toISOString().split("T")[0];
 
@@ -168,7 +168,7 @@ export const renewContract = async ({ contractId, newStartDate, newEndDate }, ad
     include: [{ model: User, as: "tenants" }, { model: Unit, as: "unit" }],
   });
   if (!contract) throw new Error("Contract not found.");
-  if (contract.status !== "Active") throw new Error("Only active contracts can be renewed.");
+  if (!["Active", "Expired"].includes(contract.status)) throw new Error("Only active or expired contracts can be renewed.");
   if (new Date(newEndDate) <= new Date(newStartDate)) throw new Error("End date must be after start date.");
 
   await contract.update({ start_date: newStartDate, end_date: newEndDate });
@@ -269,6 +269,33 @@ export const getAdminDashboardData = async () => {
     order: [["created_at", "DESC"]],
   });
 
+  // For contracts with no linked tenants (e.g. created before tenant association),
+  // fall back to looking up approved tenants by unit number so names still display.
+  const unitNumbersWithNoTenants = [
+    ...new Set(
+      contracts
+        .filter((c) => !c.tenants || c.tenants.length === 0)
+        .map((c) => c.unit?.unit_number)
+        .filter(Boolean)
+    ),
+  ];
+
+  const fallbackTenantsByUnit = {};
+  if (unitNumbersWithNoTenants.length > 0) {
+    const fallbackUsers = await User.findAll({
+      where: {
+        role: "tenant",
+        status: "Approved",
+        unitNumber: { [Op.in]: unitNumbersWithNoTenants },
+      },
+      attributes: ["ID", "fullName", "emailAddress", "numberOfTenants", "unitNumber"],
+    });
+    for (const u of fallbackUsers) {
+      if (!fallbackTenantsByUnit[u.unitNumber]) fallbackTenantsByUnit[u.unitNumber] = [];
+      fallbackTenantsByUnit[u.unitNumber].push(u);
+    }
+  }
+
   return {
     units: units.map((u) => {
       const hasActiveContract = u.contracts.length > 0;
@@ -286,20 +313,25 @@ export const getAdminDashboardData = async () => {
         contract: u.contracts[0] || null,
       };
     }),
-    contracts: contracts.map((c) => ({
-      ID: c.ID,
-      unit_number: c.unit.unit_number,
-      unit_id: c.unit_id,
-      start_date: c.start_date,
-      end_date: c.end_date,
-      rent_amount: c.rent_amount,
-      status: c.status,
-      tenancy_rules: c.tenancy_rules,
-      termination_renewal_conditions: c.termination_renewal_conditions,
-      contract_file: getWorkingPdfUrl(c.contract_file),
-      contract_file_download: getWorkingPdfUrl(c.contract_file),
-      tenants: c.tenants,
-    })),
+    contracts: contracts.map((c) => {
+      const linkedTenants = c.tenants && c.tenants.length > 0
+        ? c.tenants
+        : (fallbackTenantsByUnit[c.unit?.unit_number] ?? []);
+      return {
+        ID: c.ID,
+        unit_number: c.unit.unit_number,
+        unit_id: c.unit_id,
+        start_date: c.start_date,
+        end_date: c.end_date,
+        rent_amount: c.rent_amount,
+        status: c.status,
+        tenancy_rules: c.tenancy_rules,
+        termination_renewal_conditions: c.termination_renewal_conditions,
+        contract_file: getWorkingPdfUrl(c.contract_file),
+        contract_file_download: getWorkingPdfUrl(c.contract_file),
+        tenants: linkedTenants,
+      };
+    }),
   };
 };
 
@@ -310,7 +342,7 @@ export const getExpiringContracts = async () => {
 
   const contracts = await Contract.findAll({
     where: {
-      status: "Active",
+      status: { [Op.in]: ["Active", "Expired"] },
       end_date: {
         [Op.between]: [today.toISOString().split("T")[0], next30Days.toISOString().split("T")[0]],
       },
@@ -338,7 +370,7 @@ export const completeContract = async (contractId, adminId) => {
       ],
       transaction,
     });
-    if (!contract || contract.status !== "Active") throw new Error("Contract not eligible for completion.");
+    if (!contract || !["Active", "Expired"].includes(contract.status)) throw new Error("Contract not eligible for completion.");
 
     await contract.update({ status: "Completed" }, { transaction });
     for (const tenant of contract.tenants) {

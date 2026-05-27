@@ -88,7 +88,17 @@ export default function CaretakerPaymentOverview() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const totalCollected = rows.filter((r) => r.status === "Paid").reduce((s, r) => s + Number(r.amount ?? 0), 0);
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-indexed
+
+  const totalCollected = rows
+    .filter((r) => {
+      if (r.status !== "Paid") return false;
+      const bm = new Date(r.billing_month);
+      return bm.getFullYear() === currentYear && bm.getMonth() === currentMonth;
+    })
+    .reduce((s, r) => s + Number(r.amount ?? 0), 0);
   const pendingCount = rows.filter((r) => r.status === "Pending Verification").length;
   const overdueCount = rows.filter((r) => r.status === "Overdue").length;
   const unpaidCount = rows.filter((r) => r.status === "Unpaid").length;
@@ -181,7 +191,7 @@ export default function CaretakerPaymentOverview() {
 
           {/* STAT CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <StatCard icon={<FaMoneyBillWave size={18} />} label="Total Collected" value={`₱${totalCollected.toLocaleString()}`} color="text-emerald-500" bg="bg-emerald-50" />
+            <StatCard icon={<FaMoneyBillWave size={18} />} label={`Collected — ${now.toLocaleString("en-US", { month: "long", year: "numeric" })}`} value={`₱${totalCollected.toLocaleString()}`} color="text-emerald-500" bg="bg-emerald-50" />
             <StatCard icon={<FaClock size={18} />} label="Pending Verification" value={pendingCount} color="text-blue-500" bg="bg-blue-50" />
             <StatCard icon={<FaExclamationCircle size={18} />} label="Overdue" value={overdueCount} color="text-amber-500" bg="bg-amber-50" />
             <StatCard icon={<FaCheckCircle size={18} />} label="Unpaid Bills" value={unpaidCount} color="text-red-500" bg="bg-red-50" />
