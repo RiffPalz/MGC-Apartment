@@ -174,7 +174,7 @@ httpServer.listen(PORT, async () => {
     await connectDB();
 
     try {
-      await sequelize.sync({ alter: false });
+      await sequelize.sync({ alter: true });
       console.log("Database synchronized successfully");
     } catch (syncError) {
       console.warn("Database sync warning (non-fatal):", syncError.message);
