@@ -172,7 +172,7 @@ const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, async () => {
   try {
     await connectDB();
-    await sequelize.sync({ force: true });
+    await sequelize.sync({ alter: false });
     console.log("Database synchronized successfully");
 
     await runSeeders();
