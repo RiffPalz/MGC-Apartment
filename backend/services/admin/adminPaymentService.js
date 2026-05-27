@@ -87,7 +87,8 @@ export const getAllPayments = async () => {
         },
       ],
     }],
-    order: [["created_at", "DESC"]],
+  
+    order: [["billing_month", "DESC"]], 
   });
 };
 
