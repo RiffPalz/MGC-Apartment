@@ -50,6 +50,9 @@ export const sms = {
   contractTerminated: (unitNumber) =>
     `MGC: Your contract for Unit ${unitNumber} has been terminated. Contact the office.`,
 
+  contractExpired: (unitNumber, endDate) =>
+    `MGC: Your contract for Unit ${unitNumber} has expired as of ${fmtDate(endDate)}. Please contact management.`,
+
   // Termination request
   terminationRequestSubmitted: (tenantName, unitNumber) =>
     `${truncate(tenantName, 15)} (Unit ${unitNumber}) submitted a termination request. Review in portal.`,

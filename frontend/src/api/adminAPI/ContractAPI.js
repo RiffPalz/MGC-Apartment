@@ -47,6 +47,9 @@ export const generateContractPdf = async (id) => {
 export const getContractPdfProxyUrl = (id) =>
   `${import.meta.env.VITE_BACKEND_URL}/admin/contracts/${id}/pdf`;
 
+export const getTerminationRequestPdfProxyUrl = (id) =>
+  `${import.meta.env.VITE_BACKEND_URL}/admin/contracts/termination-requests/${id}/pdf`;
+
 export const deleteContract = async (id) => {
   const res = await api.delete(`/admin/contracts/${id}`);
   return res.data;

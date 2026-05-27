@@ -1,15 +1,26 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSocketEvent } from "../../hooks/useSocketEvent";
 import {
   FaEye, FaCheckCircle, FaTimesCircle, FaExclamationTriangle, FaFilePdf,
+  FaTimes, FaChevronLeft, FaChevronRight, FaFileDownload,
 } from "react-icons/fa";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 import toast from "../../utils/toast";
 import {
   fetchTerminationRequests,
   approveTerminationRequest,
   rejectTerminationRequest,
+  getTerminationRequestPdfProxyUrl,
 } from "../../api/adminAPI/ContractAPI";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
+import { getToken } from "../../api/authStorage";
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 const STATUS_CFG = {
   Pending: "bg-amber-50 text-amber-700 border-amber-200",
@@ -27,6 +38,44 @@ export default function AdminTerminationRequests() {
   const [actionModal, setActionModal] = useState(null); // { action: "approve"|"reject", request }
   const [actioning, setActioning] = useState(false);
   const [statusFilter, setStatusFilter] = useState("All");
+
+  // PDF viewer state
+  const [pdfModal, setPdfModal] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [numPages, setNumPages] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [downloading, setDownloading] = useState(false);
+
+  const pdfFile = useMemo(() => {
+    if (!pdfUrl) return null;
+    return { url: pdfUrl, httpHeaders: { Authorization: `Bearer ${getToken()}` } };
+  }, [pdfUrl]);
+
+  const openPdf = (url) => {
+    setPdfUrl(url);
+    setNumPages(null);
+    setPageNumber(1);
+    setPdfModal(true);
+  };
+
+  const handlePdfDownload = async () => {
+    if (!pdfUrl) return;
+    try {
+      setDownloading(true);
+      const res = await fetch(pdfUrl, { headers: { Authorization: `Bearer ${getToken()}` } });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "termination_request.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(pdfUrl, "_blank");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -275,10 +324,11 @@ export default function AdminTerminationRequests() {
               {viewModal.request_pdf && (
                 <div>
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2 font-bold">Request Letter PDF</p>
-                  <a href={viewModal.request_pdf} target="_blank" rel="noreferrer"
+                  <button
+                    onClick={() => openPdf(getTerminationRequestPdfProxyUrl(viewModal.ID))}
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all shadow-sm active:scale-95">
                     <FaFilePdf size={12} /> View PDF
-                  </a>
+                  </button>
                 </div>
               )}
               {viewModal.status === "Pending" && (
@@ -325,6 +375,97 @@ export default function AdminTerminationRequests() {
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #db6747; border-radius: 10px; }
       `}</style>
+
+      {/* PDF VIEWER MODAL */}
+      {pdfModal && pdfFile && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-60 flex flex-col">
+          {/* Toolbar */}
+          <div className="bg-slate-900 px-4 sm:px-5 py-3 flex items-center justify-between shrink-0">
+            <span className="text-white font-bold text-xs sm:text-sm uppercase tracking-widest truncate mr-3">
+              Termination Request Letter
+            </span>
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <button
+                onClick={handlePdfDownload}
+                disabled={downloading}
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3 sm:px-4 py-2 rounded-xl transition-all uppercase tracking-widest disabled:opacity-60"
+              >
+                <FaFileDownload size={12} />
+                <span className="hidden sm:inline">{downloading ? "..." : "Download"}</span>
+              </button>
+              <button
+                onClick={() => setPdfModal(false)}
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all"
+              >
+                <FaTimes size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* PDF Content */}
+          <div className="flex-1 overflow-auto bg-[#1a1a1a] flex flex-col items-center py-4 sm:py-6 gap-4 px-3">
+            <div className="w-full max-w-[800px] flex flex-col gap-3">
+              <Document
+                file={pdfFile}
+                onLoadSuccess={({ numPages }) => { setNumPages(numPages); setPageNumber(1); }}
+                onLoadError={() => {}}
+                loading={
+                  <div className="flex items-center justify-center h-64">
+                    <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  </div>
+                }
+                error={
+                  <div className="flex flex-col items-center justify-center h-64 gap-3 text-white/50">
+                    <FaFilePdf size={32} />
+                    <p className="text-sm">Could not load PDF.</p>
+                    <button
+                      onClick={() => window.open(pdfUrl, "_blank")}
+                      className="text-xs underline text-white/70"
+                    >
+                      Open in new tab
+                    </button>
+                  </div>
+                }
+              >
+                {numPages && Array.from({ length: numPages }, (_, i) => (
+                  <div
+                    key={i + 1}
+                    className={i + 1 !== pageNumber ? "hidden" : undefined}
+                  >
+                    <Page
+                      pageNumber={i + 1}
+                      width={Math.min(window.innerWidth - 48, 800)}
+                      renderTextLayer={true}
+                      renderAnnotationLayer={true}
+                    />
+                  </div>
+                ))}
+              </Document>
+            </div>
+
+            {/* Page controls */}
+            {numPages && numPages > 1 && (
+              <div className="flex items-center gap-4 bg-black/40 px-5 py-2.5 rounded-full sticky bottom-4">
+                <button
+                  onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+                  disabled={pageNumber <= 1}
+                  className="text-white disabled:opacity-30 hover:text-white/70 transition-colors"
+                >
+                  <FaChevronLeft size={14} />
+                </button>
+                <span className="text-white text-xs font-bold">{pageNumber} / {numPages}</span>
+                <button
+                  onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
+                  disabled={pageNumber >= numPages}
+                  className="text-white disabled:opacity-30 hover:text-white/70 transition-colors"
+                >
+                  <FaChevronRight size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

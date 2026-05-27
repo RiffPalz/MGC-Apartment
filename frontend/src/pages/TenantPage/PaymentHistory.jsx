@@ -282,17 +282,25 @@ export default function PaymenthisCards() {
 
       {/* DETAIL MODAL */}
       {detailModal && (
-        <div className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="bg-[#5c1f10] h-1.5 w-full" />
-            <div className="p-7">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-black text-[#330101] text-base uppercase tracking-widest">Payment Details</h3>
-                <button onClick={() => setDetailModal(null)} className="p-2 rounded-xl hover:bg-[#FDF2ED] text-[#330101]/40 hover:text-[#D96648] transition-all">
+        <div className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 md:p-6">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden">
+            {/* Sticky accent bar + header */}
+            <div className="shrink-0">
+              <div className="bg-[#5c1f10] h-1.5 w-full rounded-t-3xl" />
+              <div className="flex items-center justify-between px-5 sm:px-7 pt-5 sm:pt-6 pb-4">
+                <h3 className="font-black text-[#330101] text-sm sm:text-base uppercase tracking-widest">Payment Details</h3>
+                <button
+                  onClick={() => setDetailModal(null)}
+                  className="p-2 rounded-xl hover:bg-[#FDF2ED] text-[#330101]/40 hover:text-[#D96648] transition-all shrink-0"
+                >
                   <FaTimes size={16} />
                 </button>
               </div>
-              <div className="space-y-3">
+            </div>
+
+            {/* Scrollable body */}
+            <div className="overflow-y-auto flex-1 px-5 sm:px-7 pb-5 sm:pb-7">
+              <div className="space-y-0">
                 {[
                   ["Category", detailModal.category],
                   ["Billing Month", fmt(detailModal.billing_month)],
@@ -304,18 +312,25 @@ export default function PaymenthisCards() {
                   ["Reference #", detailModal.paymentType === "GCash" ? (detailModal.referenceNumber || "—") : "—"],
                   ["AR #", detailModal.paymentType === "Cash" ? (detailModal.arNumber || "—") : "—"],
                 ].map(([label, val]) => (
-                  <div key={label} className="flex justify-between items-center py-2.5 border-b border-[#F2DED4] last:border-0">
-                    <span className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest">{label}</span>
-                    <span className="text-sm font-bold text-[#330101]">{val}</span>
+                  <div key={label} className="flex justify-between items-center py-2.5 border-b border-[#F2DED4] last:border-0 gap-4">
+                    <span className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest shrink-0">{label}</span>
+                    <span className="text-sm font-bold text-[#330101] text-right wrap-break-word min-w-0">{val}</span>
                   </div>
                 ))}
               </div>
+
               {detailModal.receipt_image && (
                 <div className="mt-5">
-                  <p className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest mb-2">Receipt</p>
-                  <a href={detailModal.receipt_image} target="_blank" rel="noopener noreferrer">
-                    <img src={detailModal.receipt_image} alt="Receipt" className="w-full rounded-2xl border border-[#F2DED4] object-cover max-h-48" />
+                  <p className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest mb-3">Receipt</p>
+                  <a href={detailModal.receipt_image} target="_blank" rel="noopener noreferrer" className="block">
+                    <img
+                      src={detailModal.receipt_image}
+                      alt="Receipt"
+                      className="w-full rounded-2xl border border-[#F2DED4] object-contain bg-[#FFF9F6]"
+                      style={{ maxHeight: "clamp(180px, 40vh, 320px)" }}
+                    />
                   </a>
+                  <p className="text-[10px] text-[#330101]/30 text-center mt-2 font-medium">Tap image to view full size</p>
                 </div>
               )}
             </div>

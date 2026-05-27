@@ -266,7 +266,7 @@ export default function AdminTenants() {
               <div className="flex flex-col sm:flex-row gap-3 sm:items-center w-full lg:w-auto">
                 <div className="overflow-x-auto custom-scrollbar w-full sm:w-auto pb-1 sm:pb-0 -mb-1 sm:mb-0">
                   <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
-                    {["All", "Active", "Completed", "Terminated", "No Contract"].map((f) => (
+                    {["All", "Active", "Completed", "Terminated", "Expired", "No Contract"].map((f) => (
                       <button
                         key={f}
                         onClick={() => { setLeaseFilter(f); setPage(1); }}
@@ -499,7 +499,7 @@ export default function AdminTenants() {
 
       {/* ── CREATE TENANT MODAL (FORM) ── */}
       {createModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[40] p-4 no-print animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-40 p-4 no-print animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/80 shrink-0">
               <div>
@@ -702,6 +702,7 @@ function StatusBadge({ status }) {
     if (s === "Active") return "bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm";
     if (s === "Completed") return "bg-blue-50 text-blue-600 border-blue-100 shadow-sm";
     if (s === "Terminated") return "bg-red-50 text-red-600 border-red-100 shadow-sm";
+    if (s === "Expired") return "bg-orange-50 text-orange-600 border-orange-100 shadow-sm";
     return "bg-slate-100 text-slate-500 border-slate-200";
   };
 
