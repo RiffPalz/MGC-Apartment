@@ -228,6 +228,46 @@ export const editContract = async (contractId, updates, adminId) => {
 };
 
 export const getAdminDashboardData = async () => {
+  // Auto-expire any Active contracts whose end_date has passed before building the dashboard
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split("T")[0];
+
+  const toExpire = await Contract.findAll({
+    where: { status: "Active", end_date: { [Op.lte]: todayStr } },
+    include: [
+      { model: Unit, as: "unit", attributes: ["unit_number"] },
+      { model: User, as: "tenants", attributes: ["ID", "fullName"], through: { attributes: [] } },
+    ],
+  });
+
+  for (const contract of toExpire) {
+    await contract.update({ status: "Expired" });
+    const unitNumber = contract.unit?.unit_number ?? "";
+    const fmtDate = (d) =>
+      new Date(d).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" });
+    for (const tenant of contract.tenants) {
+      await createNotification({
+        userId: tenant.ID,
+        role: "tenant",
+        type: "contract expired",
+        title: "Contract Expired",
+        message: `Your contract for Unit ${unitNumber} has expired as of ${fmtDate(contract.end_date)}.`,
+        referenceId: contract.ID,
+        referenceType: "contract",
+      });
+    }
+    await createNotification({
+      role: "admin",
+      type: "contract expired",
+      title: "Contract Expired",
+      message: `Contract for Unit ${unitNumber} has expired as of ${fmtDate(contract.end_date)}.`,
+      referenceId: contract.ID,
+      referenceType: "contract",
+    });
+    console.log(`[Auto-Expire] Contract ${contract.ID} (Unit ${unitNumber}) marked Expired.`);
+  }
+
   const units = await Unit.findAll({
     include: [{
       model: Contract,
@@ -310,7 +350,7 @@ export const getExpiringContracts = async () => {
 
   const contracts = await Contract.findAll({
     where: {
-      status: "Active",
+      status: "Active",   // only Active — Expired ones are already gone
       end_date: {
         [Op.between]: [today.toISOString().split("T")[0], next30Days.toISOString().split("T")[0]],
       },

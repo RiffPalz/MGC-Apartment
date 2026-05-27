@@ -7,6 +7,7 @@ import User from "../models/user.js";
 import Unit from "../models/unit.js";
 import { sendSMS, sendSMSBulk } from "./sms.js";
 import { sms } from "./smsTemplates.js";
+import { createNotification } from "../services/notificationService.js";
 
 export const startSystemCron = () => {
   // Runs every day at midnight
@@ -15,16 +16,74 @@ export const startSystemCron = () => {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split("T")[0];
     const day = today.getDate();
 
-    // Deactivate tenants 3 days after contract termination
+    // ── 1. AUTO-EXPIRE contracts whose end_date has passed ──────────────────
+    // Covers both natural expiry AND early termination (vacate_date was set as end_date on approval)
+    const expiredContracts = await Contract.findAll({
+      where: {
+        status: "Active",
+        end_date: { [Op.lte]: todayStr },
+      },
+      include: [
+        { model: Unit, as: "unit", attributes: ["ID", "unit_number"] },
+        {
+          model: User,
+          as: "tenants",
+          attributes: ["ID", "fullName", "contactNumber"],
+          through: { attributes: [] },
+        },
+      ],
+    });
+
+    for (const contract of expiredContracts) {
+      await contract.update({ status: "Expired" });
+      console.log(`[Cron] Contract ${contract.ID} (Unit ${contract.unit?.unit_number}) expired.`);
+
+      const unitNumber = contract.unit?.unit_number ?? "";
+      const endDate = contract.end_date;
+
+      for (const tenant of contract.tenants) {
+        // In-app notification
+        await createNotification({
+          userId: tenant.ID,
+          role: "tenant",
+          type: "contract expired",
+          title: "Contract Expired",
+          message: `Your contract for Unit ${unitNumber} has expired as of ${new Date(endDate).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}.`,
+          referenceId: contract.ID,
+          referenceType: "contract",
+        });
+      }
+
+      // Admin notification
+      await createNotification({
+        role: "admin",
+        type: "contract expired",
+        title: "Contract Expired",
+        message: `Contract for Unit ${unitNumber} has expired as of ${new Date(endDate).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}.`,
+        referenceId: contract.ID,
+        referenceType: "contract",
+      });
+
+      // SMS to tenants
+      const tenantContacts = contract.tenants.map((t) => t.contactNumber).filter(Boolean);
+      if (tenantContacts.length) {
+        sendSMSBulk(tenantContacts, sms.contractExpired(unitNumber, endDate));
+      }
+    }
+
+    // ── 2. DEACTIVATE tenants 3 days after contract Terminated OR Expired ───
     const threeDaysAgo = new Date(today);
     threeDaysAgo.setDate(today.getDate() - 3);
+    const threeDaysAgoStr = threeDaysAgo.toISOString().split("T")[0];
 
+    // Terminated: use termination_date
     const expiredTerminations = await Contract.findAll({
       where: {
         status: "Terminated",
-        termination_date: { [Op.lte]: threeDaysAgo.toISOString().split("T")[0] },
+        termination_date: { [Op.lte]: threeDaysAgoStr },
       },
       include: [
         { model: Unit, as: "unit", attributes: ["ID", "unit_number"] },
@@ -41,18 +100,37 @@ export const startSystemCron = () => {
       for (const tenant of contract.tenants) {
         if (tenant.status !== "Declined") {
           await User.update({ status: "Declined" }, { where: { ID: tenant.ID } });
-          console.log(`[Cron] Deactivated tenant ${tenant.ID} (${tenant.fullName}) after 3-day grace period.`);
+          console.log(`[Cron] Deactivated tenant ${tenant.ID} (${tenant.fullName}) — 3-day grace after termination.`);
         }
       }
     }
 
-    // Auto-complete expired active contracts
-    await Contract.update(
-      { status: "Completed" },
-      { where: { end_date: { [Op.lt]: today }, status: "Active" } }
-    );
+    // Expired: use end_date as the effective end
+    const expiredGrace = await Contract.findAll({
+      where: {
+        status: "Expired",
+        end_date: { [Op.lte]: threeDaysAgoStr },
+      },
+      include: [
+        {
+          model: User,
+          as: "tenants",
+          attributes: ["ID", "fullName", "contactNumber", "status"],
+          through: { attributes: [] },
+        },
+      ],
+    });
 
-    // Contract expiry SMS reminders (30 days & 5 days)
+    for (const contract of expiredGrace) {
+      for (const tenant of contract.tenants) {
+        if (tenant.status !== "Declined") {
+          await User.update({ status: "Declined" }, { where: { ID: tenant.ID } });
+          console.log(`[Cron] Deactivated tenant ${tenant.ID} (${tenant.fullName}) — 3-day grace after expiry.`);
+        }
+      }
+    }
+
+    // ── 3. CONTRACT EXPIRY SMS REMINDERS (30 days & 5 days) ─────────────────
     const in30 = new Date(today);
     in30.setDate(today.getDate() + 30);
     const in5 = new Date(today);
@@ -89,7 +167,7 @@ export const startSystemCron = () => {
       const unitNumber = contract.unit?.unit_number ?? "";
       const endDate = contract.end_date;
       const diffDays = Math.ceil((new Date(endDate) - today) / (1000 * 60 * 60 * 24));
-      const tenantContacts = contract.tenants.map((t) => t.contactNumber);
+      const tenantContacts = contract.tenants.map((t) => t.contactNumber).filter(Boolean);
       const tenantNames = contract.tenants.map((t) => t.fullName).join(", ");
 
       if (diffDays === 30) {
@@ -103,8 +181,8 @@ export const startSystemCron = () => {
       }
     }
 
-    // Generate monthly rent bills
-    const contracts = await Contract.findAll({
+    // ── 4. GENERATE MONTHLY RENT BILLS ───────────────────────────────────────
+    const activeContracts = await Contract.findAll({
       where: {
         start_date: { [Op.lte]: today },
         end_date: { [Op.gte]: today },
@@ -112,7 +190,7 @@ export const startSystemCron = () => {
       },
     });
 
-    for (const contract of contracts) {
+    for (const contract of activeContracts) {
       const billingDay = new Date(contract.start_date).getDate();
 
       if (billingDay === day) {
@@ -142,17 +220,12 @@ export const startSystemCron = () => {
             attributes: ["contactNumber"],
           });
           sendSMSBulk(tenants.map((t) => t.contactNumber), sms.billCreated("Rent", billingMonth));
-
           console.log(`Rent bill created for contract ${contract.ID}`);
         }
       }
     }
 
-    // Mark overdue payments and send SMS notifications
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-
-    // Helper: compute date string N days from today
+    // ── 5. PAYMENT OVERDUE MARKING & SMS ─────────────────────────────────────
     const offsetDate = (days) => {
       const d = new Date(today);
       d.setDate(d.getDate() + days);
@@ -161,7 +234,6 @@ export const startSystemCron = () => {
 
     const in3 = offsetDate(3);
 
-    // Fetch payments for SMS — only Unpaid/Overdue, with tenant contact info
     const paymentInclude = [{
       model: Contract,
       as: "contract",
@@ -173,7 +245,7 @@ export const startSystemCron = () => {
       }],
     }];
 
-    // 1. Due in 3 days — send reminder
+    // Due in 3 days — reminder
     const dueSoonPayments = await Payment.findAll({
       where: { due_date: in3, status: "Unpaid" },
       include: paymentInclude,
@@ -183,7 +255,7 @@ export const startSystemCron = () => {
       if (contacts.length) sendSMSBulk(contacts, sms.paymentDueSoon(p.category, p.due_date));
     }
 
-    // 2. Due today — send due-now alert
+    // Due today — alert
     const dueTodayPayments = await Payment.findAll({
       where: { due_date: todayStr, status: "Unpaid" },
       include: paymentInclude,
@@ -193,7 +265,7 @@ export const startSystemCron = () => {
       if (contacts.length) sendSMSBulk(contacts, sms.paymentDueToday(p.category, p.due_date));
     }
 
-    // 3. Mark overdue (past due date, still Unpaid) and send overdue SMS
+    // Mark overdue and send SMS
     const overduePayments = await Payment.findAll({
       where: { due_date: { [Op.lt]: todayStr }, status: "Unpaid" },
       include: paymentInclude,

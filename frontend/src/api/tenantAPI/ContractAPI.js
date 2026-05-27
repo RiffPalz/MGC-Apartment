@@ -22,6 +22,9 @@ export const fetchUserContracts = async () => {
 export const getContractPdfProxyUrl = (id) =>
   `${import.meta.env.VITE_BACKEND_URL}/users/contracts/${id}/pdf`;
 
+export const getTerminationRequestPdfProxyUrl = (id) =>
+  `${import.meta.env.VITE_BACKEND_URL}/users/contracts/termination-request/${id}/pdf`;
+
 export const submitTerminationRequest = async (data) => {
   const res = await api.post("/users/contracts/termination-request", data);
   return res.data;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "react-router-dom";
 import { Link as ScrollLink, animateScroll as scroll } from "react-scroll";
@@ -10,8 +10,6 @@ import { useConfig } from "../context/ConfigContext";
 export default function Navbar() {
   const [isOpen, setIsOpen]       = useState(false);
   const [scrolled, setScrolled]   = useState(false);
-  const [showNavbar, setShowNavbar] = useState(true);
-  const lastScrollY = useRef(0);
 
   const { config } = useConfig();
   const mgcName = config?.mgc_name || "MGC";
@@ -19,14 +17,11 @@ export default function Navbar() {
   const location    = useLocation();
   const isLandingPage = location.pathname === "/";
 
-  /* scroll hide / hero color */
+  /* hero color only — navbar always stays visible */
   useEffect(() => {
     const handleScroll = () => {
-      const y = window.scrollY;
-      setShowNavbar(!(y > lastScrollY.current && y > 120));
-      lastScrollY.current = y;
       const hero = document.getElementById("hero");
-      if (hero) setScrolled(y > hero.offsetHeight - 100);
+      if (hero) setScrolled(window.scrollY > hero.offsetHeight - 100);
     };
     window.addEventListener("scroll", handleScroll);
     handleScroll();
@@ -108,8 +103,7 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`fixed top-0 w-full z-50 transition-transform duration-500 ease-in-out
-          ${showNavbar ? "translate-y-0" : "-translate-y-full"}
+        className={`fixed top-0 w-full z-50 transition-all duration-500 ease-in-out
           ${scrolled ? "bg-white/90 backdrop-blur-lg py-3 shadow-md" : "bg-transparent py-5 md:py-8"}`}
       >
         <div className="max-w-7xl mx-auto px-5 md:px-12">
