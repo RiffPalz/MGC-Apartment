@@ -27,7 +27,8 @@ export const createPayment = async ({ contract_id, category, billing_month, amou
   const today = new Date().setHours(0, 0, 0, 0);
   if (new Date(due_date).setHours(0, 0, 0, 0) < today) throw new Error("Due date cannot be in the past.");
 
-  const existing = await Payment.findOne({ where: { contract_id, category, billing_month } });
+  // Only check non-deleted records for duplicates
+  const existing = await Payment.findOne({ where: { contract_id, category, billing_month, is_deleted: { [Op.or]: [false, null] } } });
   if (existing) throw new Error("Payment for this month already exists.");
 
   const payment = await Payment.create({
@@ -64,15 +65,17 @@ export const createPayment = async ({ contract_id, category, billing_month, amou
 };
 
 export const getAllPayments = async () => {
-  // Eagerly mark any unpaid payments past their due date as Overdue before returning
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  // Mark overdue — exclude hard-deleted and soft-deleted rows
   await Payment.update(
     { status: "Overdue" },
-    { where: { due_date: { [Op.lt]: todayStr }, status: "Unpaid" } }
+    { where: { due_date: { [Op.lt]: todayStr }, status: "Unpaid", is_deleted: { [Op.or]: [false, null] } } }
   );
 
   return await Payment.findAll({
+    where: { is_deleted: { [Op.or]: [false, null] } },
     include: [{
       model: Contract,
       as: "contract",
@@ -87,8 +90,7 @@ export const getAllPayments = async () => {
         },
       ],
     }],
-  
-    order: [["billing_month", "DESC"]], 
+    order: [["billing_month", "DESC"]],
   });
 };
 
@@ -174,20 +176,33 @@ export const getMonthlySummary = async (billingMonth) => {
 };
 
 export const getPaymentDashboard = async () => {
-  // Sync overdue status before computing dashboard counts
+  // Sync overdue status before computing dashboard counts (skip soft-deleted bills)
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   await Payment.update(
     { status: "Overdue" },
-    { where: { due_date: { [Op.lt]: todayStr }, status: "Unpaid" } }
+    { where: { due_date: { [Op.lt]: todayStr }, status: "Unpaid", is_deleted: { [Op.or]: [false, null] } } }
   );
 
-  const totalCollected = (await Payment.sum("amount", { where: { status: "Paid" } })) || 0;
-  const pendingVerification = await Payment.count({ where: { status: "Pending Verification" } });
-  const overduePayments = await Payment.count({ where: { status: "Overdue" } });
+  const totalCollected = (await Payment.sum("amount", { where: { status: "Paid", is_deleted: { [Op.or]: [false, null] } } })) || 0;
+  const pendingVerification = await Payment.count({ where: { status: "Pending Verification", is_deleted: { [Op.or]: [false, null] } } });
+  const overduePayments = await Payment.count({ where: { status: "Overdue", is_deleted: { [Op.or]: [false, null] } } });
+
+  // Current billing month (YYYY-MM-01)
+  const currentMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const currentMonthEndStr = `${currentMonthEnd.getFullYear()}-${String(currentMonthEnd.getMonth() + 1).padStart(2, "0")}-${String(currentMonthEnd.getDate()).padStart(2, "0")}`;
+
+  const totalMonthlyCollected = (await Payment.sum("amount", {
+    where: {
+      status: "Paid",
+      is_deleted: { [Op.or]: [false, null] },
+      billing_month: { [Op.between]: [currentMonthStart, currentMonthEndStr] },
+    },
+  })) || 0;
 
   const unpaidRecords = await Payment.findAll({
-    where: { status: "Unpaid" },
+    where: { status: "Unpaid", is_deleted: { [Op.or]: [false, null] } },
     attributes: ["ID"],
     include: [{
       model: Contract,
@@ -213,7 +228,7 @@ export const getPaymentDashboard = async () => {
     raw: true,
   });
 
-  return { totalCollected, pendingVerification, overduePayments, unpaidBills, unpaidUnitNumbers, monthlyRevenue };
+  return { totalCollected, totalMonthlyCollected, currentBillingMonth: currentMonthStart, pendingVerification, overduePayments, unpaidBills, unpaidUnitNumbers, monthlyRevenue };
 };
 
 export const updatePayment = async (paymentId, data, adminId) => {
@@ -249,13 +264,40 @@ export const updatePayment = async (paymentId, data, adminId) => {
 
 export const deletePayment = async (paymentId, adminId) => {
   const payment = await Payment.findByPk(paymentId, {
-    include: [{ model: Contract, as: "contract", include: [{ model: Unit, as: "unit", attributes: ["unit_number"] }] }],
+    include: [{
+      model: Contract,
+      as: "contract",
+      include: [
+        { model: Unit, as: "unit", attributes: ["unit_number"] },
+        { model: User, as: "tenants", attributes: ["ID", "contactNumber"], through: { attributes: [] } },
+      ],
+    }],
   });
   if (!payment) throw new Error("Payment not found");
 
+  // Only unpaid bills (Unpaid / Overdue) can be deleted
+  if (payment.status === "Paid") throw new Error("Paid bills cannot be deleted.");
+  if (payment.status === "Pending Verification") throw new Error("Bills pending verification cannot be deleted. Reject the receipt first.");
+
   const unitNumber = payment.contract?.unit?.unit_number ?? "—";
   const category = payment.category;
+  const tenant = payment.contract?.tenants?.[0];
+
+  // Hard delete — removes the row entirely so the same bill can be re-created
   await payment.destroy();
+
+  // Notify the tenant in-app
+  if (tenant?.ID) {
+    await createNotification({
+      userId: tenant.ID,
+      role: "tenant",
+      type: "bill deleted",
+      title: "Bill Removed",
+      message: `Your ${category} bill has been removed by the admin.`,
+      referenceId: paymentId,
+      referenceType: "payment",
+    });
+  }
 
   await createActivityLog({
     userId: adminId,
@@ -265,4 +307,7 @@ export const deletePayment = async (paymentId, adminId) => {
     referenceId: paymentId,
     referenceType: "payment",
   });
+
+  // Return tenant ID so the controller can push a real-time socket event
+  return { tenantId: tenant?.ID ?? null };
 };

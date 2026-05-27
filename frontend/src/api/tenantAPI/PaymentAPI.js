@@ -22,3 +22,10 @@ export const uploadReceipt = async (paymentId, formData) => {
   paymentsCacheTime = 0;
   return response.data;
 };
+
+// Call this to force a fresh fetch on the next fetchMyPayments call
+// (used when a socket event signals the admin changed something)
+export const bustPaymentsCache = () => {
+  paymentsCache = null;
+  paymentsCacheTime = 0;
+};

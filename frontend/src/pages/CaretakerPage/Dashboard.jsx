@@ -115,7 +115,7 @@ export default function CaretakerDashboard() {
         <div className="w-full flex flex-col gap-4 sm:gap-5 font-sans text-slate-800">
 
             {/* Welcome Banner */}
-            <div className="bg-gradient-to-r from-[#3a0f08] to-[#db6747] rounded-2xl px-6 sm:px-8 py-5 flex items-center justify-between shadow-sm relative overflow-hidden shrink-0">
+            <div className="bg-linear-to-r from-[#3a0f08] to-[#db6747] rounded-2xl px-6 sm:px-8 py-5 flex items-center justify-between shadow-sm relative overflow-hidden shrink-0">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
                 <div className="relative z-10">
                     <p className="text-white/70 text-[10px] uppercase tracking-widest font-bold">Welcome back</p>
@@ -158,7 +158,7 @@ export default function CaretakerDashboard() {
                     <SectionHeader icon={<MdApartment size={15} />} title="Unit Occupancy" sub={`Current status · ${unitStats.total} units`} />
 
                     {/* Doughnut */}
-                    <div className="relative flex-1 min-h-[160px] flex items-center justify-center my-4">
+                    <div className="relative flex-1 min-h-40 flex items-center justify-center my-4">
                         {unitStats.total > 0 ? (
                         <Doughnut
                             data={{

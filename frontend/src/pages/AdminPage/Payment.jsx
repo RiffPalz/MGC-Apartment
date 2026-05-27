@@ -306,7 +306,13 @@ export default function AdminPayment() {
 
           {/* STAT CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <StatCard icon={<FaMoneyBillWave size={18} />} label="Total Collected" value={`₱${Number(dashboard.totalCollected ?? 0).toLocaleString()}`} color="text-emerald-500" bg="bg-emerald-50" />
+            <StatCard
+              icon={<FaMoneyBillWave size={18} />}
+              label={`Total Monthly Collected${dashboard.currentBillingMonth ? ` — ${new Date(dashboard.currentBillingMonth).toLocaleDateString("en-US", { month: "long", year: "numeric" })}` : ""}`}
+              value={`₱${Number(dashboard.totalMonthlyCollected ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              color="text-emerald-500"
+              bg="bg-emerald-50"
+            />
             <StatCard icon={<FaClock size={18} />} label="Pending Verification" value={dashboard.pendingVerification ?? 0} color="text-blue-500" bg="bg-blue-50" />
             <StatCard icon={<FaExclamationCircle size={18} />} label="Overdue" value={dashboard.overduePayments ?? 0} color="text-amber-500" bg="bg-amber-50" />
             <StatCard icon={<FaCheckCircle size={18} />} label="Unpaid Bills" value={dashboard.unpaidBills ?? 0} color="text-red-500" bg="bg-red-50" />

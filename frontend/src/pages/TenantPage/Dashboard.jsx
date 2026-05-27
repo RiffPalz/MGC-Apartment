@@ -13,14 +13,16 @@ import {
   FaCalendarAlt,
   FaFileInvoice,
   FaExternalLinkAlt,
+  FaBan,
 } from "react-icons/fa";
 
 import { fetchTenantProfile } from "../../api/tenantAPI/tenantAuth";
 import { fetchAnnouncements, fetchSingleAnnouncement } from "../../api/tenantAPI/AnnouncementAPI";
-import { fetchMyPayments, uploadReceipt } from "../../api/tenantAPI/PaymentAPI";
+import { fetchMyPayments, uploadReceipt, bustPaymentsCache } from "../../api/tenantAPI/PaymentAPI";
 import { fetchUserContracts } from "../../api/tenantAPI/ContractAPI";
 import ModalPortal from "../../components/ModalPortal";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
+import { useSocketEvent } from "../../hooks/useSocketEvent";
 
 export default function DashboardCards() {
   const [profile, setProfile] = useState(null);
@@ -53,7 +55,33 @@ export default function DashboardCards() {
   const [utilityBillUrl, setUtilityBillUrl] = useState(null);
 
   useEffect(() => {
-    const loadData = async () => {
+    loadData();
+  }, []);
+
+  // Re-fetch bills immediately when admin deletes or changes a payment
+  useSocketEvent("payment_updated", () => {
+    bustPaymentsCache();
+    loadBills();
+  });
+
+  const loadBills = async () => {
+    try {
+      const payRes = await fetchMyPayments();
+      if (payRes.success && payRes.payments) {
+        const rent = payRes.payments.find(
+          (p) => p.type === "Rent" || p.category === "Rent",
+        );
+        const util = payRes.payments.find(
+          (p) => p.type === "Utilities" || p.category === "Utilities",
+        );
+        setBills({ rent: rent || null, utilities: util || null });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadData = async () => {
       try {
         const profileRes = await fetchTenantProfile();
         setProfile(profileRes.user);
@@ -96,9 +124,7 @@ export default function DashboardCards() {
       } catch (err) {
         console.error(err);
       }
-    };
-    loadData();
-  }, []);
+  };
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -272,7 +298,7 @@ export default function DashboardCards() {
           </div>
 
           {/* RIGHT: Announcements (4 cols) */}
-          <div className="lg:col-span-4 min-h-[300px] lg:h-auto lg:min-h-[320px]">
+          <div className="lg:col-span-4 min-h-[300px] lg:h-auto lg:min-h-80">
             <div className="bg-[#7a2e1a] rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-7 text-[#FFEDE1] shadow-xl flex flex-col relative overflow-hidden h-full" style={{ minHeight: "300px" }}>
               <div className="flex items-center justify-between mb-4 sm:mb-5">
                 <h2 className="flex items-center gap-2 font-bold text-sm sm:text-base">
@@ -550,21 +576,28 @@ function StatCard({ icon, label, value, color, bg }) {
 }
 
 function PaymentCard({ title, bill, onPay, utilityBillFile, onViewBill }) {
+  const isDeleted = bill?.is_deleted === true || bill?.is_deleted === 1;
+
   const getStatusStyles = (status) => {
     switch (status) {
       case "Paid":                  return { bg: "#DCFCE7", text: "#22C55E", label: "PAID" };
-      case "Pending Verification":  return { bg: "#FEF3C7", text: "#F59E0B", label: "VERIFYING" }; // Shortened for mobile
+      case "Pending Verification":  return { bg: "#FEF3C7", text: "#F59E0B", label: "VERIFYING" };
       case "Unpaid":                return { bg: "#FEE2E2", text: "#EF4444", label: "UNPAID" };
       case "Overdue":               return { bg: "#FEE2E2", text: "#DC2626", label: "OVERDUE" };
       default:                      return { bg: "#F3F4F6", text: "#6B7280", label: "NO INVOICE" };
     }
   };
 
-  const style = getStatusStyles(bill?.status);
-  const isPaid = bill?.status === "Paid" || bill?.status === "Pending Verification";
+  // Deleted bills always show a grey "DELETED" badge
+  const style = isDeleted
+    ? { bg: "#F1F5F9", text: "#64748B", label: "DELETED" }
+    : getStatusStyles(bill?.status);
+
+  const isPaid = !isDeleted && (bill?.status === "Paid" || bill?.status === "Pending Verification");
 
   return (
-    <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-[2rem] shadow-sm border border-[#F2DED4] flex flex-col justify-between h-full group hover:border-[#f7b094] transition-all">
+    <div className={`bg-white p-5 sm:p-7 rounded-2xl sm:rounded-4xl shadow-sm border flex flex-col justify-between h-full transition-all
+      ${isDeleted ? "border-slate-200 opacity-70" : "border-[#F2DED4] group hover:border-[#f7b094]"}`}>
       <div>
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-3 sm:mb-5">
           <p className="text-[#330101]/50 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest leading-tight">{title}</p>
@@ -575,16 +608,23 @@ function PaymentCard({ title, bill, onPay, utilityBillFile, onViewBill }) {
         </div>
         <h2 className="text-3xl sm:text-4xl font-black text-[#330101] tracking-tight">
           <span className="text-base sm:text-lg font-medium text-[#330101]/30 mr-1 sm:mr-1.5">₱</span>
-          {bill?.status === "Paid"
+          {isDeleted
             ? "0.00"
-            : bill?.amount
-              ? parseFloat(bill.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })
-              : "0.00"}
+            : bill?.status === "Paid"
+              ? "0.00"
+              : bill?.amount
+                ? parseFloat(bill.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                : "0.00"}
         </h2>
       </div>
 
       <div className="mt-5 sm:mt-7">
-        {!isPaid ? (
+        {isDeleted ? (
+          // Deleted bill — fully disabled, no action possible
+          <div className="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-400 text-[10px] sm:text-xs font-bold py-3.5 sm:py-4 rounded-xl sm:rounded-2xl border border-dashed border-slate-200 uppercase tracking-widest cursor-not-allowed select-none">
+            <FaBan className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Bill Removed
+          </div>
+        ) : !isPaid ? (
           <button
             onClick={onPay}
             disabled={!bill}
@@ -598,8 +638,8 @@ function PaymentCard({ title, bill, onPay, utilityBillFile, onViewBill }) {
           </div>
         )}
 
-        {/* View Utility Bill button — only on utilities card, only when a file exists and bill is not paid */}
-        {onViewBill && utilityBillFile && bill?.status !== "Paid" && (
+        {/* View Utility Bill button — only when not deleted, not paid, and file exists */}
+        {!isDeleted && onViewBill && utilityBillFile && bill?.status !== "Paid" && (
           <button
             onClick={onViewBill}
             className="mt-2.5 w-full flex items-center justify-center gap-2 text-[10px] sm:text-xs font-bold py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-[#F2DED4] text-[#D96648] hover:bg-[#FDF2ED] transition-all uppercase tracking-widest active:scale-[0.98]"
