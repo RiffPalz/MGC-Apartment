@@ -56,6 +56,7 @@ export default function ContractCards() {
         ]);
         if (contractRes.success && contractRes.contracts.length > 0) {
           const active = contractRes.contracts.find((c) => c.status === "Active")
+            || contractRes.contracts.find((c) => c.status === "Expired")
             || contractRes.contracts.find((c) => c.status === "Terminated")
             || contractRes.contracts[0];
           setContract(active);
@@ -75,6 +76,8 @@ export default function ContractCards() {
   }, []);
 
   const isTerminated = contract?.status === "Terminated";
+  const isExpired    = contract?.status === "Expired";
+  const isInactive   = isTerminated || isExpired;
   const isTerminationApproved = terminationRequest?.status === "Approved";
   const activePdfFile = isTerminated
     ? (contract?.termination_pdf || contract?.contract_file)
@@ -146,6 +149,7 @@ export default function ContractCards() {
       case "Active":     return { bg: "#DCFCE7", text: "#16A34A", icon: <FaCheckCircle /> };
       case "Completed":  return { bg: "#EEF2FF", text: "#4F46E5", icon: <FaCheckCircle /> };
       case "Terminated": return { bg: "#FEE2E2", text: "#DC2626", icon: <FaExclamationTriangle /> };
+      case "Expired":    return { bg: "#FEF3C7", text: "#D97706", icon: <FaClock /> };
       default:           return { bg: "#FEF3C7", text: "#D97706", icon: <FaHourglassHalf /> };
     }
   };
@@ -182,10 +186,10 @@ export default function ContractCards() {
 
         {/* STAT TILES */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <StatTile icon={<FaCalendarAlt />} label="Start Date"  value={isTerminated ? "---" : fmt(contract.start_date)}  color="text-indigo-500" bg="bg-indigo-50" />
-          <StatTile icon={<FaCalendarAlt />} label="End Date"    value={isTerminated ? "---" : fmt(contract.end_date)}    color="text-[#D96648]"  bg="bg-[#FDF2ED]" />
+          <StatTile icon={<FaCalendarAlt />} label="Start Date"  value={isInactive ? "---" : fmt(contract.start_date)}  color="text-indigo-500" bg="bg-indigo-50" />
+          <StatTile icon={<FaCalendarAlt />} label="End Date"    value={isInactive ? "---" : fmt(contract.end_date)}    color="text-[#D96648]"  bg="bg-[#FDF2ED]" />
           <StatTile icon={<FaMoneyBillWave />} label="Monthly Rent"
-            value={isTerminated ? "---" : `₱${parseFloat(contract.rent_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+            value={isInactive ? "---" : `₱${parseFloat(contract.rent_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
             color="text-emerald-600" bg="bg-emerald-50"
           />
           <div className="bg-[#5c1f10] p-4 sm:p-5 rounded-3xl shadow-sm flex items-center gap-3 sm:gap-4">

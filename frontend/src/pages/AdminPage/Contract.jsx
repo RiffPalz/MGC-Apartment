@@ -17,9 +17,10 @@ import {
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 
 const STATUS_CONFIG = {
-  Active: { color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  Completed: { color: "bg-blue-50 text-blue-700 border-blue-200" },
+  Active:     { color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  Completed:  { color: "bg-blue-50 text-blue-700 border-blue-200" },
   Terminated: { color: "bg-red-50 text-red-700 border-red-200" },
+  Expired:    { color: "bg-amber-50 text-amber-700 border-amber-200" },
 };
 
 const fmt = (d) =>
@@ -266,6 +267,7 @@ export default function AdminContract() {
     Active: contracts.filter((c) => c.status === "Active").length,
     Completed: contracts.filter((c) => c.status === "Completed").length,
     Terminated: contracts.filter((c) => c.status === "Terminated").length,
+    Expired: contracts.filter((c) => c.status === "Expired").length,
   };
 
   const occupiedUnits = allUnits.filter((u) => u.status === "Ready");
@@ -335,11 +337,12 @@ export default function AdminContract() {
         <div className="max-w-[1600px] w-full mx-auto flex flex-col gap-4 sm:gap-5 flex-1">
 
           {/* STAT CARDS */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <StatCard icon={<FaFileContract size={16} />} label="Total" value={counts.All} color="text-blue-500" bg="bg-blue-50" />
-            <StatCard icon={<FaCheckCircle size={16} />} label="Active" value={counts.Active} color="text-emerald-500" bg="bg-emerald-50" />
-            <StatCard icon={<FaClock size={16} />} label="Completed" value={counts.Completed} color="text-blue-500" bg="bg-blue-50" />
-            <StatCard icon={<FaTimesCircle size={16} />} label="Terminated" value={counts.Terminated} color="text-red-500" bg="bg-red-50" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            <StatCard icon={<FaFileContract size={16} />} label="Total"      value={counts.All}        color="text-blue-500"    bg="bg-blue-50" />
+            <StatCard icon={<FaCheckCircle size={16} />}  label="Active"     value={counts.Active}     color="text-emerald-500" bg="bg-emerald-50" />
+            <StatCard icon={<FaClock size={16} />}        label="Completed"  value={counts.Completed}  color="text-blue-500"    bg="bg-blue-50" />
+            <StatCard icon={<FaTimesCircle size={16} />}  label="Terminated" value={counts.Terminated} color="text-red-500"     bg="bg-red-50" />
+            <StatCard icon={<FaClock size={16} />}        label="Expired"    value={counts.Expired}    color="text-amber-500"   bg="bg-amber-50" />
           </div>
 
           {/* TOOLBAR */}
@@ -361,7 +364,7 @@ export default function AdminContract() {
               <div className="flex flex-col sm:flex-row gap-3 sm:items-center w-full lg:w-auto">
                 <div className="overflow-x-auto custom-scrollbar w-full sm:w-auto pb-1 sm:pb-0 -mb-1 sm:mb-0">
                   <div className="flex bg-slate-100 p-1 rounded-lg min-w-max">
-                    {["All", "Active", "Completed", "Terminated"].map((f) => (
+                    {["All", "Active", "Completed", "Terminated", "Expired"].map((f) => (
                       <button key={f} onClick={() => setStatusFilter(f)}
                         className={`px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all
                           ${statusFilter === f ? "bg-white text-[#db6747] shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>
@@ -467,7 +470,7 @@ export default function AdminContract() {
                                 className="p-2 rounded-md text-slate-400 hover:text-[#db6747] hover:bg-orange-50 transition-all active:scale-95">
                                 <FaEdit size={13} />
                               </button>
-                              {c.status === "Active" && (
+                              {(c.status === "Active" || c.status === "Expired") && (
                                 <>
                                   <button onClick={() => { setRenewModal(c); setRenewForm(EMPTY_RENEW); }} title="Renew"
                                     className="p-2 rounded-md text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all active:scale-95">
@@ -529,7 +532,7 @@ export default function AdminContract() {
                         <button onClick={() => openEdit(c)} className="flex-1 min-w-[30%] flex items-center justify-center gap-1.5 py-2.5 bg-orange-50 text-[#db6747] border border-orange-100 rounded-lg text-[10px] font-bold active:scale-[0.98] transition-transform">
                           <FaEdit size={12} /> Edit
                         </button>
-                        {c.status === "Active" && (
+                        {(c.status === "Active" || c.status === "Expired") && (
                           <>
                             <button onClick={() => { setRenewModal(c); setRenewForm(EMPTY_RENEW); }} className="flex-1 min-w-[30%] flex items-center justify-center gap-1.5 py-2.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-[10px] font-bold active:scale-[0.98] transition-transform">
                               <FaSync size={11} /> Renew
@@ -849,7 +852,7 @@ export default function AdminContract() {
                   onChange={(e) => setRenewForm((f) => ({ ...f, newEndDate: e.target.value }))}
                   className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#db6747]/30 focus:border-[#db6747] bg-slate-50 hover:bg-white transition-colors shadow-sm" />
               </div>
-              <p className="text-[10px] text-slate-400 leading-relaxed font-medium bg-blue-50 text-blue-700 px-3 py-2 rounded-lg border border-blue-100">
+              <p className="text-[10px] text-slate-400 leading-relaxed font-medium bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
                 The contract PDF will be automatically regenerated with the new dates.
               </p>
               <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end pt-4 sm:pt-6 border-t border-slate-100 mt-6 sm:mt-8">

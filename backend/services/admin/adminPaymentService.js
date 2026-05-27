@@ -1,4 +1,5 @@
 import { sequelize } from "../../config/database.js";
+import { Op } from "sequelize";
 import Payment from "../../models/payment.js";
 import Contract from "../../models/contract.js";
 import Unit from "../../models/unit.js";
@@ -164,7 +165,17 @@ export const getMonthlySummary = async (billingMonth) => {
 };
 
 export const getPaymentDashboard = async () => {
-  const totalCollected = (await Payment.sum("amount", { where: { status: "Paid" } })) || 0;
+  // Current month boundaries based on billing_month
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const totalCollected = (await Payment.sum("amount", {
+    where: {
+      status: "Paid",
+      billing_month: { [Op.gte]: monthStart, [Op.lt]: monthEnd },
+    },
+  })) || 0;
   const pendingVerification = await Payment.count({ where: { status: "Pending Verification" } });
   const overduePayments = await Payment.count({ where: { status: "Overdue" } });
 

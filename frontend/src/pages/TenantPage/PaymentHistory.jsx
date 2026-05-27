@@ -282,17 +282,25 @@ export default function PaymenthisCards() {
 
       {/* DETAIL MODAL */}
       {detailModal && (
-        <div className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="bg-[#5c1f10] h-1.5 w-full" />
-            <div className="p-7">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-black text-[#330101] text-base uppercase tracking-widest">Payment Details</h3>
-                <button onClick={() => setDetailModal(null)} className="p-2 rounded-xl hover:bg-[#FDF2ED] text-[#330101]/40 hover:text-[#D96648] transition-all">
-                  <FaTimes size={16} />
-                </button>
-              </div>
-              <div className="space-y-3">
+        <div className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
+            {/* Top accent bar */}
+            <div className="bg-[#5c1f10] h-1.5 w-full rounded-t-3xl shrink-0" />
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-4 shrink-0">
+              <h3 className="font-black text-[#330101] text-sm uppercase tracking-widest">Payment Details</h3>
+              <button
+                onClick={() => setDetailModal(null)}
+                className="p-2 rounded-xl hover:bg-[#FDF2ED] text-[#330101]/40 hover:text-[#D96648] transition-all"
+              >
+                <FaTimes size={16} />
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-1">
+              <div className="space-y-0">
                 {[
                   ["Category", detailModal.category],
                   ["Billing Month", fmt(detailModal.billing_month)],
@@ -304,18 +312,24 @@ export default function PaymenthisCards() {
                   ["Reference #", detailModal.paymentType === "GCash" ? (detailModal.referenceNumber || "—") : "—"],
                   ["AR #", detailModal.paymentType === "Cash" ? (detailModal.arNumber || "—") : "—"],
                 ].map(([label, val]) => (
-                  <div key={label} className="flex justify-between items-center py-2.5 border-b border-[#F2DED4] last:border-0">
-                    <span className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest">{label}</span>
-                    <span className="text-sm font-bold text-[#330101]">{val}</span>
+                  <div key={label} className="flex justify-between items-center py-3 border-b border-[#F2DED4] last:border-0 gap-4">
+                    <span className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest shrink-0">{label}</span>
+                    <span className="text-sm font-bold text-[#330101] text-right break-all">{val}</span>
                   </div>
                 ))}
               </div>
+
               {detailModal.receipt_image && (
-                <div className="mt-5">
-                  <p className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest mb-2">Receipt</p>
-                  <a href={detailModal.receipt_image} target="_blank" rel="noopener noreferrer">
-                    <img src={detailModal.receipt_image} alt="Receipt" className="w-full rounded-2xl border border-[#F2DED4] object-cover max-h-48" />
+                <div className="pt-4">
+                  <p className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest mb-3">Receipt</p>
+                  <a href={detailModal.receipt_image} target="_blank" rel="noopener noreferrer" className="block">
+                    <img
+                      src={detailModal.receipt_image}
+                      alt="Receipt"
+                      className="w-full rounded-2xl border border-[#F2DED4] object-contain max-h-64 sm:max-h-80 bg-[#FFF9F6]"
+                    />
                   </a>
+                  <p className="text-[9px] text-[#330101]/30 text-center mt-2 uppercase tracking-widest">Tap image to view full size</p>
                 </div>
               )}
             </div>
@@ -325,23 +339,27 @@ export default function PaymenthisCards() {
 
       {/* UPLOAD MODAL */}
       {uploadModal && (
-        <div className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="bg-[#f7b094] h-1.5 w-full" />
-            <div className="p-7">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-black text-[#330101] text-base uppercase tracking-widest">Submit Receipt</h3>
-                <button onClick={closeUpload} className="p-2 rounded-xl hover:bg-[#FDF2ED] text-[#330101]/40 hover:text-[#D96648] transition-all">
-                  <FaTimes size={16} />
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-[#330101]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
+            {/* Top accent bar */}
+            <div className="bg-[#f7b094] h-1.5 w-full rounded-t-3xl shrink-0" />
 
-              <div className="bg-[#FFF9F6] border border-[#F2DED4] rounded-2xl p-4 mb-5 flex justify-between items-center">
-                <div>
-                  <p className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest">{uploadModal.payment.category}</p>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-4 shrink-0">
+              <h3 className="font-black text-[#330101] text-sm uppercase tracking-widest">Submit Receipt</h3>
+              <button onClick={closeUpload} className="p-2 rounded-xl hover:bg-[#FDF2ED] text-[#330101]/40 hover:text-[#D96648] transition-all">
+                <FaTimes size={16} />
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-5">
+              <div className="bg-[#FFF9F6] border border-[#F2DED4] rounded-2xl p-4 flex justify-between items-center gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest truncate">{uploadModal.payment.category}</p>
                   <p className="font-black text-[#330101]">{fmtAmount(uploadModal.payment.amount)}</p>
                 </div>
-                <span className="text-[10px] font-black px-3 py-1.5 rounded-full uppercase"
+                <span className="text-[10px] font-black px-3 py-1.5 rounded-full uppercase shrink-0"
                   style={{ backgroundColor: STATUS_STYLES[uploadModal.payment.status]?.bg, color: STATUS_STYLES[uploadModal.payment.status]?.text }}>
                   {uploadModal.payment.status}
                 </span>
@@ -349,15 +367,15 @@ export default function PaymenthisCards() {
 
               {!paymentMethod ? (
                 <div className="space-y-3">
-                  <p className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest mb-3">Select Payment Method</p>
+                  <p className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest">Select Payment Method</p>
                   {[
                     { method: "Cash", icon: <FaWallet size={18} />, label: "Cash Payment", sub: "Upload physical receipt" },
                     { method: "GCash", icon: <FaMobileAlt size={18} />, label: "GCash Transfer", sub: "Reference number required" },
                   ].map(({ method, icon, label, sub }) => (
                     <button key={method} onClick={() => setPaymentMethod(method)}
                       className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[#F2DED4] hover:border-[#D96648] transition-all group">
-                      <div className="p-3 bg-[#FDF2ED] text-[#D96648] rounded-xl group-hover:bg-[#D96648] group-hover:text-white transition-all">{icon}</div>
-                      <div className="text-left">
+                      <div className="p-3 bg-[#FDF2ED] text-[#D96648] rounded-xl group-hover:bg-[#D96648] group-hover:text-white transition-all shrink-0">{icon}</div>
+                      <div className="text-left min-w-0">
                         <p className="font-bold text-sm text-[#330101]">{label}</p>
                         <p className="text-xs text-[#330101]/40">{sub}</p>
                       </div>
@@ -366,7 +384,7 @@ export default function PaymenthisCards() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between">
                     <p className="text-[10px] font-bold text-[#330101]/40 uppercase tracking-widest">
                       {paymentMethod === "Cash" ? "Cash Payment" : "GCash Transfer"}
                     </p>
@@ -376,7 +394,7 @@ export default function PaymenthisCards() {
                   {/* File upload */}
                   <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-[#F2DED4] hover:border-[#D96648] rounded-2xl p-6 cursor-pointer transition-all">
                     <FaCloudUploadAlt className="text-[#D96648]" size={24} />
-                    <span className="text-xs font-bold text-[#330101]/60">
+                    <span className="text-xs font-bold text-[#330101]/60 text-center break-all">
                       {selectedFile ? selectedFile.name : "Click to upload receipt image"}
                     </span>
                     <input type="file" className="hidden" accept="image/*" onChange={(e) => setSelectedFile(e.target.files[0])} />
