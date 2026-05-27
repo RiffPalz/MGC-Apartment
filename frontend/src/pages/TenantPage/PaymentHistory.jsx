@@ -2,16 +2,18 @@ import { useState, useEffect } from "react";
 import {
   FaReceipt, FaSearch, FaCloudUploadAlt, FaEye,
   FaTimes, FaWallet, FaMobileAlt, FaCheckCircle,
-  FaCalendarAlt,
+  FaCalendarAlt, FaBan,
 } from "react-icons/fa";
-import { fetchMyPayments, uploadReceipt } from "../../api/tenantAPI/PaymentAPI";
+import { fetchMyPayments, uploadReceipt, bustPaymentsCache } from "../../api/tenantAPI/PaymentAPI";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
+import { useSocketEvent } from "../../hooks/useSocketEvent";
 
 const STATUS_STYLES = {
   "Paid": { bg: "#DCFCE7", text: "#16A34A", dot: "bg-emerald-400" },
   "Pending Verification": { bg: "#FEF3C7", text: "#D97706", dot: "bg-amber-400" },
   "Unpaid": { bg: "#FEE2E2", text: "#DC2626", dot: "bg-red-400" },
   "Overdue": { bg: "#FEE2E2", text: "#B91C1C", dot: "bg-red-600" },
+  "Deleted": { bg: "#F1F5F9", text: "#64748B", dot: "bg-slate-400" },
 };
 
 const fmt = (d) =>
@@ -42,6 +44,12 @@ export default function PaymenthisCards() {
 
   useEffect(() => { load(); }, []);
 
+  // Re-fetch immediately when admin makes any payment change (including deletion)
+  useSocketEvent("payment_updated", () => {
+    bustPaymentsCache();
+    load(true);
+  });
+
   const load = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
@@ -67,7 +75,11 @@ export default function PaymenthisCards() {
     return matchSearch && matchStatus && matchCategory;
   });
 
-  const canUpload = (p) => p.status === "Unpaid" || p.status === "Overdue";
+  const canUpload = (p) => !p.is_deleted && (p.status === "Unpaid" || p.status === "Overdue");
+
+  // Normalize display: deleted bills show ₱0.00 and a "Deleted" status label
+  const displayStatus = (p) => p.is_deleted ? "Deleted" : p.status;
+  const displayAmount = (p) => p.is_deleted ? "₱0.00" : fmtAmount(p.amount);
 
   const openUpload = (payment) => {
     setUploadModal({ payment });
@@ -195,20 +207,20 @@ export default function PaymenthisCards() {
                   </thead>
                   <tbody className="divide-y divide-[#F2DED4]">
                     {filtered.map((p) => {
-                      const st = STATUS_STYLES[p.status] || STATUS_STYLES["Unpaid"];
+                      const st = STATUS_STYLES[displayStatus(p)] || STATUS_STYLES["Unpaid"];
                       return (
-                        <tr key={p.ID || p.id} className="hover:bg-[#FFF9F6] transition-colors">
+                        <tr key={p.ID || p.id} className={`hover:bg-[#FFF9F6] transition-colors ${p.is_deleted ? "opacity-60" : ""}`}>
                           <td className="py-4 px-6 font-bold text-sm text-[#330101]">{p.category}</td>
                           <td className="py-4 px-6 text-sm text-[#330101]/70">{fmt(p.billing_month)}</td>
                           <td className="py-4 px-6 text-sm text-[#330101]/70">{fmt(p.due_date)}</td>
-                          <td className="py-4 px-6 font-black text-sm text-[#330101]">{fmtAmount(p.amount)}</td>
+                          <td className="py-4 px-6 font-black text-sm text-[#330101]">{displayAmount(p)}</td>
                           <td className="py-4 px-6 text-sm text-[#330101]/70">{fmt(p.payment_date)}</td>
                           <td className="py-4 px-6 text-sm text-[#330101]/60">{p.paymentType || "—"}</td>
                           <td className="py-4 px-6">
                             <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest"
                               style={{ backgroundColor: st.bg, color: st.text }}>
                               <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
-                              {p.status}
+                              {displayStatus(p)}
                             </span>
                           </td>
                           <td className="py-4 px-6">
@@ -223,6 +235,11 @@ export default function PaymenthisCards() {
                                   <FaCloudUploadAlt size={13} />
                                 </button>
                               )}
+                              {p.is_deleted && (
+                                <span title="This bill has been removed" className="p-2 rounded-xl bg-slate-100 text-slate-400 cursor-not-allowed">
+                                  <FaBan size={13} />
+                                </span>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -235,9 +252,9 @@ export default function PaymenthisCards() {
               {/* Mobile cards */}
               <div className="sm:hidden divide-y divide-[#F2DED4]">
                 {filtered.map((p) => {
-                  const st = STATUS_STYLES[p.status] || STATUS_STYLES["Unpaid"];
+                  const st = STATUS_STYLES[displayStatus(p)] || STATUS_STYLES["Unpaid"];
                   return (
-                    <div key={p.ID || p.id} className="p-5 space-y-3">
+                    <div key={p.ID || p.id} className={`p-5 space-y-3 ${p.is_deleted ? "opacity-60" : ""}`}>
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="font-black text-sm text-[#330101]">{p.category}</p>
@@ -246,13 +263,13 @@ export default function PaymenthisCards() {
                         <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shrink-0"
                           style={{ backgroundColor: st.bg, color: st.text }}>
                           <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
-                          {p.status}
+                          {displayStatus(p)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-[10px] text-[#330101]/40 uppercase tracking-widest">Amount</p>
-                          <p className="font-black text-base text-[#330101]">{fmtAmount(p.amount)}</p>
+                          <p className="font-black text-base text-[#330101]">{displayAmount(p)}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-[10px] text-[#330101]/40 uppercase tracking-widest">Due</p>
@@ -269,6 +286,11 @@ export default function PaymenthisCards() {
                             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#5c1f10] text-white text-xs font-bold uppercase tracking-widest">
                             <FaCloudUploadAlt size={12} /> Upload
                           </button>
+                        )}
+                        {p.is_deleted && (
+                          <div className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-100 text-slate-400 text-xs font-bold uppercase tracking-widest cursor-not-allowed">
+                            <FaBan size={12} /> Removed
+                          </div>
                         )}
                       </div>
                     </div>
@@ -305,8 +327,8 @@ export default function PaymenthisCards() {
                   ["Category", detailModal.category],
                   ["Billing Month", fmt(detailModal.billing_month)],
                   ["Due Date", fmt(detailModal.due_date)],
-                  ["Amount", fmtAmount(detailModal.amount)],
-                  ["Status", detailModal.status],
+                  ["Amount", displayAmount(detailModal)],
+                  ["Status", displayStatus(detailModal)],
                   ["Payment Date", fmt(detailModal.payment_date)],
                   ["Method", detailModal.paymentType || "—"],
                   ["Reference #", detailModal.paymentType === "GCash" ? (detailModal.referenceNumber || "—") : "—"],

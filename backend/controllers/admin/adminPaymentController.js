@@ -130,8 +130,24 @@ export const updatePaymentAdmin = async (req, res) => {
 export const deletePaymentAdmin = async (req, res) => {
   try {
     const adminId = req.admin?.id || req.auth?.id;
-    await deletePayment(req.params.id, adminId);
+    const result = await deletePayment(req.params.id, adminId);
+
+    // Broadcast to all listeners (admin/caretaker list refresh)
     emitEvent(req, "payment_updated");
+
+    // Push real-time update directly to the affected tenant
+    const io = req.app.get("io");
+    if (result?.tenantId) {
+      io.to(`user_${result.tenantId}`).emit("payment_updated");
+      io.to(`user_${result.tenantId}`).emit("new_notification", {
+        title: "Bill Removed",
+        message: "One of your unpaid bills has been removed by the admin.",
+        type: "payment",
+        is_read: false,
+        created_at: new Date().toISOString(),
+      });
+    }
+
     return res.status(200).json({ success: true, message: "Payment deleted" });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });

@@ -2,6 +2,7 @@ import Payment from "../models/payment.js";
 import Contract from "../models/contract.js";
 import User from "../models/user.js";
 import Unit from "../models/unit.js";
+import { Op } from "sequelize";
 import { createNotification } from "../services/notificationService.js";
 import { createActivityLog } from "../services/activityLogService.js";
 import { sendSMSBulk } from "../utils/sms.js";
@@ -9,6 +10,7 @@ import { sms } from "../utils/smsTemplates.js";
 
 export const getMyPayments = async (userId) => {
   return await Payment.findAll({
+    where: { is_deleted: { [Op.or]: [false, null] } },
     include: [{
       model: Contract,
       as: "contract",
@@ -69,6 +71,10 @@ export const uploadPaymentReceipt = async (paymentId, imageUrl, userId, paymentT
   });
 
   if (!payment) throw new Error("Payment not found or access denied");
+
+  if (payment.is_deleted) {
+    throw new Error("This bill has been removed and can no longer be paid.");
+  }
 
   if (payment.status !== "Unpaid" && payment.status !== "Overdue") {
     throw new Error("Receipt already uploaded or payment processed");

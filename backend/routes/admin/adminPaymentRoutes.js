@@ -1,4 +1,5 @@
 import express from "express";
+import { Op } from "sequelize";
 import adminAuth from "../../middleware/adminAuth.js";
 import uploadUtilityBill from "../../middleware/uploadUtilityBill.js";
 import Payment from "../../models/payment.js";
@@ -21,7 +22,7 @@ const checkDuplicatePayment = async (req, res, next) => {
     const { contract_id, category, billing_month } = req.body;
     if (!contract_id || !category || !billing_month) return next();
 
-    const existing = await Payment.findOne({ where: { contract_id, category, billing_month } });
+    const existing = await Payment.findOne({ where: { contract_id, category, billing_month, is_deleted: { [Op.or]: [false, null] } } });
     if (existing) {
       return res.status(400).json({ success: false, message: "Payment for this month already exists." });
     }
