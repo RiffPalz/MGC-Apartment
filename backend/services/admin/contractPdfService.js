@@ -2,6 +2,7 @@ import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import cloudinary from "../../config/cloudinary.js";
 import fs from "fs/promises";
+import fsSync from "fs";
 import { fileURLToPath } from "url";
 import path from "path";
 
@@ -25,12 +26,33 @@ const uploadPdfToCloudinary = (buffer, folder, publicId) => {
 
 /* Render an HTML template to PDF using Puppeteer */
 const renderPdf = async (htmlContent) => {
-  const executablePath = await chromium.executablePath();
+  const isProduction = process.env.NODE_ENV === "production";
+
+  let executablePath;
+  let launchArgs;
+
+  if (isProduction) {
+    // Serverless / Lambda — use @sparticuz/chromium
+    executablePath = await chromium.executablePath();
+    launchArgs = chromium.args;
+  } else {
+    // Local development — use the installed Chrome/Chromium
+    const localPaths = [
+      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+      "/usr/bin/google-chrome",
+      "/usr/bin/chromium-browser",
+      "/usr/bin/chromium",
+    ];
+    executablePath = localPaths.find((p) => fsSync.existsSync(p)) || "google-chrome";
+    launchArgs = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"];
+  }
+
   const browser = await puppeteer.launch({
-    args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
+    args: launchArgs,
+    defaultViewport: { width: 1280, height: 800 },
     executablePath,
-    headless: chromium.headless,
+    headless: true,
   });
   const page = await browser.newPage();
   await page.setContent(htmlContent, { waitUntil: "networkidle0" });

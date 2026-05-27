@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -19,10 +19,11 @@ import {
   FaTimesCircle,
   FaClock,
 } from "react-icons/fa";
-import { fetchUserContracts, submitTerminationRequest, getMyTerminationRequest } from "../../api/tenantAPI/ContractAPI";
+import { fetchUserContracts, submitTerminationRequest, getMyTerminationRequest, getContractPdfProxyUrl, getTerminationRequestPdfProxyUrl } from "../../api/tenantAPI/ContractAPI";
 import { fetchTenantProfile } from "../../api/tenantAPI/tenantAuth";
 import GeneralConfirmationModal from "../../components/GeneralConfirmationModal";
 import { toast } from "react-hot-toast";
+import { getToken } from "../../api/authStorage";
 
 // Use the bundled worker from pdfjs-dist
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -75,31 +76,52 @@ export default function ContractCards() {
   }, []);
 
   const isTerminated = contract?.status === "Terminated";
+  const isExpired    = contract?.status === "Expired";
+  const isInactive   = isTerminated || isExpired;
   const isTerminationApproved = terminationRequest?.status === "Approved";
-  const activePdfFile = isTerminated
-    ? (contract?.termination_pdf || contract?.contract_file)
-    : isTerminationApproved
-      ? (terminationRequest?.request_pdf || contract?.contract_file)
-      : contract?.contract_file;
+
+  // Pick the right proxy URL based on what document is being shown:
+  // - Termination approved → show the tenant's termination request letter
+  // - Otherwise → show the main contract file
+  const activePdfProxyUrl = useMemo(() => {
+    if (!contract) return null;
+    if (isTerminationApproved && terminationRequest?.ID) {
+      return getTerminationRequestPdfProxyUrl(terminationRequest.ID);
+    }
+    return getContractPdfProxyUrl(contract.ID);
+  }, [contract, isTerminationApproved, terminationRequest]);
+
+  // Memoized file object — stable reference prevents react-pdf from reloading on every render
+  const activePdfFile = useMemo(() => {
+    if (!activePdfProxyUrl) return null;
+    return {
+      url: activePdfProxyUrl,
+      httpHeaders: { Authorization: `Bearer ${getToken()}` },
+    };
+  }, [activePdfProxyUrl]);
 
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = async () => {
-    if (!activePdfFile) return;
+    if (!activePdfProxyUrl) return;
     try {
       setDownloading(true);
-      const res = await fetch(activePdfFile);
+      const res = await fetch(activePdfProxyUrl, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
       const blob = await res.blob();
       const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
       const a = document.createElement("a");
       a.href = url;
       a.download = isTerminated
         ? `MGC_Termination_Unit${profile?.unitNumber ?? ""}.pdf`
-        : `MGC_Contract_Unit${profile?.unitNumber ?? ""}.pdf`;
+        : isTerminationApproved
+          ? `MGC_TerminationLetter_Unit${profile?.unitNumber ?? ""}.pdf`
+          : `MGC_Contract_Unit${profile?.unitNumber ?? ""}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      window.open(activePdfFile, "_blank");
+      window.open(activePdfProxyUrl, "_blank");
     } finally {
       setDownloading(false);
     }
@@ -146,6 +168,7 @@ export default function ContractCards() {
       case "Active":     return { bg: "#DCFCE7", text: "#16A34A", icon: <FaCheckCircle /> };
       case "Completed":  return { bg: "#EEF2FF", text: "#4F46E5", icon: <FaCheckCircle /> };
       case "Terminated": return { bg: "#FEE2E2", text: "#DC2626", icon: <FaExclamationTriangle /> };
+      case "Expired":    return { bg: "#FFF7ED", text: "#C2410C", icon: <FaExclamationTriangle /> };
       default:           return { bg: "#FEF3C7", text: "#D97706", icon: <FaHourglassHalf /> };
     }
   };
@@ -182,10 +205,10 @@ export default function ContractCards() {
 
         {/* STAT TILES */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <StatTile icon={<FaCalendarAlt />} label="Start Date"  value={isTerminated ? "---" : fmt(contract.start_date)}  color="text-indigo-500" bg="bg-indigo-50" />
-          <StatTile icon={<FaCalendarAlt />} label="End Date"    value={isTerminated ? "---" : fmt(contract.end_date)}    color="text-[#D96648]"  bg="bg-[#FDF2ED]" />
+          <StatTile icon={<FaCalendarAlt />} label="Start Date"  value={isInactive ? "---" : fmt(contract.start_date)}  color="text-indigo-500" bg="bg-indigo-50" />
+          <StatTile icon={<FaCalendarAlt />} label="End Date"    value={isInactive ? "---" : fmt(contract.end_date)}    color="text-[#D96648]"  bg="bg-[#FDF2ED]" />
           <StatTile icon={<FaMoneyBillWave />} label="Monthly Rent"
-            value={isTerminated ? "---" : `₱${parseFloat(contract.rent_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+            value={isInactive ? "---" : `₱${parseFloat(contract.rent_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
             color="text-emerald-600" bg="bg-emerald-50"
           />
           <div className="bg-[#5c1f10] p-4 sm:p-5 rounded-3xl shadow-sm flex items-center gap-3 sm:gap-4">
@@ -220,7 +243,7 @@ export default function ContractCards() {
 
             {/* View PDF */}
             <button
-              onClick={() => activePdfFile && setPdfModal(true)}
+              onClick={() => { if (activePdfFile) { setPageNumber(1); setPdfModal(true); } }}
               disabled={!activePdfFile}
               className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl font-bold text-xs uppercase tracking-widest bg-[#5c1f10] text-[#FFEDE1] hover:bg-[#7a2e1a] active:scale-[0.98] transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -416,7 +439,7 @@ export default function ContractCards() {
 
           {/* PDF Viewer */}
           <div className="flex-1 overflow-auto bg-[#1a1a1a] flex flex-col items-center py-4 sm:py-6 gap-4 px-3">
-            <div className="w-full max-w-[800px]">
+            <div className="w-full max-w-[800px] flex flex-col gap-3">
             <Document
               file={activePdfFile}
               onLoadSuccess={({ numPages }) => { setNumPages(numPages); setPageNumber(1); }}
@@ -430,17 +453,26 @@ export default function ContractCards() {
                 <div className="flex flex-col items-center justify-center h-64 gap-3 text-white/50">
                   <FaClipboardList size={32} />
                   <p className="text-sm">Could not load PDF.</p>
-                  <a href={activePdfFile} target="_blank" rel="noreferrer"
+                  <a href={activePdfFile?.url} target="_blank" rel="noreferrer"
                     className="text-xs underline text-white/70">Open in new tab</a>
                 </div>
               }
             >
-              <Page
-                pageNumber={pageNumber}
-                width={Math.min(window.innerWidth - 48, 800)}
-                renderTextLayer={true}
-                renderAnnotationLayer={true}
-              />
+              {/* Render every page stacked — no re-fetch on page change */}
+              {numPages && Array.from({ length: numPages }, (_, i) => (
+                <div
+                  key={i + 1}
+                  id={`pdf-page-${i + 1}`}
+                  className={i + 1 !== pageNumber ? "hidden" : undefined}
+                >
+                  <Page
+                    pageNumber={i + 1}
+                    width={Math.min(window.innerWidth - 48, 800)}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                  />
+                </div>
+              ))}
             </Document>
             </div>
 

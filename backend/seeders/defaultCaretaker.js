@@ -12,7 +12,7 @@ const createDefaultCaretaker = async () => {
         publicUserID: "PUBLIC-CARE-001",
         fullName: "MGC CARETAKER",
         emailAddress: email,
-        contactNumber: "09201188228",
+        contactNumber: "",
         userName: "mgc_caretaker",
         password_hash: plainPassword,
         role: "caretaker",

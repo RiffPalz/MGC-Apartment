@@ -19,6 +19,7 @@ import {
   rejectTerminationRequestController,
 } from "../../controllers/terminationRequestController.js";
 import Contract from "../../models/contract.js";
+import TerminationRequest from "../../models/terminationRequest.js";
 import cloudinary from "../../config/cloudinary.js";
 
 const router = express.Router();
@@ -38,7 +39,7 @@ router.get("/termination-requests", adminAuth, getAllTerminationRequestsControll
 router.put("/termination-requests/:id/approve", adminAuth, approveTerminationRequestController);
 router.put("/termination-requests/:id/reject", adminAuth, rejectTerminationRequestController);
 
-// PDF proxy — signs the Cloudinary URL and redirects, or streams bytes as fallback
+// PDF proxy — streams bytes directly to avoid cross-origin redirect issues
 router.get("/:id/pdf", adminAuth, async (req, res) => {
   try {
     const contract = await Contract.findByPk(req.params.id);
@@ -47,26 +48,60 @@ router.get("/:id/pdf", adminAuth, async (req, res) => {
     }
 
     const pdfUrl = contract.contract_file;
-    const match = pdfUrl.match(/\/raw\/upload\/(?:v\d+\/)?(.+)$/);
 
+    // Build the fetch URL — sign it if it's a Cloudinary raw asset
+    let fetchUrl = pdfUrl;
+    const match = pdfUrl.match(/\/raw\/upload\/(?:v\d+\/)?(.+)$/);
     if (match) {
-      const signedUrl = cloudinary.url(match[1], {
+      fetchUrl = cloudinary.url(match[1], {
         resource_type: "raw",
         type: "upload",
         secure: true,
         sign_url: true,
         expires_at: Math.floor(Date.now() / 1000) + 300,
       });
-      return res.redirect(signedUrl);
     }
 
-    const response = await axios.get(pdfUrl, { responseType: "arraybuffer", timeout: 15000 });
+    const response = await axios.get(fetchUrl, { responseType: "arraybuffer", timeout: 15000 });
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="contract_${req.params.id}.pdf"`);
+    res.setHeader("Content-Disposition", `inline; filename="contract_${req.params.id}.pdf"`);
+    res.setHeader("Cache-Control", "private, max-age=300");
     return res.send(Buffer.from(response.data));
   } catch (err) {
     console.error("[PDF Proxy Error]", err.message);
     return res.status(500).json({ success: false, message: "Failed to load PDF.", detail: err.message });
+  }
+});
+
+// Termination request PDF proxy — streams bytes directly
+router.get("/termination-requests/:id/pdf", adminAuth, async (req, res) => {
+  try {
+    const request = await TerminationRequest.findByPk(req.params.id);
+    if (!request?.request_pdf) {
+      return res.status(404).json({ success: false, message: "No PDF found." });
+    }
+
+    const pdfUrl = request.request_pdf;
+    let fetchUrl = pdfUrl;
+    const match = pdfUrl.match(/\/raw\/upload\/(?:v\d+\/)?(.+)$/);
+    if (match) {
+      fetchUrl = cloudinary.url(match[1], {
+        resource_type: "raw",
+        type: "upload",
+        secure: true,
+        sign_url: true,
+        expires_at: Math.floor(Date.now() / 1000) + 300,
+      });
+    }
+
+    const response = await axios.get(fetchUrl, { responseType: "arraybuffer", timeout: 15000 });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="termination_request_${req.params.id}.pdf"`);
+    res.setHeader("Cache-Control", "private, max-age=300");
+    return res.send(Buffer.from(response.data));
+  } catch (err) {
+    console.error("[Termination PDF Proxy Error]", err.message);
+    return res.status(500).json({ success: false, message: "Failed to load PDF." });
   }
 });
 
