@@ -22,7 +22,7 @@ const generatePublicUserID = async () => {
 };
 
 export const createTenant = async (data, adminId) => {
-  const { fullName, emailAddress, contactNumber, unitNumber, numberOfTenants, userName, password, sex } = data;
+  const { fullName, emailAddress, contactNumber, unitNumber, numberOfTenants, userName, password } = data;
 
   if (!fullName || !emailAddress || !userName || !password) {
     throw new Error("Missing required fields");
@@ -47,7 +47,6 @@ export const createTenant = async (data, adminId) => {
     password_hash: password,
     role: "tenant",
     status: "Approved",
-    sex: sex || null,
   });
 
   await createActivityLog({

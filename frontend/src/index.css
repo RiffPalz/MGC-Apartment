@@ -31,6 +31,11 @@
   src: url('/fonts/NunitoSans.ttf') format('truetype');
   font-display: swap;
 }
+@font-face {
+  font-family: "Bahnschrift";
+  src: url('/fonts/BAHNSCHRIFT-Regular-woff.TTF') format('truetype');
+  font-display: swap;
+}
 
 /* ===== Tailwind v4 Theme Tokens ===== */
 @theme {
@@ -40,8 +45,14 @@
   --font-BoldMilk: "BoldMilk";
   --font-OswaldRegular: "OswaldRegular";
   --font-NunitoSans: "NunitoSans";
+  --font-Bahnschrift: "Bahnschrift";
   /* Alias used in components */
   --font-LemonMilkRegular: "RegularMilk";
+
+  
+  --font-navigation: "RegularMilk";
+  --font-title: "Bahnschrift";
+  --font-body: "NunitoSans";
 
   /* Custom border-radius */
   --radius-4xl: 2rem;

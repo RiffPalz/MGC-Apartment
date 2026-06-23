@@ -16,7 +16,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 // Api
-import { registerTenant, checkAvailability } from "../../api/tenantAPI/tenantAuth";
+import { registerTenant } from "../../api/tenantAPI/tenantAuth";
 import api from "../../api/config";
 
 const CreateAcc = () => {
@@ -33,7 +33,6 @@ const CreateAcc = () => {
     fullName: "",
     email: "",
     phone: "",
-    sex: "",
     unit: "",
     tenants: "1",
     username: "",
@@ -47,7 +46,7 @@ const CreateAcc = () => {
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [availableUnits, setAvailableUnits] = useState([]);
-  const [usernameError, setUsernameError] = useState("");
+  const [usernameError] = useState("");
 
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -99,16 +98,6 @@ const CreateAcc = () => {
     }
   };
 
-  const handleUsernameBlur = async () => {
-    const username = form.username.trim();
-    if (!username) return;
-    try {
-      const res = await checkAvailability(username);
-      setUsernameError(res.usernameTaken ? "This unit already has an existing account." : "");
-    } catch {
-      // silent
-    }
-  };
 
   /* ===== Pure Accordion Toggle Logic ===== */
   const toggleFloor = (floorNum) => {
@@ -178,11 +167,6 @@ const CreateAcc = () => {
       return;
     }
 
-    if (!form.sex) {
-      setError("Please select your sex.");
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -194,7 +178,6 @@ const CreateAcc = () => {
         numberOfTenants: Number(form.tenants),
         userName: form.username,
         password: form.password,
-        sex: form.sex || null,
       });
       setShowSuccessModal(true);
     } catch (err) {
@@ -285,7 +268,7 @@ const CreateAcc = () => {
         >
           {renderStepIndicator()}
 
-          <div className="min-h-[320px]">
+          <div className="min-h-80">
             {/* STEP 1: Unit Selection */}
             {step === 1 && (
               <div className="space-y-6 animate-fadeIn">
@@ -401,10 +384,12 @@ const CreateAcc = () => {
 
             {/* STEP 3: Form Details */}
             {step === 3 && (
-              <form id="registration-form" onSubmit={handleSubmit} className="space-y-6 animate-fadeIn max-w-xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <form id="registration-form" onSubmit={handleSubmit} className="space-y-5 animate-fadeIn max-w-xl mx-auto">
+
+                {/* Row 1: Full Name + Contact */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <Input
-                    icon={<FaUser />}
+                    icon={<FaUser size={14} />}
                     label="Full Name"
                     name="fullName"
                     placeholder="Juan Dela Cruz"
@@ -413,7 +398,7 @@ const CreateAcc = () => {
                     required
                   />
                   <Input
-                    icon={<FaPhoneAlt />}
+                    icon={<FaPhoneAlt size={14} />}
                     label="Contact Number"
                     name="phone"
                     placeholder="09XX-XXX-XXXX"
@@ -423,118 +408,136 @@ const CreateAcc = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Input
-                    icon={<MdEmail />}
-                    label="Email Address"
-                    name="email"
-                    placeholder="email@example.com"
-                    value={form.email}
-                    onChange={handleChange}
-                    required
-                  />
-                  <Select
-                    label="Sex"
-                    name="sex"
-                    value={form.sex}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="" disabled>Select sex</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </Select>
-                </div>
+                {/* Row 2: Email */}
+                <Input
+                  icon={<MdEmail size={16} />}
+                  label="Email Address"
+                  name="email"
+                  placeholder="email@example.com"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
 
-                <div className="pt-4 border-t border-slate-100">
-                  <div className="relative group mb-6">
-                    <Input
-                      icon={<FaLock />}
-                      label="Username (System Generated)"
-                      name="username"
-                      value={form.username}
-                      onChange={handleChange}
-                      onBlur={handleUsernameBlur}
-                      readOnly
-                      className="bg-slate-100/50 cursor-not-allowed text-[#db6747] font-bold w-full outline-none text-sm px-2 py-1 rounded"
-                    />
-                    <p className="text-[9px] text-slate-400 mt-1.5 uppercase tracking-wider font-bold">
-                      * Locked to Unit {form.unit} for security
-                    </p>
-                    {usernameError && (
-                      <p className="text-[9px] text-red-500 font-bold mt-1 uppercase tracking-wider">
-                        {usernameError}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                      <Password
-                        label="Password"
-                        name="password"
-                        value={form.password}
-                        onChange={handleChange}
-                        show={showPassword}
-                        toggle={() => setShowPassword(!showPassword)}
-                        required
-                      />
-                      <p className="text-[8px] text-slate-400 leading-relaxed font-semibold">
-                        Min. 8 chars · uppercase · lowercase · number · special char (!@#$)
-                      </p>
+                {/* Username — Styled callout */}
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1.5 bg-[#db6747]/10 rounded-lg">
+                      <FaLock size={11} className="text-[#db6747]" />
                     </div>
-
-                    <Password
-                      label="Confirm Password"
-                      name="confirm"
-                      value={form.confirm}
-                      onChange={handleChange}
-                      show={showPassword}
-                      toggle={() => setShowPassword(!showPassword)}
-                      required
-                    />
+                    <label className="text-[9px] font-bold tracking-[2px] text-slate-500 uppercase font-LemonMilkRegular">
+                      Username <span className="text-slate-400 font-medium normal-case tracking-normal">(System Generated)</span>
+                    </label>
                   </div>
+                  <div className="flex items-center bg-white border border-slate-200 rounded-lg px-4 py-3 gap-3">
+                    <FaLock size={13} className="text-slate-300 shrink-0" />
+                    <span className="flex-1 text-sm font-bold text-[#db6747] tracking-wide font-mono">
+                      {form.username || <span className="text-slate-300 font-normal">—</span>}
+                    </span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-md shrink-0">
+                      Read‑only
+                    </span>
+                  </div>
+                  <p className="text-[9px] text-slate-400 mt-2 font-medium tracking-wide">
+                    🔒 Locked to Unit {form.unit} for security. Cannot be changed.
+                  </p>
+                  {usernameError && (
+                    <p className="text-[9px] text-red-500 font-bold mt-1 flex items-center gap-1">
+                      <span>⚠</span> {usernameError}
+                    </p>
+                  )}
                 </div>
 
-                <label className="flex items-start gap-4 bg-slate-50 border border-slate-200 p-4 rounded-xl cursor-pointer group mt-6">
-                  <input
-                    type="checkbox"
-                    name="agreed"
-                    checked={form.agreed}
+                {/* Password row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <Password
+                    label="Password"
+                    name="password"
+                    placeholder="Min. 8 characters"
+                    value={form.password}
                     onChange={handleChange}
-                    className="mt-0.5 accent-[#db6747] w-4 h-4 shrink-0 cursor-pointer"
+                    show={showPassword}
+                    toggle={() => setShowPassword(!showPassword)}
+                    hint="Min. 8 chars · uppercase · lowercase · number · special char (!@#$)"
+                    required
                   />
+                  <Password
+                    label="Confirm Password"
+                    name="confirm"
+                    placeholder="Re-enter password"
+                    value={form.confirm}
+                    onChange={handleChange}
+                    show={showPassword}
+                    toggle={() => setShowPassword(!showPassword)}
+                    required
+                  />
+                </div>
+
+                {/* Inline error — appears right above terms */}
+                {error && (
+                  <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-xl px-4 py-3 animate-shake">
+                    <span className="text-red-500 text-base leading-none mt-0.5 shrink-0">⚠</span>
+                    <p className="text-[11px] text-red-600 font-semibold leading-relaxed">{error}</p>
+                  </div>
+                )}
+
+                {/* Terms & Privacy checkbox */}
+                <label className={`flex items-start gap-3.5 p-4 rounded-xl cursor-pointer transition-all border
+                  ${form.agreed
+                    ? "bg-[#fff7f4] border-[#db6747]/30"
+                    : "bg-slate-50 border-slate-200 hover:border-slate-300"}`}>
+                  <div className="relative mt-0.5 shrink-0">
+                    <input
+                      type="checkbox"
+                      name="agreed"
+                      checked={form.agreed}
+                      onChange={handleChange}
+                      className="peer sr-only"
+                    />
+                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all
+                      ${form.agreed ? "bg-[#db6747] border-[#db6747]" : "bg-white border-slate-300"}`}>
+                      {form.agreed && (
+                        <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                          <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
                   <span className="text-[10px] lg:text-[11px] uppercase tracking-wider text-slate-500 leading-relaxed font-semibold">
-                    I certify accuracy and agree to the{" "}
-                    <button type="button" onClick={(e) => { e.preventDefault(); setShowTerms(true); }} className="text-[#db6747] font-black hover:underline">
+                    I certify the accuracy of my information and agree to the{" "}
+                    <button type="button" onClick={(e) => { e.preventDefault(); setShowTerms(true); }}
+                      className="text-[#db6747] font-black hover:underline focus:outline-none">
                       Terms
                     </button>{" "}
                     &{" "}
-                    <button type="button" onClick={(e) => { e.preventDefault(); setShowPrivacy(true); }} className="text-[#db6747] font-black hover:underline">
+                    <button type="button" onClick={(e) => { e.preventDefault(); setShowPrivacy(true); }}
+                      className="text-[#db6747] font-black hover:underline focus:outline-none">
                       Privacy Policy
                     </button>
                   </span>
                 </label>
+
               </form>
             )}
           </div>
 
-          {/* Global Error Display */}
-          {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-3 mt-4 max-w-xl mx-auto text-[10px] text-red-600 font-bold uppercase tracking-widest animate-shake rounded-r-lg">
-              {error}
+          {/* Global Error Display — shown for steps 1 & 2 only; step 3 renders inline */}
+          {error && step !== 3 && (
+            <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-xl px-4 py-3 mt-4 max-w-xl mx-auto animate-shake">
+              <span className="text-red-500 text-base leading-none mt-0.5 shrink-0">⚠</span>
+              <p className="text-[11px] text-red-600 font-semibold leading-relaxed">{error}</p>
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="mt-8 pt-6 border-t border-slate-100 flex gap-4 max-w-xl mx-auto">
+          <div className="mt-8 pt-6 border-t border-slate-100 flex gap-3 max-w-xl mx-auto">
             {step > 1 && (
               <button
                 type="button"
                 onClick={prevStep}
-                className="w-1/3 py-4 rounded-xl text-xs tracking-[2px] font-bold text-slate-500 border-2 border-slate-200 hover:bg-slate-50 hover:text-slate-700 transition-all uppercase"
+                className="w-1/3 py-3.5 rounded-xl text-xs tracking-[2px] font-bold text-slate-500 border-2 border-slate-200 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 transition-all duration-200 uppercase active:scale-95"
               >
-                Back
+                ← Back
               </button>
             )}
 
@@ -542,20 +545,29 @@ const CreateAcc = () => {
               <button
                 type="button"
                 onClick={nextStep}
-                className={`py-4 rounded-xl text-xs tracking-[3px] font-LemonMilkRegular transition-all shadow-md uppercase flex-1
-                  ${form.unit ? 'bg-[#db6747] hover:bg-[#c45a3a] text-white shadow-orange-500/30' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}
-                `}
+                className={`flex-1 py-3.5 rounded-xl text-xs tracking-[3px] font-LemonMilkRegular transition-all duration-200 uppercase shadow-md active:scale-95
+                  ${form.unit
+                    ? "bg-[#db6747] hover:bg-[#c45a3a] text-white shadow-[#db6747]/25"
+                    : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"}`}
               >
-                Next Step
+                Next Step →
               </button>
             ) : (
               <button
                 type="submit"
                 form="registration-form"
                 disabled={loading}
-                className="flex-1 bg-[#db6747] hover:bg-[#c45a3a] text-white py-4 rounded-xl text-xs tracking-[3px] font-LemonMilkRegular transition-all duration-300 shadow-lg shadow-orange-500/30 disabled:opacity-60 uppercase active:scale-95"
+                className="flex-1 bg-[#db6747] hover:bg-[#c45a3a] active:bg-[#b84e32] text-white py-3.5 rounded-xl text-xs tracking-[3px] font-LemonMilkRegular transition-all duration-200 shadow-lg shadow-[#db6747]/25 disabled:opacity-60 disabled:cursor-not-allowed uppercase active:scale-95 flex items-center justify-center gap-2"
               >
-                {loading ? "Processing..." : "Verify Account"}
+                {loading ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+                    </svg>
+                    Processing...
+                  </>
+                ) : "Create Account"}
               </button>
             )}
           </div>
@@ -594,17 +606,17 @@ const CreateAcc = () => {
 
 const Input = ({ icon, label, name, className, required, ...props }) => (
   <div className="w-full">
-    <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 mb-2 uppercase font-LemonMilkRegular">
-      {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+    <label className="block text-[9px] font-bold tracking-[2px] text-slate-500 mb-2 uppercase font-LemonMilkRegular">
+      {label}{required && <span className="text-[#db6747] ml-0.5">*</span>}
     </label>
-    <div className="flex items-center border-b-2 border-slate-200 focus-within:border-[#db6747] transition-all py-2.5 group">
-      <span className="text-slate-300 group-focus-within:text-[#db6747] mr-3 transition-colors">
+    <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 gap-3 group focus-within:border-[#db6747] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#db6747]/10 transition-all duration-200">
+      <span className="text-slate-400 group-focus-within:text-[#db6747] shrink-0 transition-colors duration-200">
         {icon}
       </span>
       <input
         {...props}
         name={name}
-        className={className || "w-full bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-300 font-semibold"}
+        className={className || "w-full bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400 font-medium"}
       />
     </div>
   </div>
@@ -630,27 +642,32 @@ const Select = ({ label, children, name, required, ...props }) => (
   </div>
 );
 
-const Password = ({ label, name, show, toggle, required, ...props }) => (
+const Password = ({ label, name, show, toggle, required, hint, ...props }) => (
   <div className="w-full">
-    <label className="block text-[9px] font-bold tracking-[2px] text-slate-400 mb-2 uppercase font-LemonMilkRegular">
-      {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+    <label className="block text-[9px] font-bold tracking-[2px] text-slate-500 mb-2 uppercase font-LemonMilkRegular">
+      {label}{required && <span className="text-[#db6747] ml-0.5">*</span>}
     </label>
-    <div className="flex items-center border-b-2 border-slate-200 focus-within:border-[#db6747] transition-all py-2.5 group">
-      <RiLockPasswordFill className="text-slate-300 group-focus-within:text-[#db6747] mr-3 transition-colors" />
+    <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 gap-3 group focus-within:border-[#db6747] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#db6747]/10 transition-all duration-200">
+      <RiLockPasswordFill className="text-slate-400 group-focus-within:text-[#db6747] shrink-0 transition-colors duration-200" size={16} />
       <input
         {...props}
         name={name}
         type={show ? "text" : "password"}
-        className="w-full bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-300 font-semibold"
+        className="w-full bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400 font-medium"
       />
       <button
         type="button"
         onClick={toggle}
-        className="text-slate-300 hover:text-[#db6747] transition-colors p-1"
+        className="text-slate-400 hover:text-[#db6747] transition-colors duration-200 p-0.5 shrink-0 rounded focus:outline-none focus:text-[#db6747]"
+        tabIndex={-1}
+        aria-label={show ? "Hide password" : "Show password"}
       >
-        {show ? <LuEye size={18} /> : <LuEyeClosed size={18} />}
+        {show ? <LuEye size={17} /> : <LuEyeClosed size={17} />}
       </button>
     </div>
+    {hint && (
+      <p className="text-[9px] text-slate-400 mt-1.5 leading-relaxed font-medium tracking-wide">{hint}</p>
+    )}
   </div>
 );
 

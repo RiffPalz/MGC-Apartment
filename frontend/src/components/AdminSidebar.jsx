@@ -10,18 +10,18 @@ import { VscGitStashApply } from "react-icons/vsc";
 import { TbContract } from "react-icons/tb";
 
 const MENU = [
-  { name: "Dashboard",            icon: <MdDashboard />,      path: "/admin/dashboard" },
-  { name: "Tenants",              icon: <FaHouseUser />,       path: "/admin/tenants" },
-  { name: "Units",                icon: <FaDoorClosed />,      path: "/admin/units" },
-  { name: "Maintenance",          icon: <GrVmMaintenance />,   path: "/admin/maintenance" },
-  { name: "Announcement",         icon: <GrAnnounce />,        path: "/admin/announcement" },
-  { name: "Contract",             icon: <TbContract />,        path: "/admin/contract" },
-  { name: "Termination Requests", icon: <FaFileSignature />,   path: "/admin/termination-requests" },
-  { name: "Payment Overview",     icon: <FaMoneyCheckAlt />,   path: "/admin/payments" },
-  { name: "Account Approval",     icon: <MdSwitchAccount />,   path: "/admin/approvalpage" },
-  { name: "Application Requests", icon: <VscGitStashApply />,  path: "/admin/applicationrequest" },
-  { name: "Activity Logs",        icon: <FaHistory />,         path: "/admin/activity-logs" },
-  { name: "System Config",        icon: <FaCog />,             path: "/admin/system-config" },
+  { name: "Dashboard",             icon: <MdDashboard />,      path: "/admin/dashboard" },
+  { name: "Tenants",               icon: <FaHouseUser />,       path: "/admin/tenants" },
+  { name: "Units",                 icon: <FaDoorClosed />,      path: "/admin/units" },
+  { name: "Maintenance",           icon: <GrVmMaintenance />,   path: "/admin/maintenance" },
+  { name: "Announcement",          icon: <GrAnnounce />,        path: "/admin/announcement" },
+  { name: "Contract",              icon: <TbContract />,        path: "/admin/contract" },
+  { name: "Termination requests",  icon: <FaFileSignature />,   path: "/admin/termination-requests" },
+  { name: "Payment overview",      icon: <FaMoneyCheckAlt />,   path: "/admin/payments" },
+  { name: "Account approval",      icon: <MdSwitchAccount />,   path: "/admin/approvalpage" },
+  { name: "Application requests",  icon: <VscGitStashApply />,  path: "/admin/applicationrequest" },
+  { name: "Activity logs",         icon: <FaHistory />,         path: "/admin/activity-logs" },
+  { name: "System config",         icon: <FaCog />,             path: "/admin/system-config" },
 ];
 
 export default function AdminSidebar({ open = true, setOpen }) {
@@ -72,13 +72,14 @@ export default function AdminSidebar({ open = true, setOpen }) {
                 ${open ? "justify-start gap-4" : "justify-center"}
                 ${isActive
                   ? "bg-linear-to-r from-[#db6747] to-[#b04529] text-white shadow-lg shadow-[#db6747]/30"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"}`}
+                  : "text-zinc-300 hover:text-white hover:bg-white/5"}`}
             >
               {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/30" />}
               <span className={`text-xl shrink-0 transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110 group-hover:text-[#db6747]"}`}>
                 {item.icon}
               </span>
-              <span className={`font-OswaldRegular text-sm uppercase tracking-widest whitespace-nowrap transition-all duration-300 origin-left
+              <span className={`font-NunitoSans normal-case text-[13px] whitespace-nowrap transition-all duration-300 origin-left
+                ${isActive ? "font-bold tracking-normal" : "font-medium tracking-wide"}
                 ${open ? "opacity-100 translate-x-0 w-auto" : "opacity-0 -translate-x-4 w-0 overflow-hidden"}`}>
                 {item.name}
               </span>
