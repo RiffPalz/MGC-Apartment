@@ -23,7 +23,7 @@ const fmtMonth = (d) =>
 const STATUS_CFG = {
   Paid: { color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   Unpaid: { color: "bg-red-50 text-red-700 border-red-200" },
-  Overdue: { color: "bg-amber-50 text-amber-700 border-amber-200" },
+  Overdue: { color: "bg-red-50 text-red-700 border-red-200" },
   "Pending Verification": { color: "bg-blue-50 text-blue-700 border-blue-200" },
 };
 
@@ -184,10 +184,10 @@ export default function CaretakerPaymentOverview() {
       </div>
 
       {/* SCREEN UI */}
-      <div className="w-full h-full bg-[#f8fafc] p-4 md:p-6 text-slate-800 font-sans flex flex-col gap-4 sm:gap-5 no-print min-h-screen overflow-x-hidden">
+      <div className="w-full bg-[#f8fafc] p-4 md:p-6 text-slate-800 font-sans flex flex-col gap-4 sm:gap-5 no-print overflow-x-hidden">
 
         {/* 4K Containment Wrapper */}
-        <div className="max-w-[1600px] w-full mx-auto flex flex-col gap-4 sm:gap-5 flex-1">
+        <div className="max-w-[1600px] w-full mx-auto flex flex-col gap-4 sm:gap-5">
 
           {/* STAT CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -242,7 +242,7 @@ export default function CaretakerPaymentOverview() {
           </div>
 
           {/* TABLE CONTAINER */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
 
             {/* Desktop Table View */}
             <div className="hidden lg:block overflow-x-auto flex-1 custom-scrollbar">

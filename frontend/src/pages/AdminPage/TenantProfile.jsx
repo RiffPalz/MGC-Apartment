@@ -4,7 +4,6 @@ import {
   MdPerson, MdEmail, MdPhone, MdCalendarToday,
   MdPeople, MdArrowBack, MdEdit, MdHome, MdBadge,
   MdCheckCircle, MdAccessTime, MdVpnKey, MdSave, MdClose,
-  MdWc,
 } from "react-icons/md";
 import { fetchTenantProfile, updateTenantProfile } from "../../api/adminAPI/unitsAPI";
 import api from "../../api/config";
@@ -94,7 +93,6 @@ export default function TenantProfile() {
       emailAddress: tenant.emailAddress ?? "",
       contactNumber: tenant.contactNumber ?? "",
       numberOfTenants: tenant.numberOfTenants ?? 1,
-      sex: tenant.sex ?? "",
       startDate: contract?.startDate?.slice(0, 10) ?? "",
       endDate: contract?.endDate?.slice(0, 10) ?? "",
     });
@@ -122,7 +120,6 @@ export default function TenantProfile() {
         emailAddress: editForm.emailAddress.trim(),
         contactNumber: editForm.contactNumber,
         numberOfTenants: Number(editForm.numberOfTenants),
-        sex: editForm.sex || null,
       });
 
       // Save contract dates if a contract exists
@@ -170,7 +167,7 @@ export default function TenantProfile() {
 
           {/* Avatar Area */}
           <div className="relative shrink-0">
-            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#db6747] to-[#e8845f] flex items-center justify-center shadow-md shadow-orange-200">
+            <div className="w-24 h-24 rounded-2xl bg-linear-to-br from-[#db6747] to-[#e8845f] flex items-center justify-center shadow-md shadow-orange-200">
               <span className="text-white text-3xl font-semibold tracking-tight">{initials}</span>
             </div>
             <div className={`absolute -bottom-2 -right-2 w-7 h-7 rounded-xl border-4 border-white flex items-center justify-center shadow-sm
@@ -236,7 +233,6 @@ export default function TenantProfile() {
                 <DataCard icon={<MdPerson size={16} />} label="Full Name" value={tenant.fullName} />
                 <DataCard icon={<MdEmail size={16} />} label="Email Address" value={tenant.emailAddress} />
                 <DataCard icon={<MdPhone size={16} />} label="Phone Number" value={tenant.contactNumber || "—"} />
-                <DataCard icon={<MdWc size={16} />} label="Sex" value={tenant.sex || "—"} />
                 <DataCard icon={<MdBadge size={16} />} label="System ID" value={tenant.publicUserID} mono />
               </div>
             </Section>
@@ -318,12 +314,12 @@ export default function TenantProfile() {
       {/* ── EDIT PROFILE MODAL ── */}
       {showEditProfile && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex justify-center items-center p-4 sm:p-6 transition-all duration-300">
-          <div className="bg-white rounded-[2rem] w-full max-w-xl shadow-2xl shadow-slate-900/20 border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+          <div className="bg-white rounded-4xl w-full max-w-xl shadow-2xl shadow-slate-900/20 border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-300">
 
             {/* Modal Header */}
             <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 bg-slate-50/50 shrink-0">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#db6747]/20 to-[#db6747]/5 flex items-center justify-center border border-[#db6747]/10 shadow-inner">
+                <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-[#db6747]/20 to-[#db6747]/5 flex items-center justify-center border border-[#db6747]/10 shadow-inner">
                   <MdEdit size={20} className="text-[#db6747]" />
                 </div>
                 <div>
@@ -394,23 +390,6 @@ export default function TenantProfile() {
 
                 {/* 2-Column Grid */}
                 <div className="grid grid-cols-2 gap-5">
-                  {/* Sex */}
-                  <div className="relative group">
-                    <label className="block text-[10px] font-medium text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Sex</label>
-                    <div className="relative">
-                      <MdWc size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#db6747] transition-colors z-10" />
-                      <select
-                        value={editForm.sex}
-                        onChange={(e) => setEditForm({ ...editForm, sex: e.target.value })}
-                        className="w-full bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-[#db6747] text-slate-800 text-sm rounded-xl focus:ring-4 focus:ring-[#db6747]/10 outline-none transition-all py-3.5 px-4 pl-11 appearance-none cursor-pointer"
-                      >
-                        <option value="">Not specified</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                      </select>
-                    </div>
-                  </div>
-
                   {/* Occupants */}
                   <div className="relative group">
                     <label className="block text-[10px] font-medium text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Occupants</label>
@@ -539,7 +518,7 @@ function DataCard({ icon, label, value, mono = false, valueColor = "text-slate-8
       <div className="flex items-center gap-2 text-slate-400">
         {icon} <span className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">{label}</span>
       </div>
-      <p className={`text-sm font-normal break-words mt-0.5 ${mono ? "font-mono tracking-wide text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded w-max" : ""} ${valueColor}`}>
+      <p className={`text-sm font-normal wrap-break-word mt-0.5 ${mono ? "font-mono tracking-wide text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded w-max" : ""} ${valueColor}`}>
         {value || "—"}
       </p>
     </div>

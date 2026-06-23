@@ -16,9 +16,9 @@ export default function TenantSidebar({ open = true, setOpen }) {
   const menuItems = [
     { name: "Dashboard",     icon: <FaHome />,          path: "/tenant/dashboard"    },
     { name: "Maintenance",   icon: <GrVmMaintenance />, path: "/tenant/maintenance"  },
-    { name: "My Contract",   icon: <TbContract />,      path: "/tenant/contract"     },
+    { name: "My contract",   icon: <TbContract />,      path: "/tenant/contract"     },
     { name: "Payments",      icon: <FaMoneyCheckAlt />, path: "/tenant/payment"      },
-    { name: "Activity Logs", icon: <FaHistory />,       path: "/tenant/activityLogs" },
+    { name: "Activity logs", icon: <FaHistory />,       path: "/tenant/activityLogs" },
   ];
 
   return (
@@ -79,8 +79,8 @@ export default function TenantSidebar({ open = true, setOpen }) {
                   ${open ? "justify-start gap-3 sm:gap-4" : "justify-center"}
                   ${
                     isActive
-                      ? "bg-gradient-to-r from-[#db6747] to-[#b04529] text-white shadow-lg shadow-[#db6747]/30"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                      ? "bg-linear-to-r from-[#db6747] to-[#b04529] text-white shadow-lg shadow-[#db6747]/30"
+                      : "text-zinc-300 hover:text-white hover:bg-white/5"
                   }
                 `}
               >
@@ -96,7 +96,8 @@ export default function TenantSidebar({ open = true, setOpen }) {
                 </span>
                 <span
                   className={`
-                    font-OswaldRegular text-xs sm:text-sm uppercase tracking-widest whitespace-nowrap
+                    font-NunitoSans normal-case text-[13px] whitespace-nowrap
+                    ${isActive ? "font-bold tracking-normal" : "font-medium tracking-wide"}
                     transition-all duration-300 origin-left
                     ${open ? "opacity-100 translate-x-0 w-auto" : "opacity-0 -translate-x-4 w-0 overflow-hidden"}
                   `}

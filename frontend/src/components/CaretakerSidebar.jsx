@@ -7,13 +7,13 @@ import {
 import { MdDashboard } from "react-icons/md";
 
 const MENU = [
-  { name: "Dashboard",    icon: <MdDashboard />,      path: "/caretaker/dashboard" },
-  { name: "Tenants",      icon: <FaUsers />,           path: "/caretaker/tenants" },
-  { name: "Maintenance",  icon: <FaTools />,           path: "/caretaker/maintenance" },
-  { name: "Payment Overview", icon: <FaMoneyCheckAlt />, path: "/caretaker/payments" },
-  { name: "Announcements",icon: <FaBullhorn />,        path: "/caretaker/announcements" },
-  { name: "Activity Logs",icon: <FaHistory />,         path: "/caretaker/activity-logs" },
-  { name: "Settings",     icon: <FaCog />,             path: "/caretaker/settings" },
+  { name: "Dashboard",        icon: <MdDashboard />,      path: "/caretaker/dashboard" },
+  { name: "Tenants",          icon: <FaUsers />,           path: "/caretaker/tenants" },
+  { name: "Maintenance",      icon: <FaTools />,           path: "/caretaker/maintenance" },
+  { name: "Payment overview", icon: <FaMoneyCheckAlt />,   path: "/caretaker/payments" },
+  { name: "Announcements",    icon: <FaBullhorn />,        path: "/caretaker/announcements" },
+  { name: "Activity logs",    icon: <FaHistory />,         path: "/caretaker/activity-logs" },
+  { name: "Settings",         icon: <FaCog />,             path: "/caretaker/settings" },
 ];
 
 export default function CaretakerSidebar({ open, setOpen }) {
@@ -48,13 +48,15 @@ export default function CaretakerSidebar({ open, setOpen }) {
               className={`group flex items-center rounded-xl px-4 py-3.5 transition-all duration-300 relative overflow-hidden
                 ${open ? "justify-start gap-4" : "justify-center"}
                 ${isActive
-                  ? "bg-gradient-to-r from-[#db6747] to-[#b04529] text-white shadow-lg shadow-[#db6747]/30"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"}`}>
+                  ? "bg-linear-to-r from-[#db6747] to-[#b04529] text-white shadow-lg shadow-[#db6747]/30"
+                  : "text-zinc-300 hover:text-white hover:bg-white/5"}`}
+            >
               {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/30" />}
               <span className={`text-xl shrink-0 transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110 group-hover:text-[#db6747]"}`}>
                 {item.icon}
               </span>
-              <span className={`font-OswaldRegular text-sm uppercase tracking-widest whitespace-nowrap transition-all duration-300 origin-left
+              <span className={`font-NunitoSans normal-case text-[13px] whitespace-nowrap transition-all duration-300 origin-left
+                ${isActive ? "font-bold tracking-normal" : "font-medium tracking-wide"}
                 ${open ? "opacity-100 translate-x-0 w-auto" : "opacity-0 -translate-x-4 w-0 overflow-hidden"}`}>
                 {item.name}
               </span>

@@ -20,7 +20,7 @@ export default function CaretakerLayout() {
   }, [location]);
 
   return (
-    <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans text-slate-800">
+    <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-NunitoSans text-slate-800">
       {open && (
         <div
           className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden transition-opacity"
@@ -39,7 +39,7 @@ export default function CaretakerLayout() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <CaretakerHeader open={open} setOpen={setOpen} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8fafc] p-4 md:p-6">
-          <div className="max-w-[1600px] w-full h-full mx-auto flex flex-col">
+          <div className="max-w-[1600px] w-full mx-auto">
             <Outlet />
           </div>
         </main>
