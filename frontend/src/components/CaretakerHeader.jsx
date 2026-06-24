@@ -115,7 +115,7 @@ export default function CaretakerHeader({ open, setOpen }) {
             <FaBars size={18} />
           </button>
           <div className="min-w-0">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-widest leading-none truncate font-OswaldRegular">
+            <h2 className="text-base font-black text-slate-900 uppercase tracking-widest leading-none truncate font-BahnschriftRegular">
               {title}
             </h2>
           </div>

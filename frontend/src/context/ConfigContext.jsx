@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { fetchConfig } from "../api/adminAPI/ConfigAPI";
+import { useSocket } from "./SocketContext";
 
 const ConfigContext = createContext(null);
 
@@ -16,6 +17,7 @@ const DEFAULTS = {
 export function ConfigProvider({ children }) {
   const [config, setConfig] = useState(DEFAULTS);
   const [configLoaded, setConfigLoaded] = useState(false);
+  const socket = useSocket();
 
   useEffect(() => {
     fetchConfig()
@@ -23,6 +25,17 @@ export function ConfigProvider({ children }) {
       .catch(() => {})
       .finally(() => setConfigLoaded(true));
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handler = () => {
+      fetchConfig()
+        .then((data) => { if (data?.config) setConfig((prev) => ({ ...prev, ...data.config })); })
+        .catch(() => {});
+    };
+    socket.on("config_updated", handler);
+    return () => socket.off("config_updated", handler);
+  }, [socket]);
 
   return (
     <ConfigContext.Provider value={{ config, setConfig, configLoaded }}>

@@ -36,7 +36,7 @@ const toDateInput = (d) => {
 const STATUS_CFG = {
   Paid: { color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   Unpaid: { color: "bg-red-50 text-red-700 border-red-200" },
-  Overdue: { color: "bg-amber-50 text-amber-700 border-amber-200" },
+  Overdue: { color: "bg-red-100 text-red-700 border-red-300" },
   "Pending Verification": { color: "bg-blue-50 text-blue-700 border-blue-200" },
 };
 
@@ -314,7 +314,7 @@ export default function AdminPayment() {
               bg="bg-emerald-50"
             />
             <StatCard icon={<FaClock size={18} />} label="Pending Verification" value={dashboard.pendingVerification ?? 0} color="text-blue-500" bg="bg-blue-50" />
-            <StatCard icon={<FaExclamationCircle size={18} />} label="Overdue" value={dashboard.overduePayments ?? 0} color="text-amber-500" bg="bg-amber-50" />
+            <StatCard icon={<FaExclamationCircle size={18} />} label="Overdue" value={dashboard.overduePayments ?? 0} color="text-red-500" bg="bg-red-50" />
             <StatCard icon={<FaCheckCircle size={18} />} label="Unpaid Bills" value={dashboard.unpaidBills ?? 0} color="text-red-500" bg="bg-red-50" />
           </div>
 
@@ -992,7 +992,7 @@ function StatCard({ icon, label, value, color, bg }) {
       <div className={`p-3 ${bg} ${color} rounded-xl shrink-0`}>{icon}</div>
       <div className="min-w-0">
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 truncate">{label}</p>
-        <p className="text-xl sm:text-2xl font-black text-slate-800 leading-none">{value}</p>
+        <p className="text-xl sm:text-2xl font-black text-slate-800 leading-none font-BahnschriftRegular">{value}</p>
       </div>
     </div>
   );

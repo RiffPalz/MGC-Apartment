@@ -135,7 +135,7 @@ export default function AdminHeader({ open, setOpen }) {
             <FaBars size={18} />
           </button>
           <div className="min-w-0">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-widest leading-none truncate font-OswaldRegular">
+            <h2 className="text-base font-black text-slate-900 uppercase tracking-widest leading-none truncate font-BahnschriftRegular">
               {title}
             </h2>
             <p className="text-[10px] font-bold text-slate-400 mt-1 hidden sm:block uppercase tracking-widest">

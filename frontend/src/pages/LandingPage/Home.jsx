@@ -19,6 +19,7 @@ import Navbar from "../../components/Navbar.jsx";
 import TermsAndConditions from "./TermsAndConditions.jsx";
 import PrivacyPolicy from "./PrivacyPolicy.jsx";
 import { useConfig } from "../../context/ConfigContext.jsx";
+import { useSocketEvent } from "../../hooks/useSocketEvent";
 
 const LOCAL_GALLERY = [
   { url: img1, caption: "Front View", slot: "left1" },
@@ -35,9 +36,8 @@ function Home() {
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
 
-  const { config: rawConfig } = useConfig();
+  const { config: rawConfig, setConfig } = useConfig();
 
-  // Merge remote gallery images with local fallbacks
   const config = {
     ...rawConfig,
     gallery_images: LOCAL_GALLERY.map((def, i) => {
@@ -49,6 +49,10 @@ function Home() {
         : { ...def, src: def.url };
     }),
   };
+
+  useSocketEvent("config_updated", (payload) => {
+    setConfig((prev) => ({ ...prev, ...payload }));
+  });
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
@@ -84,7 +88,6 @@ function Home() {
     <div className="overflow-x-hidden bg-white">
       <Navbar />
 
-      {/* ── HERO ── */}
       <section
         id="hero"
         className="relative w-full min-h-screen bg-cover bg-center flex items-center justify-center"
@@ -114,7 +117,6 @@ function Home() {
         </div>
       </section>
 
-      {/* ── GALLERY ── */}
       <section
         id="home"
         className="py-16 sm:py-24 px-4 sm:px-8 md:px-12 lg:px-24 bg-white"
@@ -150,13 +152,11 @@ function Home() {
         </div>
       </section>
 
-      {/* ── ABOUT ── */}
       <section
         id="about"
         className="py-16 sm:py-24 px-4 sm:px-8 md:px-12 lg:px-24 bg-[#fff7f1] border-y border-slate-100"
       >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-10 md:gap-16">
-          {/* Image — visible on all screens */}
           <div className="w-full md:w-1/2" data-aos="fade-right">
             <div className="relative p-3 sm:p-4 border-2 border-[#db6747] rounded-xl bg-white shadow-xl">
               <img
@@ -197,13 +197,10 @@ function Home() {
         </div>
       </section>
 
-      {/* ── RENT CONDITIONS ── */}
       <section className="py-16 sm:py-24 px-4 sm:px-8 md:px-12 lg:px-24 bg-white">
         <div className="max-w-7xl mx-auto" data-aos="fade-up">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-            {/* Monthly Rate Card */}
             <div className="bg-[#fff7f1] rounded-3xl p-8 sm:p-10 lg:p-12 border border-[#F2DED4] shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow duration-300">
-              {/* Subtle background accent */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#db6747]/5 rounded-bl-full -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-110" />
 
               <div className="relative z-10 space-y-6">
@@ -227,7 +224,6 @@ function Home() {
                   {config.monthly_rate_description}
                 </p>
 
-                {/* Sleek Tag (Replaced Button) */}
                 <div className="inline-flex items-center gap-2.5 bg-white px-4 py-2 rounded-xl border border-[#F2DED4] shadow-sm mt-2">
                   <svg
                     className="w-4 h-4 text-[#db6747]"
@@ -249,9 +245,7 @@ function Home() {
               </div>
             </div>
 
-            {/* Deposit Terms Card */}
             <div className="bg-white rounded-3xl p-8 sm:p-10 lg:p-12 border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow duration-300">
-              {/* Subtle background accent */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-full -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-110" />
 
               <div className="relative z-10 space-y-6">
@@ -284,7 +278,6 @@ function Home() {
                   </p>
                 )}
 
-                {/* Sleek Tag (Replaced Button) */}
                 <div className="inline-flex items-center gap-2.5 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200 shadow-sm mt-2">
                   <svg
                     className="w-4 h-4 text-slate-500"
@@ -309,7 +302,6 @@ function Home() {
         </div>
       </section>
 
-      {/* ── APPLY CTA ── */}
       <section
         id="apply"
         className="relative w-full overflow-hidden flex justify-center items-center text-center py-20 sm:py-32"
@@ -364,13 +356,11 @@ function Home() {
         </div>
       </section>
 
-      {/* ── CONTACT ── */}
       <section
         id="contact"
         className="py-16 sm:py-24 md:py-32 px-4 sm:px-8 md:px-12 lg:px-24 bg-[#fff7f1] border-t border-slate-100"
       >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 items-start">
-          {/* Left */}
           <div className="space-y-8 sm:space-y-10" data-aos="fade-right">
             <div>
               <h4 className="text-[#db6747] font-bold tracking-[4px] uppercase text-xs mb-2">
@@ -407,7 +397,6 @@ function Home() {
             </div>
           </div>
 
-          {/* Right — Form */}
           <div
             className="bg-white p-6 sm:p-8 md:p-10 shadow-2xl shadow-slate-200/50 rounded-3xl border border-slate-100"
             data-aos="fade-left"
@@ -486,11 +475,9 @@ function Home() {
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
       <footer className="bg-slate-900 text-white pt-14 sm:pt-20 pb-8 sm:pb-10 px-4 sm:px-8 md:px-12 lg:px-24">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12 lg:gap-8 mb-10 sm:mb-16">
-            {/* Location */}
             <div className="col-span-2 sm:col-span-1 space-y-4 sm:space-y-6">
               <h4 className="font-NunitoSans font-bold text-[#db6747] uppercase tracking-widest text-xs">
                 Location
@@ -506,7 +493,6 @@ function Home() {
                 Santa Rosa, Laguna, Philippines
               </a>
             </div>
-            {/* Caretakers */}
             <div className="space-y-4 sm:space-y-6">
               <h4 className="font-NunitoSans font-bold text-[#db6747] uppercase tracking-widest text-xs">
                 Caretakers
@@ -528,7 +514,6 @@ function Home() {
                 ))}
               </ul>
             </div>
-            {/* Email */}
             <div className="space-y-4 sm:space-y-6">
               <h4 className="font-NunitoSans font-bold text-[#db6747] uppercase tracking-widest text-xs">
                 Email Address
@@ -540,7 +525,6 @@ function Home() {
                 mgcbuilding762@gmail.com
               </a>
             </div>
-            {/* Hotlines */}
             <div className="col-span-2 sm:col-span-1 space-y-4 sm:space-y-6">
               <h4 className="font-NunitoSans font-bold text-[#db6747] uppercase tracking-widest text-xs">
                 Inquiry Hotlines
@@ -562,7 +546,6 @@ function Home() {
             </div>
           </div>
 
-          {/* Bottom bar */}
           <div className="border-t border-slate-800 pt-6 sm:pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6">
             <p className="text-slate-500 font-NunitoSans text-[10px] uppercase tracking-[2px] text-center sm:text-left font-bold">
               © {new Date().getFullYear()} MGC BUILDING. ALL RIGHTS RESERVED.

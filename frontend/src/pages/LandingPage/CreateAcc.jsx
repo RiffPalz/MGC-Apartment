@@ -33,7 +33,6 @@ const CreateAcc = () => {
     fullName: "",
     email: "",
     phone: "",
-    sex: "",
     unit: "",
     tenants: "1",
     username: "",
@@ -178,11 +177,6 @@ const CreateAcc = () => {
       return;
     }
 
-    if (!form.sex) {
-      setError("Please select your sex.");
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -194,7 +188,6 @@ const CreateAcc = () => {
         numberOfTenants: Number(form.tenants),
         userName: form.username,
         password: form.password,
-        sex: form.sex || null,
       });
       setShowSuccessModal(true);
     } catch (err) {
@@ -423,28 +416,15 @@ const CreateAcc = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Input
-                    icon={<MdEmail />}
-                    label="Email Address"
-                    name="email"
-                    placeholder="email@example.com"
-                    value={form.email}
-                    onChange={handleChange}
-                    required
-                  />
-                  <Select
-                    label="Sex"
-                    name="sex"
-                    value={form.sex}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="" disabled>Select sex</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </Select>
-                </div>
+                <Input
+                  icon={<MdEmail />}
+                  label="Email Address"
+                  name="email"
+                  placeholder="email@example.com"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
 
                 <div className="pt-4 border-t border-slate-100">
                   <div className="relative group mb-6">

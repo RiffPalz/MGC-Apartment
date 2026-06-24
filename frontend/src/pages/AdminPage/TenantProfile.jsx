@@ -4,7 +4,6 @@ import {
   MdPerson, MdEmail, MdPhone, MdCalendarToday,
   MdPeople, MdArrowBack, MdEdit, MdHome, MdBadge,
   MdCheckCircle, MdAccessTime, MdVpnKey, MdSave, MdClose,
-  MdWc,
 } from "react-icons/md";
 import { fetchTenantProfile, updateTenantProfile } from "../../api/adminAPI/unitsAPI";
 import api from "../../api/config";
@@ -94,7 +93,6 @@ export default function TenantProfile() {
       emailAddress: tenant.emailAddress ?? "",
       contactNumber: tenant.contactNumber ?? "",
       numberOfTenants: tenant.numberOfTenants ?? 1,
-      sex: tenant.sex ?? "",
       startDate: contract?.startDate?.slice(0, 10) ?? "",
       endDate: contract?.endDate?.slice(0, 10) ?? "",
     });
@@ -122,7 +120,6 @@ export default function TenantProfile() {
         emailAddress: editForm.emailAddress.trim(),
         contactNumber: editForm.contactNumber,
         numberOfTenants: Number(editForm.numberOfTenants),
-        sex: editForm.sex || null,
       });
 
       // Save contract dates if a contract exists
@@ -232,13 +229,12 @@ export default function TenantProfile() {
 
             {/* Personal Info */}
             <Section title="Personal Information" icon={<MdPerson size={18} />}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-bold">
-                <DataCard icon={<MdPerson size={16} />} label="Full Name" value={tenant.fullName} />
-                <DataCard icon={<MdEmail size={16} />} label="Email Address" value={tenant.emailAddress} />
-                <DataCard icon={<MdPhone size={16} />} label="Phone Number" value={tenant.contactNumber || "—"} />
-                <DataCard icon={<MdWc size={16} />} label="Sex" value={tenant.sex || "—"} />
-                <DataCard icon={<MdBadge size={16} />} label="System ID" value={tenant.publicUserID} mono />
-              </div>
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-bold">
+                 <DataCard icon={<MdPerson size={16} />} label="Full Name" value={tenant.fullName} />
+                 <DataCard icon={<MdEmail size={16} />} label="Email Address" value={tenant.emailAddress} />
+                 <DataCard icon={<MdPhone size={16} />} label="Phone Number" value={tenant.contactNumber || "—"} />
+                 <DataCard icon={<MdBadge size={16} />} label="System ID" value={tenant.publicUserID} mono />
+               </div>
             </Section>
 
             {/* Contract Info */}
@@ -393,40 +389,23 @@ export default function TenantProfile() {
                 </div>
 
                 {/* 2-Column Grid */}
-                <div className="grid grid-cols-2 gap-5">
-                  {/* Sex */}
-                  <div className="relative group">
-                    <label className="block text-[10px] font-medium text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Sex</label>
-                    <div className="relative">
-                      <MdWc size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#db6747] transition-colors z-10" />
-                      <select
-                        value={editForm.sex}
-                        onChange={(e) => setEditForm({ ...editForm, sex: e.target.value })}
-                        className="w-full bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-[#db6747] text-slate-800 text-sm rounded-xl focus:ring-4 focus:ring-[#db6747]/10 outline-none transition-all py-3.5 px-4 pl-11 appearance-none cursor-pointer"
-                      >
-                        <option value="">Not specified</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Occupants */}
-                  <div className="relative group">
-                    <label className="block text-[10px] font-medium text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Occupants</label>
-                    <div className="relative">
-                      <MdPeople size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#db6747] transition-colors z-10" />
-                      <select
-                        value={editForm.numberOfTenants}
-                        onChange={(e) => setEditForm({ ...editForm, numberOfTenants: e.target.value })}
-                        className="w-full bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-[#db6747] text-slate-800 text-sm rounded-xl focus:ring-4 focus:ring-[#db6747]/10 outline-none transition-all py-3.5 px-4 pl-11 appearance-none cursor-pointer"
-                      >
-                        <option value={1}>1 Person</option>
-                        <option value={2}>2 Persons</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
+<div className="grid grid-cols-2 gap-5">
+                   {/* Occupants */}
+                   <div className="relative group col-span-2">
+                     <label className="block text-[10px] font-medium text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Occupants</label>
+                     <div className="relative">
+                       <MdPeople size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#db6747] transition-colors z-10" />
+                       <select
+                         value={editForm.numberOfTenants}
+                         onChange={(e) => setEditForm({ ...editForm, numberOfTenants: e.target.value })}
+                         className="w-full bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-[#db6747] text-slate-800 text-sm rounded-xl focus:ring-4 focus:ring-[#db6747]/10 outline-none transition-all py-3.5 px-4 pl-11 appearance-none cursor-pointer"
+                       >
+                         <option value={1}>1 Person</option>
+                         <option value={2}>2 Persons</option>
+                       </select>
+                     </div>
+                   </div>
+                 </div>
               </div>
 
               {/* Contract Dates */}

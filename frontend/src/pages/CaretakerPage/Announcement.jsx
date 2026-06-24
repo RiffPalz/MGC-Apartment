@@ -160,7 +160,6 @@ export default function CaretakerAnnouncement() {
         }
       `}</style>
 
-      {/* PRINT AREA */}
       <div id="ann-print" className="hidden print:block">
         <div className="flex justify-between items-end border-b-[3px] border-slate-900 pb-5 mb-6">
           <div className="flex items-center gap-4">
@@ -194,11 +193,9 @@ export default function CaretakerAnnouncement() {
         </div>
       </div>
 
-      {/* SCREEN UI */}
-      <div className="w-full text-slate-800 font-sans flex flex-col gap-4 sm:gap-5 no-print overflow-x-hidden">
-        <div className="max-w-[1600px] w-full mx-auto flex flex-col gap-4 sm:gap-5 flex-1">
+      <div className="w-full text-slate-800 font-sans flex flex-col gap-4 sm:gap-5 no-print">
+        <div className="max-w-[1600px] w-full mx-auto flex flex-col gap-4 sm:gap-5">
 
-          {/* STAT CARDS */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <StatCard icon={<FaBullhorn size={18} />} label="Total"      value={counts.All}        color="text-blue-500"  bg="bg-blue-50" />
             <StatCard icon={<FaBullhorn size={18} />} label="General"    value={counts.General}    color="text-slate-500" bg="bg-slate-100" />
@@ -206,7 +203,6 @@ export default function CaretakerAnnouncement() {
             <StatCard icon={<FaBullhorn size={18} />} label="Water"      value={counts.Water}      color="text-sky-500"   bg="bg-sky-50" />
           </div>
 
-          {/* COMPOSE FORM */}
           <form onSubmit={handlePreSubmit} ref={formRef} className={`bg-white rounded-xl shadow-sm p-4 md:p-5 transition-all border ${editingId ? "border-[#db6747] ring-2 ring-[#db6747]/10" : "border-slate-200"}`}>
             <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">
               {editingId ? "Edit Announcement" : "Compose New Announcement"}
@@ -253,7 +249,6 @@ export default function CaretakerAnnouncement() {
             </div>
           </form>
 
-          {/* TOOLBAR */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
             <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
               <div className="relative flex-1 max-w-md w-full">
@@ -283,10 +278,9 @@ export default function CaretakerAnnouncement() {
             </div>
           </div>
 
-          {/* ANNOUNCEMENTS FEED */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
             {loading ? (
-              <div className="flex flex-col gap-0 flex-1 animate-pulse">
+              <div className="flex flex-col gap-0 animate-pulse">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="flex-1 space-y-2">
@@ -302,14 +296,14 @@ export default function CaretakerAnnouncement() {
                 ))}
               </div>
             ) : paginated.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 text-slate-400 flex-1">
+              <div className="flex flex-col items-center justify-center py-24 text-slate-400">
                 <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm border border-slate-100">
                   <FaBullhorn className="text-slate-300" size={20} />
                 </div>
                 <p className="text-[11px] font-bold uppercase tracking-widest">No announcements found</p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 flex-1 overflow-y-auto">
+              <div className="divide-y divide-slate-100">
                 {paginated.map((a) => (
                   <div key={a.ID} className="p-5 sm:p-6 hover:bg-slate-50/80 transition-colors group">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -343,7 +337,6 @@ export default function CaretakerAnnouncement() {
               </div>
             )}
 
-            {/* Pagination */}
             {!loading && filtered.length > PAGE_SIZE && (
               <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-slate-200 bg-slate-50/50 gap-4 shrink-0">
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -376,7 +369,6 @@ export default function CaretakerAnnouncement() {
         </div>
       </div>
 
-      {/* VIEW MODAL */}
       {viewModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex justify-center items-center p-4 animate-in fade-in duration-200 no-print">
           <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
@@ -410,7 +402,6 @@ export default function CaretakerAnnouncement() {
         </div>
       )}
 
-      {/* CREATE/EDIT CONFIRM */}
       <GeneralConfirmationModal
         isOpen={confirmSubmit}
         onClose={() => setConfirmSubmit(false)}
@@ -422,7 +413,6 @@ export default function CaretakerAnnouncement() {
         loading={submitting}
       />
 
-      {/* CANCEL CONFIRM */}
       <GeneralConfirmationModal
         isOpen={confirmCancel}
         onClose={() => setConfirmCancel(false)}
@@ -434,7 +424,6 @@ export default function CaretakerAnnouncement() {
         cancelText="Go Back"
       />
 
-      {/* DELETE CONFIRM */}
       <GeneralConfirmationModal
         isOpen={!!confirmDelete}
         onClose={() => setConfirmDelete(null)}
@@ -454,7 +443,7 @@ function StatCard({ icon, label, value, color, bg }) {
       <div className={`p-3.5 sm:p-4 ${bg} ${color} rounded-xl shrink-0`}>{icon}</div>
       <div className="min-w-0">
         <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 truncate">{label}</p>
-        <p className="text-2xl font-black text-slate-800 leading-none truncate">{value}</p>
+        <p className="text-2xl font-black text-slate-800 leading-none truncate font-BahnschriftRegular">{value}</p>
       </div>
     </div>
   );
