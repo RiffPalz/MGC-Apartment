@@ -1,7 +1,7 @@
 import api from "../config";
 
 export const fetchPaymentDashboard = async () => {
-  const res = await api.get("/admin/payments/dashboard");
+  const res = await api.get(`/admin/payments/dashboard?_t=${Date.now()}`);
   return res.data;
 };
 

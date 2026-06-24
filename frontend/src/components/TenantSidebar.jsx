@@ -31,7 +31,6 @@ export default function TenantSidebar({ open = true, setOpen }) {
           ${open ? "w-[280px] max-w-[85vw]" : "w-20"}
         `}
       >
-        {/* Brand header */}
         <div
           className={`flex items-center h-16 sm:h-20 px-4 sm:px-6 border-b border-white/10 shrink-0 ${
             open ? "justify-between" : "justify-center"
@@ -65,7 +64,6 @@ export default function TenantSidebar({ open = true, setOpen }) {
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 py-4 sm:py-6 px-2 sm:px-3 space-y-1 sm:space-y-2 overflow-y-auto custom-scrollbar">
           {menuItems.map((item, index) => {
             const isActive = location.pathname.includes(item.path);
@@ -96,7 +94,7 @@ export default function TenantSidebar({ open = true, setOpen }) {
                 </span>
                 <span
                   className={`
-                    font-OswaldRegular text-xs sm:text-sm uppercase tracking-widest whitespace-nowrap
+                    font-NunitoSans text-xs sm:text-sm font-semibold whitespace-nowrap
                     transition-all duration-300 origin-left
                     ${open ? "opacity-100 translate-x-0 w-auto" : "opacity-0 -translate-x-4 w-0 overflow-hidden"}
                   `}

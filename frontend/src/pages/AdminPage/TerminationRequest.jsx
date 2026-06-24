@@ -139,7 +139,7 @@ export default function AdminTerminationRequests() {
               </div>
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
-                <p className="text-2xl font-black text-slate-800 leading-none">{value}</p>
+                <p className="text-2xl font-black text-slate-800 leading-none font-BahnschriftRegular">{value}</p>
               </div>
             </div>
           ))}

@@ -300,7 +300,7 @@ function StatCard({ label, value, color, className = "" }) {
     return (
         <div className={`bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-3 ${className}`}>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-            <p className={`text-2xl font-black ${color}`}>{value}</p>
+            <p className={`text-2xl font-black font-BahnschriftRegular ${color}`}>{value}</p>
         </div>
     );
 }

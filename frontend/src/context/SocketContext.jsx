@@ -14,9 +14,6 @@ export const SocketProvider = ({ children }) => {
     const user = getUser();
     const role = getRole();
 
-    if (!user) return;
-
-    // Strip trailing /api — Socket.IO must connect to the root server URL
     const rawUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
     const backendUrl = rawUrl.replace(/\/api\/?$/, "");
 
@@ -31,8 +28,10 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on("connect", () => {
-      newSocket.emit("join_role", role);
-      newSocket.emit("join_user", user.id || user.ID);
+      if (user) {
+        newSocket.emit("join_role", role);
+        newSocket.emit("join_user", user.id || user.ID);
+      }
     });
 
     newSocket.on("connect_error", () => {

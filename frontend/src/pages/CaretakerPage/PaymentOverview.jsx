@@ -23,7 +23,7 @@ const fmtMonth = (d) =>
 const STATUS_CFG = {
   Paid: { color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   Unpaid: { color: "bg-red-50 text-red-700 border-red-200" },
-  Overdue: { color: "bg-amber-50 text-amber-700 border-amber-200" },
+  Overdue: { color: "bg-red-100 text-red-700 border-red-300" },
   "Pending Verification": { color: "bg-blue-50 text-blue-700 border-blue-200" },
 };
 
@@ -143,8 +143,8 @@ export default function CaretakerPaymentOverview() {
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#db6747]">Payment Overview Report</p>
             </div>
           </div>
-          <div className="text-right text-[10px] text-slate-500 flex flex-col gap-1.5">
-            <p><span className="font-bold text-slate-800 uppercase tracking-widest mr-2">Date Generated:</span>{new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}</p>
+          <div className="text-right text-[10px] text-slate-500">
+            <p><span className="font-bold text-slate-800 uppercase tracking-widest mr-2">Date Generated:</span>{new Date().toLocaleDateString("en-US")}</p>
             <p><span className="font-bold text-slate-800 uppercase tracking-widest mr-2">Filter:</span>{statusFilter}</p>
           </div>
         </div>
@@ -172,24 +172,24 @@ export default function CaretakerPaymentOverview() {
             ))}
           </tbody>
         </table>
-        <div className="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-[9px] uppercase tracking-widest text-slate-400 font-bold">
+        <div className="mt-8 pt-4 border-t border-slate-200 flex justify-between text-[9px] uppercase tracking-widest text-slate-400 font-bold">
           <p>Total Records: <span className="text-slate-800 text-[11px] ml-1">{filtered.length}</span></p>
           <p>MGC Building — Apartment Monitoring System</p>
-          <p className="text-right">CONFIDENTIAL</p>
+          <p>CONFIDENTIAL</p>
         </div>
       </div>
 
       {/* SCREEN UI */}
-      <div className="w-full h-full bg-[#f8fafc] p-4 md:p-6 text-slate-800 font-sans flex flex-col gap-4 sm:gap-5 no-print min-h-screen overflow-x-hidden">
+      <div className="w-full bg-[#f8fafc] p-4 md:p-6 text-slate-800 font-sans flex flex-col gap-4 sm:gap-5 no-print">
 
         {/* 4K Containment Wrapper */}
-        <div className="max-w-[1600px] w-full mx-auto flex flex-col gap-4 sm:gap-5 flex-1">
+        <div className="max-w-[1600px] w-full mx-auto flex flex-col gap-4 sm:gap-5">
 
           {/* STAT CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <StatCard icon={<FaMoneyBillWave size={18} />} label={`Total Monthly Collected — ${currentMonthLabel}`} value={`₱${totalMonthlyCollected.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} color="text-emerald-500" bg="bg-emerald-50" />
             <StatCard icon={<FaClock size={18} />} label="Pending Verification" value={pendingCount} color="text-blue-500" bg="bg-blue-50" />
-            <StatCard icon={<FaExclamationCircle size={18} />} label="Overdue" value={overdueCount} color="text-amber-500" bg="bg-amber-50" />
+            <StatCard icon={<FaExclamationCircle size={18} />} label="Overdue" value={overdueCount} color="text-red-500" bg="bg-red-50" />
             <StatCard icon={<FaCheckCircle size={18} />} label="Unpaid Bills" value={unpaidCount} color="text-red-500" bg="bg-red-50" />
           </div>
 
@@ -238,15 +238,15 @@ export default function CaretakerPaymentOverview() {
           </div>
 
           {/* TABLE CONTAINER */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
 
             {/* Desktop Table View */}
-            <div className="hidden lg:block overflow-x-auto flex-1 custom-scrollbar">
+            <div className="hidden lg:block overflow-x-auto custom-scrollbar">
               <table className="w-full text-left whitespace-nowrap">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500">
                     <th className="px-5 py-4 font-bold">Unit</th>
-                    <th className="px-5 py-4 font-bold">Tenant Details</th>
+                    <th className="px-5 py-4 font-bold">Full Name</th>
                     <th className="px-5 py-4 font-bold">Billing Month</th>
                     <th className="px-5 py-4 font-bold">Due Date</th>
                     <th className="px-5 py-4 font-bold">Amount</th>
@@ -335,7 +335,7 @@ export default function CaretakerPaymentOverview() {
             </div>
 
             {/* Mobile Cards View */}
-            <div className="lg:hidden flex-1 overflow-y-auto divide-y divide-slate-100 bg-slate-50/30">
+            <div className="lg:hidden divide-y divide-slate-100 bg-slate-50/30">
               {loading ? (
                 <div className="divide-y divide-slate-100 animate-pulse">
                   {[...Array(5)].map((_, i) => (
@@ -460,15 +460,14 @@ export default function CaretakerPaymentOverview() {
 
       {/* VIEW MODAL */}
       {viewModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex justify-center items-center p-4 animate-in fade-in duration-200 no-print">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95">
-            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/80 shrink-0">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex justify-center items-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/50 shrink-0">
               <div>
-                <h2 className="text-slate-800 font-bold text-sm uppercase tracking-widest">Payment Details</h2>
-                <p className="text-slate-400 text-[10px] uppercase tracking-widest mt-0.5 font-semibold">ID: {viewModal.id}</p>
+                <h2 className="text-slate-800 font-bold text-xs uppercase tracking-widest">Payment Details</h2>
+                <p className="text-slate-400 text-[10px] uppercase tracking-widest mt-0.5">ID: {viewModal.id}</p>
               </div>
-              <button onClick={() => setViewModal(null)} className="text-slate-400 hover:text-slate-800 transition-colors text-lg px-2 active:scale-90 bg-white rounded-md border border-slate-200 shadow-sm w-8 h-8 flex items-center justify-center">✕</button>
-            </div>
+              <button onClick={() => setViewModal(null)} className="text-slate-400 hover:text-slate-800 transition-colors text-lg px-2 active:scale-90 bg-white rounded-md border border-slate-200 shadow-sm w-8 h-8 flex items-center justify-center">✕</button>            </div>
             <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar flex-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
@@ -484,9 +483,9 @@ export default function CaretakerPaymentOverview() {
                   ["Reference No.", viewModal.paymentType === "GCash" ? (viewModal.referenceNumber ?? "—") : "—"],
                   ["AR No.", viewModal.paymentType === "Cash" ? (viewModal.arNumber ?? "—") : "—"],
                 ].map(([label, val]) => (
-                  <div key={label} className="bg-slate-50 border border-slate-100 p-3 rounded-xl">
-                    <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-1 font-bold">{label}</p>
-                    <p className="text-sm font-semibold text-slate-800 truncate">{val}</p>
+                  <div key={label}>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">{label}</p>
+                    <p className="text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-100 px-3 py-2 rounded-lg truncate">{val}</p>
                   </div>
                 ))}
               </div>
@@ -498,7 +497,7 @@ export default function CaretakerPaymentOverview() {
 
               {viewModal.receiptImage && (
                 <div>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2 font-bold">Uploaded Receipt</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2 font-bold">Receipt</p>
                   <a href={viewModal.receiptImage} target="_blank" rel="noreferrer" className="block w-max">
                     <img src={viewModal.receiptImage} alt="Receipt" className="max-h-48 rounded-xl border border-slate-200 object-contain shadow-sm hover:shadow-md transition-shadow" />
                   </a>
@@ -508,16 +507,15 @@ export default function CaretakerPaymentOverview() {
                 <div>
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2 font-bold">Utility Bill File</p>
                   <a href={viewModal.utilityBillFile} target="_blank" rel="noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all shadow-sm active:scale-95"
-                  >
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all shadow-sm">
                     View Utility Bill
                   </a>
                 </div>
               )}
             </div>
-            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex shrink-0">
+            <div className="px-6 py-4 border-t border-slate-100 shrink-0">
               <button onClick={() => setViewModal(null)}
-                className="w-full py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-white shadow-sm transition-all active:scale-95">
+                className="w-full py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors uppercase tracking-widest active:scale-95">
                 Close
               </button>
             </div>
@@ -546,11 +544,11 @@ export default function CaretakerPaymentOverview() {
 
 function StatCard({ icon, label, value, color, bg }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-      <div className={`p-3.5 sm:p-4 ${bg} ${color} rounded-xl shrink-0`}>{icon}</div>
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-5 flex items-center gap-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+      <div className={`p-3 ${bg} ${color} rounded-xl shrink-0`}>{icon}</div>
       <div className="min-w-0">
-        <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 truncate">{label}</p>
-        <p className="text-2xl font-black text-slate-800 leading-none truncate">{value}</p>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 truncate">{label}</p>
+        <p className="text-xl sm:text-2xl font-black text-slate-800 leading-none font-BahnschriftRegular">{value}</p>
       </div>
     </div>
   );
@@ -559,7 +557,7 @@ function StatCard({ icon, label, value, color, bg }) {
 function StatusBadge({ status }) {
   const cfg = STATUS_CFG[status] ?? { color: "bg-slate-100 text-slate-500 border-slate-200" };
   return (
-    <span className={`text-[10px] font-bold px-2.5 py-1.5 rounded-md uppercase tracking-wider border shrink-0 ${cfg.color}`}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${cfg.color}`}>
       {status ?? "—"}
     </span>
   );

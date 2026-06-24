@@ -178,7 +178,6 @@ export const getTenantProfile = async (req, res) => {
         unitNumber: tenant.unitNumber,
         numberOfTenants: tenant.numberOfTenants,
         userName: tenant.userName,
-        sex: tenant.sex ?? null,
         status: tenant.status,
         createdAt: tenant.created_at,
         contract: activeContract
@@ -206,7 +205,7 @@ export const getTenantProfile = async (req, res) => {
 
 export const updateTenantProfile = async (req, res) => {
   try {
-    const { fullName, emailAddress, contactNumber, numberOfTenants, sex } = req.body;
+    const { fullName, emailAddress, contactNumber, numberOfTenants } = req.body;
 
     const tenant = await User.findOne({ where: { ID: req.params.id, role: "tenant" } });
     if (!tenant) return res.status(404).json({ success: false, message: "Tenant not found" });
@@ -214,7 +213,6 @@ export const updateTenantProfile = async (req, res) => {
     if (fullName) tenant.fullName = fullName.trim();
     if (contactNumber !== undefined) tenant.contactNumber = contactNumber;
     if (numberOfTenants !== undefined) tenant.numberOfTenants = numberOfTenants;
-    if (sex !== undefined) tenant.sex = sex || null;
 
     if (emailAddress && emailAddress !== tenant.emailAddress) {
       const exists = await User.findOne({ where: { emailAddress } });
@@ -260,7 +258,6 @@ export const updateTenantProfile = async (req, res) => {
         emailAddress: tenant.emailAddress,
         contactNumber: tenant.contactNumber,
         numberOfTenants: tenant.numberOfTenants,
-        sex: tenant.sex,
         unitNumber: tenant.unitNumber,
         userName: tenant.userName,
         status: tenant.status,

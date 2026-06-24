@@ -454,7 +454,7 @@ function StatCard({ icon, label, value, color, bg }) {
       <div className={`p-3.5 sm:p-4 ${bg} ${color} rounded-xl shrink-0`}>{icon}</div>
       <div className="min-w-0">
         <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 truncate">{label}</p>
-        <p className="text-2xl font-black text-slate-800 leading-none">{value}</p>
+        <p className="text-2xl font-black text-slate-800 leading-none font-BahnschriftRegular">{value}</p>
       </div>
     </div>
   );

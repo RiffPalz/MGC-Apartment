@@ -12,6 +12,10 @@ export const getConfigController = async (req, res) => {
 export const updateConfigController = async (req, res) => {
   try {
     const config = await updateConfig(req.body, req.files ?? {}, req.admin?.id);
+
+    const io = req.app.get("io");
+    if (io) io.emit("config_updated", config);
+
     return res.status(200).json({ success: true, config });
   } catch (error) {
     if (error.status === 422) {

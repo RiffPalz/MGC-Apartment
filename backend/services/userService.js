@@ -24,7 +24,7 @@ const generatePublicUserID = async () => {
 };
 
 export const registerUser = async (userData) => {
-  const { fullName, email, contactNumber, unitNumber, numberOfTenants, userName, password, sex } = userData;
+  const { fullName, email, contactNumber, unitNumber, numberOfTenants, userName, password } = userData;
 
   if (!fullName || !email || !userName || !password || !unitNumber) {
     throw new Error("All required fields must be provided");
@@ -66,7 +66,6 @@ export const registerUser = async (userData) => {
     userName,
     password_hash: password,
     role: "tenant",
-    sex: sex || null,
   });
 
   const { sendMail } = await import("../utils/mailer.js");
