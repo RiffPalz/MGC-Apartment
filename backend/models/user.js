@@ -82,10 +82,6 @@ const User = sequelize.define(
       allowNull: false,
       defaultValue: "Pending",
     },
-    sex: {
-      type: DataTypes.ENUM("Male", "Female"),
-      allowNull: true,
-    },
     profilePicture: {
       type: DataTypes.TEXT,
       allowNull: true,

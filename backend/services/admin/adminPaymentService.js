@@ -217,6 +217,21 @@ export const getPaymentDashboard = async () => {
     ...new Set(unpaidRecords.map((p) => p.contract?.unit?.unit_number).filter(Boolean)),
   ].sort((a, b) => a - b);
 
+  const overdueRecords = await Payment.findAll({
+    where: { status: "Overdue", is_deleted: { [Op.or]: [false, null] } },
+    attributes: ["ID"],
+    include: [{
+      model: Contract,
+      as: "contract",
+      attributes: ["unit_id"],
+      include: [{ model: Unit, as: "unit", attributes: ["unit_number"] }],
+    }],
+  });
+
+  const overdueUnitNumbers = [
+    ...new Set(overdueRecords.map((p) => p.contract?.unit?.unit_number).filter(Boolean)),
+  ].sort((a, b) => a - b);
+
   const monthlyRevenue = await Payment.findAll({
     attributes: [
       [sequelize.fn("DATE_FORMAT", sequelize.col("billing_month"), "%Y-%m-01"), "billing_month"],
@@ -228,7 +243,7 @@ export const getPaymentDashboard = async () => {
     raw: true,
   });
 
-  return { totalCollected, totalMonthlyCollected, currentBillingMonth: currentMonthStart, pendingVerification, overduePayments, unpaidBills, unpaidUnitNumbers, monthlyRevenue };
+  return { totalCollected, totalMonthlyCollected, currentBillingMonth: currentMonthStart, pendingVerification, overduePayments, unpaidBills, unpaidUnitNumbers, overdueUnitNumbers, monthlyRevenue };
 };
 
 export const updatePayment = async (paymentId, data, adminId) => {

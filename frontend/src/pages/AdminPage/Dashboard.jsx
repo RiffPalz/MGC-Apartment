@@ -4,7 +4,7 @@ import { useDebounceCallback } from "../../hooks/useDebounceCallback";
 import {
   FaUsers, FaTools, FaMoneyBillWave,
   FaCheckCircle, FaClock, FaArrowRight,
-  FaUserCheck, FaChartLine, FaMale, FaFemale,
+  FaUserCheck, FaChartLine,
 } from "react-icons/fa";
 import { MdPendingActions, MdApartment } from "react-icons/md";
 import {
@@ -108,14 +108,17 @@ export default function AdminDashboard() {
   const totalTenants = data?.tenants?.count ?? 0;
   const pendingCount = data?.pending?.count ?? 0;
   const payDash = data?.payments ?? {};
+  const paymentUnitList = [
+    ...(payDash.unpaidUnitNumbers ?? []).map((num) => ({ unitNumber: num, status: "Unpaid" })),
+    ...(payDash.overdueUnitNumbers ?? []).map((num) => ({ unitNumber: num, status: "Overdue" })),
+  ].sort((a, b) => a.unitNumber - b.unitNumber);
+  const totalOutstanding = (payDash.unpaidBills ?? 0) + (payDash.overduePayments ?? 0);
+  const totalUnitsAffected = paymentUnitList.length;
   const maintenance = data?.maintenance?.requests ?? [];
   const pendingMaint = maintenance.filter((m) => m.status === "Pending").length;
   const inProgressMaint = maintenance.filter((m) => m.status === "In Progress").length;
 
-  // Gender counts from tenant list
   const tenantList = data?.tenants?.tenants ?? [];
-  const maleCount = tenantList.filter((t) => t.sex === "Male").length;
-  const femaleCount = tenantList.filter((t) => t.sex === "Female").length;
 
   // Unit status counts (4 statuses)
   const allUnits = data?.units?.units ?? [];
@@ -368,8 +371,8 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* ── BOTTOM ROW: Maintenance Pie + Gender ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* ── BOTTOM ROW: Maintenance Pie ── */}
+      <div className="grid grid-cols-1 gap-4">
 
         {/* Maintenance Pie Chart */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col">
@@ -415,56 +418,6 @@ export default function AdminDashboard() {
                 );
               })}
             </div>
-          </div>
-        </div>
-
-        {/* Tenants by Gender */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[#db6747]">
-              <div className="p-1.5 bg-orange-50 rounded-md"><FaUsers size={13} /></div>
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Tenants by Gender</h3>
-                <p className="text-[10px] text-slate-400 uppercase">Building-wide total</p>
-              </div>
-            </div>
-            <NavBtn onClick={() => navigate("/admin/tenants")} />
-          </div>
-          <div className="flex-1 flex flex-col justify-center gap-4 p-5">
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-blue-50 border border-blue-100">
-              <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-                <FaMale size={22} className="text-blue-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-0.5">Male</p>
-                <p className="text-2xl font-black text-blue-600 leading-none">{maleCount}</p>
-              </div>
-              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest shrink-0">
-                {totalTenants > 0 ? Math.round((maleCount / totalTenants) * 100) : 0}%
-              </p>
-            </div>
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-pink-50 border border-pink-100">
-              <div className="w-11 h-11 rounded-xl bg-pink-100 flex items-center justify-center shrink-0">
-                <FaFemale size={22} className="text-pink-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-pink-400 uppercase tracking-widest mb-0.5">Female</p>
-                <p className="text-2xl font-black text-pink-500 leading-none">{femaleCount}</p>
-              </div>
-              <p className="text-[10px] font-bold text-pink-400 uppercase tracking-widest shrink-0">
-                {totalTenants > 0 ? Math.round((femaleCount / totalTenants) * 100) : 0}%
-              </p>
-            </div>
-            {(totalTenants - maleCount - femaleCount) > 0 && (
-              <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Not Specified</p>
-                <p className="text-sm font-black text-slate-500">{totalTenants - maleCount - femaleCount}</p>
-              </div>
-            )}
-          </div>
-          <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Tenants</p>
-            <p className="text-lg font-black text-slate-800">{totalTenants}</p>
           </div>
         </div>
 
@@ -519,60 +472,62 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-2 text-amber-500">
               <div className="p-1.5 bg-amber-50 rounded-md"><FaMoneyBillWave size={13} /></div>
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Unpaid Payments</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Unpaid & Overdue Payments</h3>
                 <p className="text-[10px] text-slate-400 uppercase">Bills awaiting payment</p>
               </div>
             </div>
             <NavBtn onClick={() => navigate("/admin/payments")} />
           </div>
 
-          <div className="flex-1 flex flex-col">
-            {payDash.unpaidBills === 0 || !payDash.unpaidBills ? (
-              <div className="p-8 flex flex-col items-center justify-center flex-1">
-                <FaCheckCircle className="text-emerald-400 mb-2" size={24} />
-                <p className="text-xs text-slate-400">No unpaid bills</p>
-              </div>
-            ) : (
-              <>
-                {/* Summary row */}
-                <div className="px-5 py-3 bg-amber-50/60 border-b border-amber-100 flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-amber-600 uppercase tracking-widest">
-                    {payDash.unpaidBills} unpaid bill{payDash.unpaidBills !== 1 ? "s" : ""}
-                  </span>
-                  <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">
-                    {payDash.unpaidUnitNumbers?.length ?? 0} unit{(payDash.unpaidUnitNumbers?.length ?? 0) !== 1 ? "s" : ""} affected
-                  </span>
-                </div>
-
-                {/* Unit list */}
-                <div className="divide-y divide-slate-100 flex-1 overflow-y-auto max-h-52 custom-scrollbar">
-                  {(payDash.unpaidUnitNumbers ?? []).map((unitNum) => (
-                    <div
-                      key={unitNum}
-                      onClick={() => navigate("/admin/payments")}
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-amber-50/40 transition-colors cursor-pointer"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center shrink-0">
-                        <MdApartment size={15} className="text-amber-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-slate-800">Unit {unitNum}</p>
-                        <p className="text-[10px] text-slate-400">Unpaid bill pending</p>
-                      </div>
-                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-md bg-amber-50 text-amber-600 border border-amber-200 uppercase tracking-wider shrink-0">
-                        Unpaid
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+          {/* Summary row */}
+          <div className="px-5 py-3 bg-amber-50/60 border-b border-amber-100 flex items-center justify-between">
+            <span className="text-[11px] font-bold text-amber-600 uppercase tracking-widest">
+              {totalOutstanding} outstanding bill{totalOutstanding !== 1 ? "s" : ""}
+            </span>
+            <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">
+              {totalUnitsAffected} unit{totalUnitsAffected !== 1 ? "s" : ""} affected
+            </span>
           </div>
 
-          {/* Footer total */}
-          <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Unpaid</p>
-            <p className="text-lg font-black text-amber-600">{payDash.unpaidBills ?? 0}</p>
+          {/* Unified unit list */}
+          <div className="divide-y divide-slate-100 flex-1 overflow-y-auto max-h-52 custom-scrollbar">
+            {paymentUnitList.length === 0 ? (
+              <div className="px-5 py-8 flex items-center justify-center">
+                <p className="text-xs text-slate-400">No outstanding bills</p>
+              </div>
+            ) : paymentUnitList.map(({ unitNumber, status }) => {
+              const isOverdue = status === "Overdue";
+              return (
+                <div
+                  key={`${status}-${unitNumber}`}
+                  onClick={() => navigate("/admin/payments")}
+                  className={`flex items-center gap-3 px-5 py-3 transition-colors cursor-pointer ${
+                    isOverdue ? "hover:bg-red-50/40" : "hover:bg-amber-50/40"
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${
+                    isOverdue
+                      ? "bg-red-50 border-red-100"
+                      : "bg-amber-50 border-amber-100"
+                  }`}>
+                    <MdApartment size={15} className={isOverdue ? "text-red-500" : "text-amber-500"} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-black text-slate-800">Unit {unitNumber}</p>
+                    <p className="text-[10px] text-slate-400">
+                      {isOverdue ? "Payment overdue" : "Unpaid bill pending"}
+                    </p>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md border uppercase tracking-wider shrink-0 ${
+                    isOverdue
+                      ? "bg-red-50 text-red-600 border-red-200"
+                      : "bg-amber-50 text-amber-600 border-amber-200"
+                  }`}>
+                    {status}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -596,7 +551,7 @@ function StatCard({ icon, label, value, color, bg, onClick, badge }) {
       </div>
       <div className="min-w-0">
         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 truncate">{label}</p>
-        <p className="text-2xl font-black text-slate-800 leading-none truncate">{value}</p>
+        <p className="text-2xl font-black text-slate-800 leading-none truncate font-BahnschriftRegular">{value}</p>
       </div>
     </div>
   );

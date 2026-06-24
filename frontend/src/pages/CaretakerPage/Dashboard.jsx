@@ -327,7 +327,7 @@ function StatCard({ icon, label, value, color, bg, onClick, badge, hoverable }) 
             </div>
             <div className="min-w-0">
                 <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 truncate">{label}</p>
-                <p className="text-xl sm:text-2xl font-black text-slate-800 leading-none">{value}</p>
+                <p className="text-xl sm:text-2xl font-black text-slate-800 leading-none font-BahnschriftRegular">{value}</p>
             </div>
         </div>
     );
